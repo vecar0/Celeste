@@ -1,8 +1,11 @@
 // 오프라인 캐시. 배포할 때마다 버전이 오른다(tools/celeste_deploy.py)
-const CACHE = 'bleu-minuit-v27';
+const CACHE = 'bleu-minuit-v29';
 const FILES = [
  "rig/under.webp",
  "rig/back_hair.webp",
+ "rig/strand00b.webp",
+ "rig/strand01b.webp",
+ "rig/strand02b.webp",
  "rig/restHead.webp",
  "rig/neck.webp",
  "rig/topwear.webp",
@@ -22,11 +25,8 @@ const FILES = [
  "rig/irides-r.webp",
  "rig/irides-l.webp",
  "rig/eyelash-l.webp",
- "rig/strand00b.webp",
  "rig/strand00.webp",
- "rig/strand01b.webp",
  "rig/strand01.webp",
- "rig/strand02b.webp",
  "rig/strand02.webp",
  "rig/earMoon.webp",
  "rig/earStar.webp",
