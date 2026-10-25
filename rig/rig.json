@@ -1,0 +1,349 @@
+{
+ "size": [
+  1228,
+  2416
+ ],
+ "order": [
+  "under",
+  "back_hair",
+  "restHead",
+  "neck",
+  "topwear",
+  "ears-l",
+  "ears-r",
+  "face",
+  "mouth",
+  "nose",
+  "rest",
+  "handwear-r",
+  "underHair",
+  "eyebrow-r",
+  "eyebrow-l",
+  "eyelash-r",
+  "eyewhite-r",
+  "eyewhite-l",
+  "irides-r",
+  "irides-l",
+  "eyelash-l",
+  "strand00",
+  "strand01",
+  "strand02",
+  "earMoon",
+  "earStar",
+  "front_hair"
+ ],
+ "layers": {
+  "under": {
+   "xy": [
+    0,
+    1255
+   ],
+   "size": [
+    1228,
+    1161
+   ],
+   "group": "static"
+  },
+  "back_hair": {
+   "xy": [
+    0,
+    400
+   ],
+   "size": [
+    1228,
+    1640
+   ],
+   "group": "hairBack"
+  },
+  "restHead": {
+   "xy": [
+    225,
+    399
+   ],
+   "size": [
+    751,
+    759
+   ],
+   "group": "head"
+  },
+  "neck": {
+   "xy": [
+    556,
+    952
+   ],
+   "size": [
+    205,
+    235
+   ],
+   "group": "body"
+  },
+  "topwear": {
+   "xy": [
+    239,
+    1108
+   ],
+   "size": [
+    854,
+    730
+   ],
+   "group": "body"
+  },
+  "ears-l": {
+   "xy": [
+    805,
+    763
+   ],
+   "size": [
+    79,
+    156
+   ],
+   "group": "ears"
+  },
+  "ears-r": {
+   "xy": [
+    351,
+    889
+   ],
+   "size": [
+    131,
+    127
+   ],
+   "group": "ears"
+  },
+  "face": {
+   "xy": [
+    387,
+    620
+   ],
+   "size": [
+    442,
+    497
+   ],
+   "group": "face"
+  },
+  "mouth": {
+   "xy": [
+    609,
+    1005
+   ],
+   "size": [
+    108,
+    60
+   ],
+   "group": "feature"
+  },
+  "nose": {
+   "xy": [
+    594,
+    936
+   ],
+   "size": [
+    55,
+    60
+   ],
+   "group": "feature"
+  },
+  "rest": {
+   "xy": [
+    0,
+    1103
+   ],
+   "size": [
+    1228,
+    1313
+   ],
+   "group": "static"
+  },
+  "handwear-r": {
+   "xy": [
+    14,
+    1216
+   ],
+   "size": [
+    1185,
+    864
+   ],
+   "group": "arms"
+  },
+  "earMoon": {
+   "xy": [
+    419,
+    979
+   ],
+   "size": [
+    94,
+    167
+   ],
+   "group": "earring"
+  },
+  "earStar": {
+   "xy": [
+    833,
+    877
+   ],
+   "size": [
+    35,
+    164
+   ],
+   "group": "earring"
+  },
+  "eyebrow-r": {
+   "xy": [
+    396,
+    800
+   ],
+   "size": [
+    169,
+    44
+   ],
+   "group": "feature"
+  },
+  "eyebrow-l": {
+   "xy": [
+    629,
+    740
+   ],
+   "size": [
+    177,
+    55
+   ],
+   "group": "feature"
+  },
+  "eyelash-r": {
+   "xy": [
+    383,
+    865
+   ],
+   "size": [
+    194,
+    79
+   ],
+   "group": "feature"
+  },
+  "eyewhite-r": {
+   "xy": [
+    436,
+    879
+   ],
+   "size": [
+    132,
+    50
+   ],
+   "group": "eyewhite"
+  },
+  "eyewhite-l": {
+   "xy": [
+    680,
+    817
+   ],
+   "size": [
+    119,
+    52
+   ],
+   "group": "eyewhite"
+  },
+  "irides-r": {
+   "xy": [
+    435,
+    878
+   ],
+   "size": [
+    132,
+    52
+   ],
+   "group": "iris"
+  },
+  "irides-l": {
+   "xy": [
+    679,
+    816
+   ],
+   "size": [
+    121,
+    54
+   ],
+   "group": "iris"
+  },
+  "eyelash-l": {
+   "xy": [
+    655,
+    785
+   ],
+   "size": [
+    173,
+    92
+   ],
+   "group": "feature"
+  },
+  "strand00": {
+   "xy": [
+    24,
+    1376
+   ],
+   "size": [
+    120,
+    236
+   ],
+   "group": "strand",
+   "root": [
+    128,
+    1377
+   ],
+   "len": 284
+  },
+  "strand01": {
+   "xy": [
+    166,
+    598
+   ],
+   "size": [
+    416,
+    930
+   ],
+   "group": "strand",
+   "root": [
+    336,
+    598
+   ],
+   "len": 928
+  },
+  "strand02": {
+   "xy": [
+    731,
+    532
+   ],
+   "size": [
+    317,
+    988
+   ],
+   "group": "strand",
+   "root": [
+    765,
+    533
+   ],
+   "len": 986
+  },
+  "front_hair": {
+   "xy": [
+    363,
+    601
+   ],
+   "size": [
+    526,
+    441
+   ],
+   "group": "hairFront"
+  },
+  "underHair": {
+   "xy": [
+    137,
+    526
+   ],
+   "size": [
+    917,
+    1008
+   ],
+   "group": "underHair"
+  }
+ }
+}
