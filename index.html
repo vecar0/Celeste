@@ -267,6 +267,36 @@
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
+  /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
+  #spSheet .pc{background:var(--ink) radial-gradient(circle,#ffffff10 1px,transparent 1.3px) 0 0/8px 8px;color:#fff;outline:0;box-shadow:7px 7px 0 var(--bleu)}
+  #spSheet small{color:#8b8ff5} #spSheet b{color:#fff}
+  #spSheet>.pc>b{font:italic 400 26px var(--serif);margin:0 0 4px}
+  #spTabs{border-bottom:1px solid #ffffff30}
+  #spTabs button{color:#888;font:11px 'American Typewriter','Courier New',monospace;letter-spacing:.14em}
+  #spTabs button.on{color:#fff;border-bottom-color:var(--bleu)}
+  #spBody h4{color:#8b8ff5;margin-top:14px}
+  #spBody .none{color:#888}
+  #spBody .li{background:none;outline:0;border-bottom:1px solid #ffffff18;color:#fff;margin:0;padding:8px 2px}
+  #spBody .li[data-on],#spBody .li.on{outline:0;background:#1e22d633}
+  #spBody .li img,#spBody .li .art{width:38px;height:38px;outline:2px solid #fff;outline-offset:-1px;transform:rotate(-2deg)}
+  #spBody .li svg{fill:#fff;background:none}
+  #spBody .li b{color:#fff} #spBody .li em{color:#999}
+  #spBody .li[disabled]{opacity:1}
+  #spBody .add{background:none;border-bottom:1px solid #ffffff18;margin:0;width:40px} #spBody .add svg{fill:#8b8ff5}
+  #spBody .re{background:#1e22d633;outline:0;color:#ddd}
+  #spBody .row input{background:none;border:0;border-bottom:1px solid #fff;color:#fff;font:15px var(--sans)} #spBody .row input::placeholder{color:#777}
+  #spBody .row button{background:var(--bleu)}
+  .now .cover{outline:3px solid #fff;box-shadow:7px 7px 0 var(--bleu)}
+  .now>b{color:#fff;font-style:italic} .now>em{color:#999}
+  .now .tm{color:#888}
+  .now .ctl button{color:#fff} .now .ctl .on{color:#8b8ff5} .now .ctl .pp{box-shadow:4px 4px 0 #fff}
+  .now .ctl2 button{background:none;outline:1px solid #ffffff40;color:#fff} .now .ctl2 svg{fill:#fff} .now .ctl2 .on svg{fill:#8b8ff5}
+  .now .vol svg{fill:#fff} .now .note{color:#777}
+  #spSheet .opt{color:#ccc;border-bottom-color:#ffffff22}
+  #spSheet details{color:#999} #spSheet p{color:#aaa}
+  #spSheet .row input{background:#ffffff10;color:#fff;border-color:#ffffff40}
+  #spSheet .pb button{background:none;border:1px solid #ffffff60;color:#fff}
+  #spSheet #spClose{background:var(--bleu);border-color:var(--bleu)}
   #calClose{display:block;width:100%;margin-top:16px;height:46px;border:1px solid var(--ink);background:#fff;letter-spacing:.2em}
   #recent button.ok{color:#888;border-color:var(--bleu);text-decoration:line-through;text-decoration-color:var(--bleu)}
   #recent button.add{border-style:dashed}
@@ -1090,6 +1120,23 @@ const Music = {
     let r = await this.api('/me/player/play', {method:'PUT', body});
     if(r && r.noDevice){ const id = await this.device(); if(id) r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body}); }
     this.after(r); },
+  async playTrack(uri, ctx){
+    const tries = [];
+    if(ctx) tries.push(JSON.stringify({context_uri:ctx, offset:{uri}}));
+    tries.push(JSON.stringify({uris:[uri]}));
+    let r, id = '';
+    for(const body of tries){
+      r = await this.api('/me/player/play' + id, {method:'PUT', body});
+      if(r && r.noDevice){ const d = await this.device(); if(!d) return; id = '?device_id=' + d; r = await this.api('/me/player/play' + id, {method:'PUT', body}); }
+      if(r && !r.err && !r.noDevice) break;
+    }
+    if(r && (r.err || r.noDevice)){                       // 마지막 방법: 대기열에 넣고 바로 넘기기
+      const q = await this.api('/me/player/queue?uri=' + encodeURIComponent(uri), {method:'POST'});
+      if(q && !q.err){ r = await this.api('/me/player/next', {method:'POST'}); }
+    }
+    if(r && !r.err){ toast('재생할게요 ♪', 1400); if(this.state){ this.state.is_playing = true; this.render(); } }
+    this.after(r, 900);
+  },
   after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + ') · 스포티파이 앱을 한 번 열어 주세요', 3000);
     setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, ms); },
   async pause(){ if(this.state){ this.state.is_playing = false; this.render(); } const r = await this.api('/me/player/pause', {method:'PUT'}); this.after(r, 400); },
@@ -1142,7 +1189,7 @@ const Music = {
       const rp = await this.api('/me/player/recently-played?limit=15'); const seen = new Set();
       const rec = ((rp && rp.items) || []).map(x=>x.track).filter(t=>t && !seen.has(t.id) && seen.add(t.id));
       box.innerHTML = reauth + '<h4>바로 듣기</h4>' + li('', '좋아요 표시한 곡', '내 보관함 전체', 'data-a="liked"') +
-        (rec.length ? '<h4>최근 재생</h4>' + rec.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"')).join('') : '') +
+        (rec.length ? '<h4>최근 재생</h4>' + rec.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"' + (t.album && t.album.uri ? ' data-c="' + t.album.uri + '"' : ''))).join('') : '') +
         '<h4>내 플레이리스트</h4>' + (this.pls.length ? this.pls.filter(Boolean).map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"' + (p.uri === this.ctx ? ' data-on="1"' : ''))).join('') : '<p class="none">플레이리스트를 못 불러왔어요' + (this.plsErr ? ' (' + this.plsErr + ')' : '') + '</p>');
       return;
     }
@@ -1150,7 +1197,7 @@ const Music = {
       const f = this.found;
       box.innerHTML = '<form id="spQ" class="row" autocomplete="off"><input id="spQin" placeholder="곡, 가수, 앨범, 플레이리스트" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit">검색</button></form>' +
         (!f ? '<p class="none">듣고 싶은 걸 찾아서 바로 재생하거나 대기열에 넣어요</p>' :
-        (f.tracks.length ? '<h4>곡</h4>' + f.tracks.map(t=>'<div class="tr">' + li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"') + '<button class="add" data-a="queue" data-u="' + t.uri + '" aria-label="대기열에 추가">' + SPI.plus + '</button></div>').join('') : '') +
+        (f.tracks.length ? '<h4>곡</h4>' + f.tracks.map(t=>'<div class="tr">' + li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"' + (t.album && t.album.uri ? ' data-c="' + t.album.uri + '"' : '')) + '<button class="add" data-a="queue" data-u="' + t.uri + '" aria-label="대기열에 추가">' + SPI.plus + '</button></div>').join('') : '') +
         (f.artists.length ? '<h4>가수</h4>' + f.artists.map(a=>li(im(a), a.name, '인기곡 재생', 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
         (f.albums.length ? '<h4>앨범</h4>' + f.albums.map(a=>li(im(a), a.name, (a.artists || []).map(x=>x.name).join(', '), 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
         (f.playlists.length ? '<h4>플레이리스트</h4>' + f.playlists.map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"')).join('') : '') +
@@ -1194,7 +1241,7 @@ const Music = {
     else if(a === 'liked'){ const r = await this.api('/me/tracks?limit=50'); const uris = ((r && r.items) || []).map(x=>x.track && x.track.uri).filter(Boolean);
       if(!uris.length){ toast('좋아요 표시한 곡을 못 불러왔어요' + (r && r.err ? ' (' + r.err + ')' : ''), 2600); return; }
       await this.playUris(uris); toast('좋아요 표시한 곡 재생 ♪', 1600); }
-    else if(a === 'track'){ await this.playUris([u]); toast('재생할게요 ♪', 1400); }
+    else if(a === 'track'){ await this.playTrack(u, b.dataset.c); }
     else if(a === 'queue'){ const r = await this.api('/me/player/queue?uri=' + encodeURIComponent(u), {method:'POST'}); toast(r && r.err ? '대기열에 넣지 못했어요' : '대기열에 넣었어요', 1600); return; }
     setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, 500);
   },
