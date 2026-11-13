@@ -386,6 +386,8 @@
   .layer{will-change:transform}
   @media (prefers-reduced-motion:reduce){ .layer .o canvas,.tw,.orb{animation:none} }
   #loading{position:absolute;inset:0;display:grid;place-items:center;font:italic 13px var(--serif);color:var(--grey);z-index:1}
+  #spSheet,#spSheet *{font-family:var(--sans)!important;font-style:normal!important}   /* 음악 화면은 한 글꼴로 */
+  #spSheet *{letter-spacing:0!important} #spSheet .pc>small{letter-spacing:.3em!important}   /* 한글 자간 벌어짐 없앰 */
 </style></head><body>
 <div id="ytWin" hidden><div id="ytBox"><div id="ytFrame"></div></div></div>
 <div id="app">
@@ -1147,6 +1149,7 @@ const Music = {
     this.playing = e.data === YT.PlayerState.PLAYING; if(e.data === 2 || e.data === 0) this.want = false;
     if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
     if(e.data === YT.PlayerState.ENDED && this.loop){ this._pl.seekTo(0, true); this._pl.playVideo(); this.want = true; }   // 한 곡 반복
+    else if(e.data === YT.PlayerState.ENDED && this.mixNext()) return;   // 끝나면 유튜브가 고른 다음 곡으로
     if(e.data === YT.PlayerState.PLAYING && this.cur){ const d = this._pl.getVideoData(); if(d && d.video_id) this.vid = d.video_id; }
     this.render(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet();
   },
@@ -1157,15 +1160,17 @@ const Music = {
     this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.save();
     this.radio = false; this.chId = item.ch || '';
     if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'});
-    else if(this.autoplay !== false && !this.loop){ this.radio = true; pl.loadPlaylist({list:'RD' + item.id, listType:'playlist', index:0}); }   // 유튜브가 고른 다음 곡들
-    else pl.loadVideoById(item.id);
+    else pl.loadVideoById(item.id);                        // 바로 바꾼다(믹스 목록을 먼저 받으면 몇 초 늦음)
     pl.playVideo(); this.want = true; this.adWatch(); this.render();
   },
   async toggle(){
     if(!this._pl || $('ytWin').hidden){ const it = this.cur || this.lib[0]; if(it) this.start(it); return; }
     if(this.playing){ this.want = false; this._pl.pauseVideo(); } else { this.want = true; this._pl.playVideo(); this.adWatch(); }
   },
-  skip(d){ if(!this._pl) return; if(this.cur && (this.cur.type === 'playlist' || this.radio)){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
+  mixNext(){                                               // 한 영상 재생 중 → 그 영상의 유튜브 믹스 2번째 곡부터 이어 재생
+    const c = this.cur; if(!c || c.type === 'playlist' || this.radio || this.loop || this.autoplay === false) return false;
+    this.radio = true; this._pl.loadPlaylist({list:'RD' + c.id, listType:'playlist', index:1}); this.want = true; return true; },
+  skip(d){ if(!this._pl) return; if(d > 0 && this.mixNext()) return; if(this.cur && (this.cur.type === 'playlist' || this.radio)){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
     else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
   onFocus(){}, onBreak(){},
   parse(url){                                              // 유튜브 링크 → 영상/재생목록
