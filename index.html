@@ -88,6 +88,13 @@
   #mini{flex:none;font:italic 13px var(--serif);color:var(--ink);display:flex;gap:10px;align-items:baseline}
   #mini i{font-style:normal;font:9px var(--sans);letter-spacing:.2em;color:var(--grey);margin-right:3px}
   #mini b{font-weight:400;color:var(--bleu)}
+  #lockBtn{width:22px;height:22px;display:grid;place-items:center;align-self:center} #lockBtn svg{width:15px;fill:#aaa} #lockBtn.on svg{fill:var(--bleu)}
+  #lockSheet{position:fixed;inset:0;z-index:33;background:#12121299;display:grid;place-items:center;padding:16px} #lockSheet[hidden]{display:none}
+  #lockSheet .pc{width:min(380px,100%);background:var(--paper2);outline:1px solid var(--ink);box-shadow:6px 6px 0 var(--bleu);padding:16px}
+  #lockSheet small{font:600 9px var(--sans);letter-spacing:.34em;color:var(--bleu)} #lockSheet b{display:block;font:400 22px var(--serif);margin:2px 0 8px}
+  #lockSheet h4{margin:12px 0 4px;font:600 12px var(--sans)} #lockSheet ol,#lockSheet p{margin:0;padding-left:18px;font:12px/1.6 var(--sans);color:#333} #lockSheet p{padding:0}
+  #lockSheet .opt{display:flex;gap:8px;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #0002}
+  #lockSheet .pb{display:flex;margin-top:14px} #lockSheet .pb button{flex:1;height:44px;background:var(--bleu);color:#fff;letter-spacing:.1em}
   #btns{display:flex;gap:10px}
   #go{flex:1;height:52px;background:var(--bleu);color:#fff;font:600 15px var(--sans);letter-spacing:.2em;box-shadow:5px 5px 0 var(--ink)}
   #go.run{background:var(--ink)}
@@ -322,6 +329,20 @@
     <details><summary>연결 코드 붙여 넣기</summary><p>로그인 후 다른 창에서 코드가 나왔다면 여기에 붙여 넣어요.</p>
       <div class="row"><input id="spIn" placeholder="연결 코드" autocomplete="off"><button id="spPaste" type="button">연결</button></div></details>
     <div class="pb"><button id="spOut" type="button">연결 끊기</button><button id="spClose" type="button">닫기</button></div>
+  </div>
+</section>
+<section id="lockSheet" hidden>
+  <div class="pc">
+    <small>VERROU · 집중 잠금</small>
+    <b>나가지 않게</b>
+    <label class="opt"><input id="lockChk" type="checkbox"> 잠금 켜기: 집중 중 10초 넘게 나가면 그 시간은 빼고 세요</label>
+    <h4>아예 못 나가게 하려면 (아이폰 '사용법 유도')</h4>
+    <ol><li>설정 → 손쉬운 사용 → 사용법 유도 → 켜기, 암호 설정</li>
+      <li>Bleu Minuit을 연 상태에서 측면 버튼을 세 번 누르고 '시작'</li>
+      <li>그동안엔 홈으로 나갈 수 없어요. 끝나면 측면 버튼 세 번 → 암호 → '종료'</li></ol>
+    <h4>알림까지 막으려면</h4>
+    <p>제어 센터 → 집중 모드 → 방해 금지(또는 '공부' 집중 모드)를 켜 두세요.</p>
+    <div class="pb"><button id="lockClose" type="button">확인</button></div>
   </div>
 </section>
 <section id="cal" hidden>
@@ -642,9 +663,13 @@ function commit(done){ if(!cur) return;
   cur = null; saveRec(); paintStats(); }
 const esc = t => t.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtMin = sec => { const m = Math.round(sec/60); return m >= 60 ? Math.floor(m/60)+'시간 '+(m%60)+'분' : m+'분'; };
+let strict = true;                                        // 집중 잠금(기본 켬)
+try{ strict = localStorage.getItem('bleu.strict') !== '0'; }catch(e){}
+const LOCK_ON = '<svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>',
+  LOCK_OFF = '<svg viewBox="0 0 24 24"><path d="M9 10h10v12H5V10h2V7a5 5 0 0 1 9.6-2l-1.8.9A3 3 0 0 0 9 7z"/></svg>';
 function paintMini(){
   const list = plans[keyOf()] || [], done = list.filter(it=>it.d).length;
-  $('mini').innerHTML = '<span><i>TODAY</i>' + fmtMin(rec.todaySec) + '</span>' + (list.length ? '<span><i>TO-DO</i><b>' + done + '</b>/' + list.length + '</span>' : '');
+  $('mini').innerHTML = '<button id="lockBtn" type="button" class="' + (strict ? 'on' : '') + '" aria-label="집중 잠금">' + (strict ? LOCK_ON : LOCK_OFF) + '</button><span><i>TODAY</i>' + fmtMin(rec.todaySec) + '</span>' + (list.length ? '<span><i>TO-DO</i><b>' + done + '</b>/' + list.length + '</span>' : '');
 }
 function paintStats(){
   paintMini();
@@ -728,6 +753,9 @@ function paintPlan(){
     : '<div class="none">' + (past ? '할 일이 없던 날이에요' : '할 일을 적어 두고 하나씩 체크해요') + '</div>';
 }
 $('date').onclick = ()=>openCal();
+$('mini').addEventListener('click', e=>{ if(e.target.closest('#lockBtn')){ $('lockChk').checked = strict; $('lockSheet').hidden = false; } });
+$('lockChk').onchange = e=>{ strict = e.target.checked; try{ localStorage.setItem('bleu.strict', strict ? '1' : '0'); }catch(_){} paintMini(); };
+$('lockClose').onclick = ()=>{ $('lockSheet').hidden = true; };
 function openPre(){ $('pre').hidden = false; paintPre(); setTimeout(()=>$('preIn').focus(), 50); }
 function paintPre(){ const list = plans[keyOf()] || [];
   $('preList').innerHTML = list.map((it, i)=>'<div class="it"><span>' + esc(it.t) + '</span><button type="button" data-i="' + i + '" aria-label="지우기">×</button></div>').join('');
@@ -914,7 +942,10 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ hideAt = focusing() ? Date.now() : 0; return; }
   if(hideAt && cur){ const sec = Math.round((Date.now() - hideAt)/1000); hideAt = 0;
     if(sec >= 3){ cur.leaves = (cur.leaves || 0) + 1; cur.away = (cur.away || 0) + sec;
-      toast((sec < 60 ? sec + '초' : Math.round(sec/60) + '분') + ' 다녀왔어요 · 다시 여기로', 2600);
+      const t = sec < 60 ? sec + '초' : Math.round(sec/60) + '분';
+      if(strict && mode === 'run' && sec >= 10){ endAt += sec*1000;                // 잠금: 밖에 있던 시간은 집중으로 세지 않는다(그만큼 타이머가 기다림)
+        toast(t + ' 동안 셀레스트가 기다렸어요 · 그 시간은 빼고 셀게요', 3200); }
+      else toast(t + ' 다녀왔어요 · 다시 여기로', 2600);
       if(rig){ rig.point(650, 880); } setStatus('이번 집중에서 ' + cur.leaves + '번 나갔다 왔어요'); } }
 });
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && mode === 'run'){ tickOnce(); if(mode === 'run') keepAwake(true); } });   // 화면 꺼짐 방지는 앱을 다시 열면 새로 걸어야 한다
