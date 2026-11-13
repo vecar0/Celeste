@@ -293,6 +293,8 @@
   .now .ctl button{color:#fff} .now .ctl .on{color:#8b8ff5} .now .ctl .pp{box-shadow:4px 4px 0 #fff}
   .now .ctl2 button{background:none;outline:1px solid #ffffff40;color:#fff} .now .ctl2 svg{fill:#fff} .now .ctl2 .on svg{fill:#8b8ff5}
   .now .vol svg{fill:#fff} .now .note{color:#777}
+  #spBody .diag{font:10px monospace;color:#777;margin:10px 0 0;text-align:center;word-break:break-all}
+  #spBody .big{margin-top:10px}
   #spSheet .opt{color:#ccc;border-bottom-color:#ffffff22}
   #spSheet details{color:#999} #spSheet p{color:#aaa}
   #spSheet .row input{background:#ffffff10;color:#fff;border-color:#ffffff40}
@@ -1103,49 +1105,66 @@ const Music = {
       if(!$('spSheet').hidden && this.tab === 'now' && !this.dragging && (this.state && this.state.item && this.state.item.id) !== was) this.renderSheet(); }
     this.timer = setTimeout(()=>this.poll(), this.state && this.state.is_playing ? 5000 : 12000);
   },
-  async device(){                                          // 재생 중인 기기가 없으면 이 폰(또는 첫 기기)으로 옮긴다
+  sleep(ms){ return new Promise(r=>setTimeout(r, ms)); },
+  async target(playing){                                   // 명령 보낼 기기 고르기: 켜진 기기 중 재생 중 → 아이폰 → 첫 기기. 비활성이면 먼저 넘겨받는다
     const d = await this.api('/me/player/devices'); const list = (d && d.devices) || [];
+    this.devs = list;
     const pick = list.find(x=>x.is_active) || list.find(x=>x.type === 'Smartphone') || list[0];
-    if(!pick){ toast('스포티파이 앱을 한 번 열어 아무 곡이나 재생해 두세요', 3600); return null; }
+    if(!pick){ this.needWake = true; this.render(); toast('스포티파이가 잠들어 있어요 · 깨우기를 눌러 주세요', 3200); return null; }
+    this.needWake = false;
+    if(!pick.is_active){ await this.api('/me/player', {method:'PUT', body:JSON.stringify({device_ids:[pick.id], play:!!playing})}); await this.sleep(700); }
     return pick.id;
   },
-  async play(ctx){
-    let body = ctx ? JSON.stringify({context_uri:ctx}) : undefined;
-    let r = await this.api('/me/player/play', {method:'PUT', body});
-    if(r && r.noDevice){ const id = await this.device(); if(!id) return; r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body: body || (this.ctx ? JSON.stringify({context_uri:this.ctx}) : undefined)}); }
-    if(r && !r.err && this.state){ this.state.is_playing = true; this.render(); }
-    this.after(r, 600);
+  async device(){ return this.target(true); },
+  fail(errs){ const t = errs.filter(Boolean).join(' / ').slice(0, 100); this.lastErr = t; toast('재생이 안 됐어요 · ' + t, 6000); },
+  async send(path, method, body, id){                      // 기기를 지정해 보내고, 한 번 더 시도
+    const url = path + (path.includes('?') ? '&' : '?') + 'device_id=' + encodeURIComponent(id);
+    let r = await this.api(url, {method, body});
+    if(r && r.err){ await this.sleep(600); r = await this.api(url, {method, body}); }
+    return r;
   },
-  async playUris(uris){ const body = JSON.stringify({uris});
-    let r = await this.api('/me/player/play', {method:'PUT', body});
-    if(r && r.noDevice){ const id = await this.device(); if(id) r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body}); }
-    this.after(r); },
+  async play(ctx){
+    toast('재생 요청 중…', 1000);
+    const id = await this.target(true); if(!id) return;
+    const c = ctx || (!(this.state && this.state.item) && this.ctx) || '';
+    const r = await this.send('/me/player/play', 'PUT', c ? JSON.stringify({context_uri:c}) : undefined, id);
+    if(r && r.err){ this.fail([r.err + ' ' + (r.msg || '')]); }
+    else if(this.state){ this.state.is_playing = true; this.render(); }
+    this.after(null, 700);
+  },
+  async playUris(uris){
+    toast('재생 요청 중…', 1000);
+    const id = await this.target(true); if(!id) return;
+    const r = await this.send('/me/player/play', 'PUT', JSON.stringify({uris}), id);
+    if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 800);
+  },
   async playTrack(uri, ctx){                               // 곡 하나: ① 곡만 ② 앨범 안에서 그 곡부터 ③ 대기열에 넣고 넘기기
     if(!uri || !/^spotify:/.test(uri)){ toast('곡 정보를 못 받았어요', 2400); return; }
-    toast('재생 요청 중…', 1200);
-    const dev = this.state && this.state.device && this.state.device.id;     // 지금 재생 중인 기기에 바로 (없으면 스포티파이가 고르게)
-    const q = dev ? '?device_id=' + encodeURIComponent(dev) : '', tries = [JSON.stringify({uris:[uri]})];
-    if(ctx) tries.push(JSON.stringify({context_uri:ctx, offset:{uri}}));
+    toast('재생 요청 중…', 1000);
+    const id = await this.target(true); if(!id) return;
+    const tries = [JSON.stringify({uris:[uri]})]; if(ctx) tries.push(JSON.stringify({context_uri:ctx, offset:{uri}}));
     let r, errs = [];
-    let qq = q;
-    for(const body of tries){ r = await this.api('/me/player/play' + qq, {method:'PUT', body});
-      if(r && r.noDevice){ const d = await this.device(); if(!d) return; qq = '?device_id=' + encodeURIComponent(d); r = await this.api('/me/player/play' + qq, {method:'PUT', body}); }
-      if(r && !r.err) break; errs.push(r && (r.err + ' ' + (r.msg || ''))); }
-    if(!r || r.err){ const a = await this.api('/me/player/queue?uri=' + encodeURIComponent(uri) + qq.replace('?', '&'), {method:'POST'});
-      if(a && !a.err){ r = await this.api('/me/player/next' + qq, {method:'POST'}); } else errs.push(a && (a.err + ' ' + (a.msg || ''))); }
+    for(const body of tries){ r = await this.send('/me/player/play', 'PUT', body, id); if(r && !r.err) break; errs.push(r && (r.err + ' ' + (r.msg || ''))); }
+    if(!r || r.err){ const a = await this.send('/me/player/queue?uri=' + encodeURIComponent(uri), 'POST', undefined, id);
+      if(a && !a.err) r = await this.send('/me/player/next', 'POST', undefined, id); else errs.push(a && (a.err + ' ' + (a.msg || ''))); }
     if(r && !r.err){ toast('재생할게요 ♪', 1400); if(this.state){ this.state.is_playing = true; this.render(); } this.after(null, 900); return; }
-    toast('재생이 안 됐어요 · ' + errs.filter(Boolean).join(' / ').slice(0, 90), 6000);
+    this.fail(errs);
   },
-  after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + ') · 스포티파이 앱을 한 번 열어 주세요', 3000);
+  wake(){ this.needWake = false; this.render(); location.href = 'spotify:'; },
+  after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + (r.msg ? ' ' + r.msg : '') + ')', 4000);
     setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, ms); },
-  async pause(){ if(this.state){ this.state.is_playing = false; this.render(); } const r = await this.api('/me/player/pause', {method:'PUT'}); this.after(r, 400); },
-  async skip(dir){ const r = await this.api('/me/player/' + (dir > 0 ? 'next' : 'previous'), {method:'POST'}); this.after(r, 800); },
+  async pause(){ if(this.state){ this.state.is_playing = false; this.render(); }
+    const id = (this.state && this.state.device && this.state.device.id) || await this.target(false); if(!id) return;
+    const r = await this.send('/me/player/pause', 'PUT', undefined, id); if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 500); },
+  async skip(dir){ const id = (this.state && this.state.device && this.state.device.id) || await this.target(true); if(!id) return;
+    const r = await this.send('/me/player/' + (dir > 0 ? 'next' : 'previous'), 'POST', undefined, id); if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 800); },
   toggle(){ this.state && this.state.is_playing ? this.pause() : this.play(); },
   onFocus(){ if(this.tok && this.auto && !(this.state && this.state.is_playing)) this.play(this.state && this.state.item ? undefined : this.ctx || undefined); },
   onBreak(){ if(this.tok && this.auto && this.state && this.state.is_playing) this.pause(); },
   render(){
     const el = $('music'); if(!el) return;
     if(!this.tok){ el.innerHTML = '<button class="mc" data-a="login"><i>MUSIQUE</i>스포티파이 연결</button><button class="mx" data-a="sheet" aria-label="음악 설정">' + SPI.more + '</button>'; return; }
+    if(this.needWake){ el.innerHTML = '<button class="mc" data-a="wake"><i>SPOTIFY</i>잠들어 있어요 · 눌러서 깨우기</button><button class="mx" data-a="sheet" aria-label="음악">' + SPI.list + '</button>'; return; }
     const s = this.state, it = s && s.item, img = it && it.album && it.album.images && it.album.images[it.album.images.length - 1];
     el.innerHTML = (img ? '<img src="' + img.url + '" alt="">' : '<i class="art">♪</i>') +
       '<div class="mt" data-a="open"><small>' + (s && s.is_playing ? 'NOW PLAYING' : 'EN PAUSE') + '</small><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '재생을 누르면 시작해요') + '</span></div>' +
@@ -1167,7 +1186,7 @@ const Music = {
     const im = o => o && o.images && o.images.length ? o.images[o.images.length - 1].url : (o && o.album ? (o.album.images || []).slice(-1).map(x=>x.url)[0] : '');
     if(T === 'now'){
       const s = this.state, it = s && s.item, big = it && it.album && it.album.images && it.album.images[0];
-      if(!it){ box.innerHTML = reauth + '<p class="none">재생 중인 곡이 없어요. 보관함이나 검색에서 골라 보세요</p>'; return; }
+      if(!it){ box.innerHTML = reauth + '<p class="none">재생 중인 곡이 없어요. 보관함이나 검색에서 골라 보세요</p><button class="big" data-a="wake">스포티파이 깨우기</button><p class="diag">' + esc(this.lastErr ? '마지막 오류: ' + this.lastErr : '') + '</p>'; return; }
       const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0), d = it.duration_ms, mm = ms => Math.floor(ms/60000) + ':' + String(Math.floor(ms/1000)%60).padStart(2,'0');
       const vol = s.device && s.device.supports_volume !== false && s.device.volume_percent != null;
       box.innerHTML = reauth + '<div class="now">' + (big ? '<img class="cover" src="' + big.url + '" alt="">' : '') +
@@ -1179,7 +1198,7 @@ const Music = {
         '<div class="ctl2"><button data-a="like" class="' + (this.liked ? 'on' : '') + '">' + (this.liked ? SPI.heartOn : SPI.heart) + '<span>좋아요</span></button>' +
         '<button data-a="devices">' + SPI.device + '<span>' + esc(s.device ? s.device.name : '기기') + '</span></button></div>' +
         (vol ? '<label class="vol">' + SPI.vol + '<input id="spVol" type="range" min="0" max="100" value="' + s.device.volume_percent + '"></label>' : '<p class="note">이 기기는 앱에서 음량을 바꿀 수 없어요(아이폰은 버튼으로)</p>') +
-        '<div id="spDev"></div></div>';
+        '<div id="spDev"></div><p class="diag">' + esc((s.device ? '기기: ' + s.device.name : '') + (this.lastErr ? ' · 마지막 오류: ' + this.lastErr : '')) + '</p></div>';
       this.checkLike(it.id); this.tick(); return;
     }
     if(T === 'lib'){
@@ -1228,7 +1247,7 @@ const Music = {
   async sheetAct(b){ try{ await this.sheetAct2(b); }catch(e){ toast('오류: ' + (e && e.message || e), 5000); } },
   async sheetAct2(b){
     const a = b.dataset.a, u = b.dataset.u, s = this.state || {};
-    if(a === 'login') return this.login();
+    if(a === 'login') return this.login(); if(a === 'wake') return this.wake();
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1);
     if(a === 'shuffle'){ const v = !s.shuffle_state; const r = await this.api('/me/player/shuffle?state=' + v, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.shuffle_state = v; this.renderSheet(); } return this.after(r, 900); }
     else if(a === 'repeat'){ const nx = {off:'context', context:'track', track:'off'}[s.repeat_state || 'off']; const r = await this.api('/me/player/repeat?state=' + nx, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.repeat_state = nx; this.renderSheet(); } return this.after(r, 900); }
@@ -1248,7 +1267,7 @@ const Music = {
   init(){
     this.load();
     $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
-      if(a === 'login') this.login(); else if(a === 'toggle') this.toggle(); else if(a === 'prev') this.skip(-1); else if(a === 'next') this.skip(1);
+      if(a === 'login') this.login(); else if(a === 'wake') this.wake(); else if(a === 'toggle') this.toggle(); else if(a === 'prev') this.skip(-1); else if(a === 'next') this.skip(1);
       else if(a === 'sheet') this.open('lib'); else if(a === 'open') this.open('now'); };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
     $('spBody').onclick = e=>{ const b = e.target.closest('button[data-a]'); if(b && !b.disabled) this.sheetAct(b); };
@@ -1289,7 +1308,6 @@ function parallax(t){                       // 고개·기울기를 따라 뒤�
     shown += ((plasterWanted() ? 0 : 1) - shown) * .025;
     rig.draw(ms/1000, shown);
     drawHalo(ms/1000, progress(), rig.S.head, rig.S.roll.x);         // 헤일로는 머리를 따라 움직이고 계속 돈다
-    parallax(ms/1000);
     requestAnimationFrame(loop);
   };
   if(location.hash !== '#still') requestAnimationFrame(loop);
