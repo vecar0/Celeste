@@ -300,6 +300,8 @@
   #spSheet.wide .pc{background:#0f0f0f} #spSheet.wide .pc>b{font-size:20px}
   .yv .keep{width:32px;height:32px;flex:none;display:grid;place-items:center} .yv .keep svg{width:20px;fill:#aaa}
   #spBody .more{margin:4px 0 20px}
+  #ytNow .cover{width:100%;aspect-ratio:16/9;object-fit:cover;transform:rotate(-1.5deg)}
+  #ytNow .ctl .on{color:#8b8ff5}
   #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
   #spBody form.row{margin-bottom:6px}
   /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
@@ -404,7 +406,7 @@
   <div class="pc">
     <small>MUSIQUE · YOUTUBE</small>
     <b>음악</b>
-    <nav id="spTabs"><button data-t="lib" type="button">저장한 음악</button><button data-t="search" type="button">검색</button></nav>
+    <nav id="spTabs"><button data-t="now" type="button">지금</button><button data-t="lib" type="button">저장한 음악</button><button data-t="search" type="button">검색</button></nav>
     <div id="spBody"></div>
     <div class="pb"><button id="spClose" type="button">닫기</button></div>
   </div>
@@ -1083,8 +1085,8 @@ const YT_PRESET = [
 const Music = {
   p:null, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
-    this.key = o.key || ''; this.auto = o.auto !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
-  save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur})); }catch(e){} },
+    this.key = o.key || ''; this.auto = o.auto !== false; this.loop = o.loop; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
+  save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur, loop:this.loop})); }catch(e){} },
   api(){                                                   // 유튜브 플레이어 스크립트는 처음 재생할 때 불러온다
     if(this.apiP) return this.apiP;
     return this.apiP = new Promise(res=>{ window.onYouTubeIframeAPIReady = res; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); });
@@ -1097,8 +1099,9 @@ const Music = {
   onState(e){
     this.playing = e.data === YT.PlayerState.PLAYING;
     if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
-    if(e.data === YT.PlayerState.ENDED && this.cur && this.cur.type === 'video') this.pl.playVideo();   // 영상 하나는 반복
-    this.render();
+    if(e.data === YT.PlayerState.ENDED && this.cur && this.cur.type === 'video'){ if(this.loop !== false) this._pl.playVideo(); else this.skip(1); }   // 영상 하나: 반복 또는 다음 저장곡
+    if(e.data === YT.PlayerState.PLAYING && this.cur){ const d = this._pl.getVideoData(); if(d && d.video_id) this.vid = d.video_id; }
+    this.render(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet();
   },
   get pl(){ return this._pl; },
   async start(item){                                       // 저장한 것·검색 결과 재생
@@ -1175,13 +1178,35 @@ const Music = {
     const el = $('music'); if(!el) return;
     const it = this.cur, img = it ? this.thumb(it) : '';
     el.innerHTML = (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') +
-      '<div class="mt" data-a="sheet"><small>' + (this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<div class="mt" data-a="now"><small>' + (this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  nowTick(){                                               // 지금 화면: 진행 막대·시간
+    clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
+    const d = pl.getDuration ? pl.getDuration() : 0, t = pl.getCurrentTime ? pl.getCurrentTime() : 0, mm = x=>{ x = Math.max(0, Math.floor(x)); const h = Math.floor(x/3600), m = Math.floor(x/60)%60, s = x%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
+    if(!this.seeking){ sk.max = d || 1; sk.value = t; } const tm = document.querySelectorAll('#ytNow .tm span'); if(tm.length){ tm[0].textContent = mm(this.seeking ? +sk.value : t); tm[1].textContent = d ? mm(d) : 'LIVE'; }
+    this.nt = setTimeout(()=>this.nowTick(), 500);
+  },
+  renderNow(box){
+    const it = this.cur, pl = this._pl;
+    if(!it){ box.innerHTML = '<p class="none">재생 중인 음악이 없어요. 저장한 음악이나 검색에서 골라요</p>'; return; }
+    const vid = this.vid || (it.type === 'video' ? it.id : ''), big = vid ? 'https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg' : (it.img || '');
+    const list = pl && pl.getPlaylist ? pl.getPlaylist() : null, idx = pl && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    box.innerHTML = '<div id="ytNow" class="now">' + (big ? '<img class="cover" src="' + big + '" alt="">' : '') +
+      '<b>' + esc(this.title || it.title || '') + '</b><em>' + esc(this.by || it.by || '') + (it.type === 'playlist' && list ? ' · 재생목록 ' + (idx + 1) + '/' + list.length : '') + '</em>' +
+      '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
+      '<div class="ctl"><button data-a="loop" class="' + (this.loop !== false ? 'on' : '') + '" aria-label="반복">' + SPI.repeat1 + '</button><button data-a="prev">' + SPI.prev + '</button>' +
+      '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
+      '<button data-a="sheet" aria-label="목록">' + SPI.list + '</button></div>' +
+      (list && list.length > 1 ? '<h4>다음 곡</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>'<button class="li" data-a="pi" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + (idx + 2 + k) + '번째 곡</b><em>눌러서 바로 듣기</em></span></button>').join('') : '') + '</div>';
+    const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
+    this.nowTick();
+  },
   renderSheet(tab){
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search');
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
+    if(this.tab === 'now'){ document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === 'now')); this.renderNow($('spBody')); return; }
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
       (this.thumb(it) ? '<img src="' + this.thumb(it) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(it.title || '') + '</b><em>' + (it.type === 'playlist' ? '재생목록 · ' : '') + esc(it.by || '') + '</em></span></button>' +
       (src === 'lib' ? '<button class="add" data-a="del" data-i="' + i + '" aria-label="지우기">×</button>' : '<button class="add" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button>') + '</div>';
@@ -1206,7 +1231,9 @@ const Music = {
   },
   act(b){
     const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
-    if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open();
+    if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open('lib'); if(a === 'now') return this.open('now');
+    if(a === 'loop'){ this.loop = !this.loop; this.save(); this.renderSheet(); return; }
+    if(a === 'pi'){ this._pl && this._pl.playVideoAt(i); return; }
     if(a === 'play'){ const it = (src === 'lib' ? this.lib : this.found)[i]; if(it){ this.start(it); toast('재생할게요 ♪', 1200); } return; }
     if(a === 'keep'){ const it = Object.assign({}, this.found[i]); if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
     if(a === 'del'){ this.lib.splice(i, 1); this.save(); this.renderSheet(); return; }
