@@ -186,14 +186,21 @@
   #pre .pb button{height:44px;border:1px solid var(--ink);background:#fff;flex:1;letter-spacing:.1em}
   #preGo{background:var(--bleu)!important;color:#fff;border-color:var(--bleu)!important;flex:2!important}
   #preGo:disabled{opacity:.35}
-  #music{display:flex;align-items:center;gap:6px;margin:0 0 10px;padding:5px 6px;background:#fff;outline:1px solid var(--ink);min-height:40px}
-  #music img,#music .art{width:30px;height:30px;flex:none;object-fit:cover;display:grid;place-items:center;background:var(--bleu);color:#fff;font-style:normal}
-  #music .mt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
-  #music .mt b{font:400 13px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #music .mt span{font:10px 'American Typewriter','Courier New',monospace;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #music button{width:34px;height:34px;font-size:14px;flex:none}
-  #music .pp{background:var(--bleu);color:#fff}
-  #music .mc{flex:1;width:auto;text-align:left;padding-left:6px;font:13px var(--sans);letter-spacing:.06em}
+  /* 음악: 검은 티켓 카드 + 스티커 앨범 + 파란 재생 버튼 + 곡 진행 줄 */
+  #music{position:relative;display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:8px 8px 10px;background:var(--ink);color:#fff;box-shadow:4px 4px 0 var(--bleu);min-height:46px}
+  #music img,#music .art{width:38px;height:38px;flex:none;object-fit:cover;outline:2px solid #fff;outline-offset:-1px;transform:rotate(-3deg);display:grid;place-items:center;background:var(--bleu);color:#fff;font-style:normal}
+  #music .mt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+  #music .mt small{font:600 7.5px var(--sans);letter-spacing:.3em;color:#8b8ff5}
+  #music .mt b{font:italic 400 15px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #music .mt span{font:9.5px 'American Typewriter','Courier New',monospace;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #music button{width:30px;height:34px;flex:none;display:grid;place-items:center;color:#fff}
+  #music button svg{width:16px;height:16px;fill:currentColor}
+  #music .pp{width:36px;height:36px;background:var(--bleu)}
+  #music .mx{color:#aaa}
+  #music .mc{flex:1;width:auto;display:flex;align-items:center;gap:8px;padding-left:4px;font:13px var(--sans);letter-spacing:.08em}
+  #music .mc i{font:600 7.5px var(--sans);letter-spacing:.3em;color:#8b8ff5;font-style:normal}
+  #music .bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#ffffff26}
+  #music .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--bleu);width:0}
   #spSheet{position:fixed;inset:0;z-index:32;background:#12121299;display:grid;place-items:center;padding:16px}
   #spSheet[hidden]{display:none}
   #spSheet .pc{width:min(380px,100%);max-height:88%;overflow:auto;background:var(--paper2);outline:1px solid var(--ink);box-shadow:6px 6px 0 var(--bleu);padding:16px}
@@ -921,6 +928,7 @@ setTimeout(fit, 400); setTimeout(fit, 1500);      // iOS는 처음 높이를 늦
    폰의 스포티파이 앱이 뒤에서 재생하고, 조작은 여기서(재생·멈춤·이전·다음·플레이리스트). 프리미엄 필요.
    로그인은 PKCE(비밀값 없음). 아이폰 홈 화면 앱은 로그인 창이 따로 열려 저장 공간이 달라질 수 있어서,
    돌아온 쪽에서 바로 토큰을 받고, 앱 저장 공간이 아니면 '연결 코드'를 보여 줘 붙여 넣게 한다 */
+const SPI = {"prev": `<svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>`, "next": `<svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>`, "play": `<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>`, "pause": `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`, "list": `<svg viewBox="0 0 24 24"><path d="M3 6h13v2H3zM3 11h13v2H3zM3 16h9v2H3zM18 10v8.2A2.5 2.5 0 1 0 20 20.6V12h2v-2z"/></svg>`, "more": `<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`};
 const SP_ID = '47146c1c5ea44eaf968142dcbb920963';
 const SP_REDIRECT = location.origin + location.pathname;
 const SP_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
@@ -996,11 +1004,13 @@ const Music = {
   onBreak(){ if(this.tok && this.auto && this.state && this.state.is_playing) this.pause(); },
   render(){
     const el = $('music'); if(!el) return;
-    if(!this.tok){ el.innerHTML = '<button class="mc" data-a="login">♪ 스포티파이 연결</button><button class="mx" data-a="sheet" aria-label="음악 설정">⋯</button>'; return; }
+    if(!this.tok){ el.innerHTML = '<button class="mc" data-a="login"><i>MUSIQUE</i>스포티파이 연결</button><button class="mx" data-a="sheet" aria-label="음악 설정">' + SPI.more + '</button>'; return; }
     const s = this.state, it = s && s.item, img = it && it.album && it.album.images && it.album.images[it.album.images.length - 1];
     el.innerHTML = (img ? '<img src="' + img.url + '" alt="">' : '<i class="art">♪</i>') +
-      '<div class="mt"><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '▶ 를 누르면 시작해요') + '</span></div>' +
-      '<button data-a="prev" aria-label="이전">⏮</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (s && s.is_playing ? '❚❚' : '▶') + '</button><button data-a="next" aria-label="다음">⏭</button><button class="mx" data-a="sheet" aria-label="플레이리스트">≡</button>';
+      '<div class="mt"><small>' + (s && s.is_playing ? 'NOW PLAYING' : 'EN PAUSE') + '</small><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '재생을 누르면 시작해요') + '</span></div>' +
+      '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (s && s.is_playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="플레이리스트">' + SPI.list + '</button>' +
+      '<div class="bar"><i id="mBar"></i></div>';
+    this.at = Date.now(); this.tick();
   },
   async renderSheet(){
     $('spAuto').checked = this.auto;
@@ -1011,6 +1021,12 @@ const Music = {
     box.innerHTML = this.pls.length ? this.pls.map(p=>{ const im = p.images && p.images.length ? p.images[p.images.length - 1].url : '';
       return '<button data-u="' + p.uri + '" class="' + (p.uri === this.ctx ? 'on' : '') + '">' + (im ? '<img src="' + im + '" alt="">' : '<i class="art">♪</i>') + '<span>' + esc(p.name) + '</span></button>'; }).join('')
       : '<p class="none">플레이리스트를 못 불러왔어요</p>';
+  },
+  tick(){                                                  // 곡 진행 줄: 받아 온 위치에서 시간만큼 흘려 보낸다
+    const s = this.state, el = $('mBar'); if(!el || !s || !s.item) return;
+    const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0);
+    el.style.width = Math.min(100, pos/s.item.duration_ms*100) + '%';
+    clearTimeout(this.tt); if(s.is_playing) this.tt = setTimeout(()=>this.tick(), 1000);
   },
   init(){
     this.load();
