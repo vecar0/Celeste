@@ -1308,6 +1308,7 @@ function parallax(t){                       // 고개·기울기를 따라 뒤�
     shown += ((plasterWanted() ? 0 : 1) - shown) * .025;
     rig.draw(ms/1000, shown);
     drawHalo(ms/1000, progress(), rig.S.head, rig.S.roll.x);         // 헤일로는 머리를 따라 움직이고 계속 돈다
+    parallax(ms/1000);
     requestAnimationFrame(loop);
   };
   if(location.hash !== '#still') requestAnimationFrame(loop);
