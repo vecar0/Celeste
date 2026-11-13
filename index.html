@@ -95,9 +95,21 @@
   #lockSheet h4{margin:12px 0 4px;font:600 12px var(--sans)} #lockSheet ol,#lockSheet p{margin:0;padding-left:18px;font:12px/1.6 var(--sans);color:#333} #lockSheet p{padding:0}
   #lockSheet .opt{display:flex;gap:8px;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #0002}
   #lockSheet .pc{max-height:88%;overflow:auto}
-  #lockSheet .how{margin:8px 0;font-size:12px;background:#fff;outline:1px solid #0002;padding:8px 10px} #lockSheet .how summary{cursor:pointer;color:var(--bleu)}
-  #lockSheet .how p{margin:2px 0 6px} #lockSheet .how p b{display:inline;font:600 12px var(--sans);margin:0}
-  #lockSheet .test{width:100%;height:36px;margin-top:6px;border:1px solid var(--ink);background:#fff;font-size:12px}
+  #lockSheet .pc{max-height:88%;overflow:auto}
+  /* 시작할 때 사용법 유도 안내 */
+  #ga{position:fixed;left:50%;top:38%;z-index:40;transform:translate(-50%,-50%);width:min(300px,84vw);background:var(--ink);color:#fff;padding:16px 16px 14px;
+    box-shadow:6px 6px 0 var(--bleu);text-align:center;cursor:pointer}
+  #ga[hidden]{display:none}
+  #ga.on{animation:gaIn .35s ease-out, gaOut .5s ease-in 4.7s forwards}
+  @keyframes gaIn{from{opacity:0;transform:translate(-50%,-44%)}} @keyframes gaOut{to{opacity:0}}
+  #ga small{font:600 9px var(--sans);letter-spacing:.3em;color:#8b8ff5}
+  #ga b{display:block;font:400 22px var(--serif);margin:4px 0 2px}
+  #ga p{margin:6px 0 0;font:11px/1.5 'American Typewriter','Courier New',monospace;color:#bbb}
+  #ga .side{position:relative;height:64px;margin:10px auto 2px;width:120px}
+  #ga .side i{position:absolute;right:18px;top:6px;width:44px;height:58px;border:2px solid #fff;border-radius:10px}
+  #ga .side u{position:absolute;right:12px;top:16px;width:5px;height:18px;background:var(--bleu);border-radius:2px;animation:press 1.2s ease-in-out infinite}
+  @keyframes press{0%,60%,100%{transform:none}10%,30%,50%{transform:translateX(-3px)}}
+  #lockSheet ol b.em{display:inline;font:600 12px var(--sans);margin:0;color:var(--bleu)}
   #lockSheet .pb{display:flex;margin-top:14px} #lockSheet .pb button{flex:1;height:44px;background:var(--bleu);color:#fff;letter-spacing:.1em}
   #btns{display:flex;gap:10px}
   #go{flex:1;height:52px;background:var(--bleu);color:#fff;font:600 15px var(--sans);letter-spacing:.2em;box-shadow:5px 5px 0 var(--ink)}
@@ -335,28 +347,18 @@
     <div class="pb"><button id="spOut" type="button">연결 끊기</button><button id="spClose" type="button">닫기</button></div>
   </div>
 </section>
+<div id="ga" hidden><small>VERROU</small><b>측면 버튼 세 번</b>
+  <div class="side"><i></i><u></u></div>
+  <p>지금 누르면 끝날 때까지 이 앱 밖으로 못 나가요<br>(처음 한 번은 화면에서 '시작')</p></div>
 <section id="lockSheet" hidden>
   <div class="pc">
     <small>VERROU · 집중 잠금</small>
     <b>나가지 않게</b>
     <label class="opt"><input id="lockChk" type="checkbox"> 잠금 켜기: 집중 중 10초 넘게 나가면 그 시간은 빼고 세요</label>
-    <label class="opt"><input id="scChk" type="checkbox"> 집중 시작하면 단축어로 다른 앱 막기</label>
-    <label class="opt"><input id="scBrk" type="checkbox"> 휴식 동안엔 풀어 주기</label>
-    <details class="how"><summary>단축어 만드는 법 (처음 한 번, 3분)</summary>
-      <h4>① '공부' 집중 모드</h4>
-      <p>설정 → 집중 모드 → + → 사용자화 → 이름 '공부'. 알림 허용에서 필요한 사람·앱만 남겨요.</p>
-      <h4>② 단축어 'Bleu 잠금'</h4>
-      <p>단축어 앱 → + → 동작 추가 '집중 모드 설정' → '공부'를 '켬', '끌 때까지'. 이름을 정확히 <b>Bleu 잠금</b>으로.</p>
-      <h4>③ 단축어 'Bleu 해제'</h4>
-      <p>같은 방법으로 '집중 모드 설정' → '공부'를 '끔'. 이름 <b>Bleu 해제</b>.</p>
-      <h4>④ 자동화: 딴짓 앱 막기</h4>
-      <p>단축어 앱 → 자동화 → + → '앱' → 인스타그램·유튜브 등 막을 앱 선택 → '열릴 때' → '즉시 실행'.<br>
-      동작: '현재 집중 모드 가져오기' → '만약' [현재 집중 모드]가 '공부'이면 → '알림 보기'(예: 셀레스트가 기다려요) → '홈 화면으로 이동'.</p>
-      <p>이제 집중 시작을 누르면 단축어가 잠깐 열렸다 닫혀요. 화면 아래 막대를 오른쪽으로 쓸어 Bleu Minuit으로 돌아오면 돼요.</p>
-    </details>
-    <button id="scTest" type="button" class="test">단축어 시험 실행</button>
+    <label class="opt"><input id="gaChk" type="checkbox"> 집중 시작할 때 '측면 버튼 세 번' 알려 주기</label>
     <h4>아예 못 나가게 하려면 (아이폰 '사용법 유도')</h4>
-    <ol><li>설정 → 손쉬운 사용 → 사용법 유도 → 켜기, 암호 설정</li>
+    <ol><li>설정 → 손쉬운 사용 → 사용법 유도 → 켜기, 암호 설정에서 <b class="em">Face ID</b>도 켜기(끌 때 얼굴로)</li>
+      <li>설정 → 손쉬운 사용 → 손쉬운 사용 단축키 → <b class="em">사용법 유도만</b> 체크(세 번 누르면 바로 시작)</li>
       <li>Bleu Minuit을 연 상태에서 측면 버튼을 세 번 누르고 '시작'</li>
       <li>그동안엔 홈으로 나갈 수 없어요. 끝나면 측면 버튼 세 번 → 암호 → '종료'</li></ol>
     <h4>알림까지 막으려면</h4>
@@ -682,12 +684,11 @@ function commit(done){ if(!cur) return;
   cur = null; saveRec(); paintStats(); }
 const esc = t => t.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtMin = sec => { const m = Math.round(sec/60); return m >= 60 ? Math.floor(m/60)+'시간 '+(m%60)+'분' : m+'분'; };
-// 단축어 연결: 세트를 시작하면 'Bleu 잠금'(공부 집중 모드 켜기), 세트를 끝내거나 그만두면 'Bleu 해제'를 실행한다.
-// 공부 집중 모드가 켜져 있는 동안 고른 앱을 열면, 단축어 자동화가 홈 화면으로 돌려보낸다
-let shortcut = false, scBreak = false, scAway = 0;
-try{ shortcut = localStorage.getItem('bleu.sc') === '1'; scBreak = localStorage.getItem('bleu.scBreak') === '1'; }catch(e){}
-function runShortcut(name){ if(!shortcut) return; scAway = Date.now();               // 이번 이탈은 셈하지 않는다
-  setTimeout(()=>{ location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(name); }, 350); }
+// 사용법 유도(측면 버튼 세 번)를 잊지 않게: 세트를 시작할 때 큰 안내를 잠깐 띄운다
+let gaHint = true;
+try{ gaHint = localStorage.getItem('bleu.ga') !== '0'; }catch(e){}
+function showGA(){ if(!gaHint) return; const el = $('ga'); el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(showGA.t); showGA.t = setTimeout(()=>{ el.hidden = true; }, 5200); }
 let strict = true;                                        // 집중 잠금(기본 켬)
 try{ strict = localStorage.getItem('bleu.strict') !== '0'; }catch(e){}
 const LOCK_ON = '<svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>',
@@ -778,12 +779,11 @@ function paintPlan(){
     : '<div class="none">' + (past ? '할 일이 없던 날이에요' : '할 일을 적어 두고 하나씩 체크해요') + '</div>';
 }
 $('date').onclick = ()=>openCal();
-$('mini').addEventListener('click', e=>{ if(e.target.closest('#lockBtn')){ $('lockChk').checked = strict; $('scChk').checked = shortcut; $('scBrk').checked = scBreak; $('lockSheet').hidden = false; } });
+$('mini').addEventListener('click', e=>{ if(e.target.closest('#lockBtn')){ $('lockChk').checked = strict; $('gaChk').checked = gaHint; $('lockSheet').hidden = false; } });
 $('lockChk').onchange = e=>{ strict = e.target.checked; try{ localStorage.setItem('bleu.strict', strict ? '1' : '0'); }catch(_){} paintMini(); };
 $('lockClose').onclick = ()=>{ $('lockSheet').hidden = true; };
-$('scChk').onchange = e=>{ shortcut = e.target.checked; try{ localStorage.setItem('bleu.sc', shortcut ? '1' : '0'); }catch(_){} };
-$('scBrk').onchange = e=>{ scBreak = e.target.checked; try{ localStorage.setItem('bleu.scBreak', scBreak ? '1' : '0'); }catch(_){} };
-$('scTest').onclick = ()=>{ const was = shortcut; shortcut = true; runShortcut('Bleu 잠금'); shortcut = was; };
+$('gaChk').onchange = e=>{ gaHint = e.target.checked; try{ localStorage.setItem('bleu.ga', gaHint ? '1' : '0'); }catch(_){} };
+$('ga').onclick = ()=>{ $('ga').hidden = true; };
 function openPre(){ $('pre').hidden = false; paintPre(); setTimeout(()=>$('preIn').focus(), 50); }
 function paintPre(){ const list = plans[keyOf()] || [];
   $('preList').innerHTML = list.map((it, i)=>'<div class="it"><span>' + esc(it.t) + '</span><button type="button" data-i="' + i + '" aria-label="지우기">×</button></div>').join('');
@@ -867,7 +867,7 @@ function runPhase(ph, warm){                             // 한 단계(집중/�
   if(ph === 'focus'){ cur = {s:subjOf(), t:Date.now(), sec:0, mins:mins(), warm:!!warm, rewarded:false}; $('subject').disabled = true; if(rig) rig.expr = '';
     setGo('잠시 멈춤', true); setQuit(warm ? '여기까지' : '그만두기');
     setStatus(warm ? '딱 5분만 해 봐요' : cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); Music.onFocus(); }
-  else { setGo('휴식 건너뛰기', false); setQuit('그만두기'); Music.onBreak(); if(scBreak && ph === 'break') runShortcut('Bleu 해제'); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요 · 끝나면 알려 줄게요'); }
+  else { setGo('휴식 건너뛰기', false); setQuit('그만두기'); Music.onBreak(); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요 · 끝나면 알려 줄게요'); }
   paint();
 }
 function tickOnce(){
@@ -901,14 +901,14 @@ function phaseEnd(){
   }
   // 휴식 끝: 분명하게 알리고 10초 뒤 다음 집중 자동 시작(취소 가능)
   tone([783.99, 659.25, 783.99, 1046.5], 1.1, 'sine', .14); buzz([300, 150, 300, 150, 300]);
-  if(phase === 'long'){ rounds = 0; runShortcut('Bleu 해제'); }
+  if(phase === 'long'){ rounds = 0; }
   mode = 'wait'; phase = 'focus'; total = remain = mins()*60; waitUntil = Date.now() + 10000;
   tid = setInterval(tickOnce, 1000); setGo('지금 시작'); setQuit('나중에'); waitTick();
 }
 function waitTick(){
   if(!waitUntil){ return; }
   const left = Math.ceil((waitUntil - Date.now())/1000);
-  if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } if(scBreak) runShortcut('Bleu 잠금'); runPhase('focus'); return; }
+  if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } runPhase('focus'); return; }
   setStatus('휴식 끝 · ' + left + '초 뒤 다음 집중이 시작돼요'); paint();
 }
 function toBreak(){                                      // 집중을 마치고 휴식으로
@@ -923,7 +923,7 @@ function start(warm){                                    // 큰 버튼
   if(mode === 'run'){ remain = 0; phaseEnd(); return; }   // 휴식 건너뛰기
   if(mode === 'paused'){ mode = 'run'; endAt = Date.now() + remain*1000; clearInterval(tid); tid = setInterval(tickOnce, 1000); keepAwake(true);
     setGo('잠시 멈춤', true); setStatus(cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); paint(); return; }
-  if(mode === 'idle' || mode === 'finished' || scBreak && mode === 'wait'){ if(mode !== 'wait'){ rounds = 0; if(rig) rig.expr = ''; } runShortcut('Bleu 잠금'); }
+  if(mode === 'idle' || mode === 'finished'){ rounds = 0; if(rig) rig.expr = ''; showGA(); }
   clearInterval(tid); runPhase('focus', warm === true);
 }
 function pause(){ mode = 'paused'; clearInterval(tid); keepAwake(false); saveRec();
@@ -934,8 +934,7 @@ function quitBtn(){
     if(cur.sec >= 60){ toast('시작한 것만으로 충분해요', 2400); toBreak(); return; } }
   giveUp();
 }
-function giveUp(){ if(mode !== 'idle') runShortcut('Bleu 해제');
-  const spent = phase === 'focus' && cur ? Math.floor(cur.sec/60) : 0, was = rounds;
+function giveUp(){ const spent = phase === 'focus' && cur ? Math.floor(cur.sec/60) : 0, was = rounds;
   clearInterval(tid); waitUntil = 0; keepAwake(false); saveRec(); if(phase === 'focus') commit(false); $('subject').disabled = false;
   mode = 'idle'; phase = 'focus'; rounds = 0; total = remain = mins()*60; setGo('집중 시작'); setQuit('그만두기');
   if(rig && (spent >= 1 || was)){ rig.expr = 'frown'; setTimeout(()=>{ if(mode === 'idle' && rig.expr === 'frown') rig.expr = ''; }, 4500); }
@@ -969,7 +968,6 @@ let hideAt = 0;
 const focusing = () => (mode === 'run' || mode === 'over') && phase === 'focus';
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ hideAt = focusing() ? Date.now() : 0; return; }
-  if(hideAt && scAway && hideAt - scAway < 3000){ hideAt = 0; scAway = 0; return; }   // 단축어 실행으로 잠깐 나갔다 온 건 이탈이 아님
   if(hideAt && cur){ const sec = Math.round((Date.now() - hideAt)/1000); hideAt = 0;
     if(sec >= 3){ cur.leaves = (cur.leaves || 0) + 1; cur.away = (cur.away || 0) + sec;
       const t = sec < 60 ? sec + '초' : Math.round(sec/60) + '분';
@@ -1070,7 +1068,9 @@ const Music = {
   },
   async poll(){
     clearTimeout(this.timer); if(!this.tok){ this.render(); return; }
-    if(!document.hidden){ const s = await this.api('/me/player'); this.state = s && s.item ? s : (s && s.device ? s : null); this.render(); }
+    if(!document.hidden){ const s = await this.api('/me/player'); const was = this.state && this.state.item && this.state.item.id;
+      this.state = s && s.item ? s : (s && s.device ? s : null); this.at = Date.now(); this.render();
+      if(!$('spSheet').hidden && this.tab === 'now' && !this.dragging && (this.state && this.state.item && this.state.item.id) !== was) this.renderSheet(); }
     this.timer = setTimeout(()=>this.poll(), this.state && this.state.is_playing ? 5000 : 12000);
   },
   async device(){                                          // 재생 중인 기기가 없으면 이 폰(또는 첫 기기)으로 옮긴다
@@ -1083,10 +1083,17 @@ const Music = {
     let body = ctx ? JSON.stringify({context_uri:ctx}) : undefined;
     let r = await this.api('/me/player/play', {method:'PUT', body});
     if(r && r.noDevice){ const id = await this.device(); if(!id) return; r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body: body || (this.ctx ? JSON.stringify({context_uri:this.ctx}) : undefined)}); }
-    setTimeout(()=>this.poll(), 600);
+    if(r && !r.err && this.state){ this.state.is_playing = true; this.render(); }
+    this.after(r, 600);
   },
-  async pause(){ await this.api('/me/player/pause', {method:'PUT'}); setTimeout(()=>this.poll(), 400); },
-  async skip(dir){ await this.api('/me/player/' + (dir > 0 ? 'next' : 'previous'), {method:'POST'}); setTimeout(()=>this.poll(), 700); },
+  async playUris(uris){ const body = JSON.stringify({uris});
+    let r = await this.api('/me/player/play', {method:'PUT', body});
+    if(r && r.noDevice){ const id = await this.device(); if(id) r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body}); }
+    this.after(r); },
+  after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + ') · 스포티파이 앱을 한 번 열어 주세요', 3000);
+    setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, ms); },
+  async pause(){ if(this.state){ this.state.is_playing = false; this.render(); } const r = await this.api('/me/player/pause', {method:'PUT'}); this.after(r, 400); },
+  async skip(dir){ const r = await this.api('/me/player/' + (dir > 0 ? 'next' : 'previous'), {method:'POST'}); this.after(r, 800); },
   toggle(){ this.state && this.state.is_playing ? this.pause() : this.play(); },
   onFocus(){ if(this.tok && this.auto && !(this.state && this.state.is_playing)) this.play(this.state && this.state.item ? undefined : this.ctx || undefined); },
   onBreak(){ if(this.tok && this.auto && this.state && this.state.is_playing) this.pause(); },
@@ -1127,16 +1134,16 @@ const Music = {
         '<button data-a="devices">' + SPI.device + '<span>' + esc(s.device ? s.device.name : '기기') + '</span></button></div>' +
         (vol ? '<label class="vol">' + SPI.vol + '<input id="spVol" type="range" min="0" max="100" value="' + s.device.volume_percent + '"></label>' : '<p class="note">이 기기는 앱에서 음량을 바꿀 수 없어요(아이폰은 버튼으로)</p>') +
         '<div id="spDev"></div></div>';
-      this.checkLike(it.id); return;
+      this.checkLike(it.id); this.tick(); return;
     }
     if(T === 'lib'){
       box.innerHTML = reauth + '<p class="none">불러오는 중…</p>';
-      if(!this.pls){ const r = await this.api('/me/playlists?limit=50'); this.pls = (r && r.items) || []; }
+      if(!this.pls){ const r = await this.api('/me/playlists?limit=50'); this.pls = (r && r.items) || []; this.plsErr = r && r.err; }
       const rp = await this.api('/me/player/recently-played?limit=15'); const seen = new Set();
       const rec = ((rp && rp.items) || []).map(x=>x.track).filter(t=>t && !seen.has(t.id) && seen.add(t.id));
       box.innerHTML = reauth + '<h4>바로 듣기</h4>' + li('', '좋아요 표시한 곡', '내 보관함 전체', 'data-a="liked"') +
         (rec.length ? '<h4>최근 재생</h4>' + rec.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"')).join('') : '') +
-        '<h4>내 플레이리스트</h4>' + (this.pls.length ? this.pls.filter(Boolean).map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"' + (p.uri === this.ctx ? ' data-on="1"' : ''))).join('') : '<p class="none">플레이리스트를 못 불러왔어요</p>');
+        '<h4>내 플레이리스트</h4>' + (this.pls.length ? this.pls.filter(Boolean).map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"' + (p.uri === this.ctx ? ' data-on="1"' : ''))).join('') : '<p class="none">플레이리스트를 못 불러왔어요' + (this.plsErr ? ' (' + this.plsErr + ')' : '') + '</p>');
       return;
     }
     if(T === 'search'){
@@ -1165,26 +1172,29 @@ const Music = {
     const s = this.state, el = $('mBar'); if(!el || !s || !s.item) return;
     const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0);
     el.style.width = Math.min(100, pos/s.item.duration_ms*100) + '%';
+    const sk = $('spSeek'); if(sk && document.activeElement !== sk && !this.dragging){ sk.value = Math.min(sk.max, pos);
+      const tm = document.querySelector('.now .tm span'); if(tm) tm.textContent = Math.floor(pos/60000) + ':' + String(Math.floor(pos/1000)%60).padStart(2,'0'); }
     clearTimeout(this.tt); if(s.is_playing) this.tt = setTimeout(()=>this.tick(), 1000);
   },
   async checkLike(id){ if(!id || this.likeId === id) return; this.likeId = id;
-    const r = await this.api('/me/tracks/contains?ids=' + id); const v = Array.isArray(r) && r[0];
+    const r = await this.api('/me/library/contains?uris=' + encodeURIComponent('spotify:track:' + id)); const v = Array.isArray(r) && r[0];
     if(v !== this.liked){ this.liked = v; if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); } },
   async sheetAct(b){
     const a = b.dataset.a, u = b.dataset.u, s = this.state || {};
     if(a === 'login') return this.login();
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1);
-    if(a === 'shuffle'){ await this.api('/me/player/shuffle?state=' + !s.shuffle_state, {method:'PUT'}); }
-    else if(a === 'repeat'){ const nx = {off:'context', context:'track', track:'off'}[s.repeat_state || 'off']; await this.api('/me/player/repeat?state=' + nx, {method:'PUT'}); }
-    else if(a === 'like'){ const it = s.item; if(!it) return; const r = await this.api('/me/tracks?ids=' + it.id, {method:this.liked ? 'DELETE' : 'PUT'});
+    if(a === 'shuffle'){ const v = !s.shuffle_state; const r = await this.api('/me/player/shuffle?state=' + v, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.shuffle_state = v; this.renderSheet(); } return this.after(r, 900); }
+    else if(a === 'repeat'){ const nx = {off:'context', context:'track', track:'off'}[s.repeat_state || 'off']; const r = await this.api('/me/player/repeat?state=' + nx, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.repeat_state = nx; this.renderSheet(); } return this.after(r, 900); }
+    else if(a === 'like'){ const it = s.item; if(!it) return; const r = await this.api('/me/library?uris=' + encodeURIComponent(it.uri || 'spotify:track:' + it.id), {method:this.liked ? 'DELETE' : 'PUT'});
       if(r && r.err){ toast('좋아요를 바꾸지 못했어요', 2200); return; } this.liked = !this.liked; this.renderSheet(); return; }
     else if(a === 'devices'){ const d = await this.api('/me/player/devices'); const list = (d && d.devices) || [];
       $('spDev').innerHTML = list.length ? list.map(x=>'<button class="li' + (x.is_active ? ' on' : '') + '" data-a="transfer" data-u="' + x.id + '">' + SPI.device + '<span><b>' + esc(x.name) + '</b><em>' + esc(x.type) + (x.is_active ? ' · 재생 중' : '') + '</em></span></button>').join('') : '<p class="none">켜져 있는 기기가 없어요. 스포티파이 앱을 열어 두세요</p>'; return; }
     else if(a === 'transfer'){ await this.api('/me/player', {method:'PUT', body:JSON.stringify({device_ids:[u], play:true})}); toast('여기서 재생해요', 1600); }
     else if(a === 'ctx'){ this.ctx = u; this.save(); await this.play(u); toast('재생할게요 ♪', 1400); }
-    else if(a === 'liked'){ const me = this.meId || (this.meId = ((await this.api('/me')) || {}).id); if(!me) return; await this.play('spotify:user:' + me + ':collection'); toast('좋아요 표시한 곡 재생 ♪', 1600); }
-    else if(a === 'track'){ let r = await this.api('/me/player/play', {method:'PUT', body:JSON.stringify({uris:[u]})});
-      if(r && r.noDevice){ const id = await this.device(); if(id) await this.api('/me/player/play?device_id=' + id, {method:'PUT', body:JSON.stringify({uris:[u]})}); } toast('재생할게요 ♪', 1400); }
+    else if(a === 'liked'){ const r = await this.api('/me/tracks?limit=50'); const uris = ((r && r.items) || []).map(x=>x.track && x.track.uri).filter(Boolean);
+      if(!uris.length){ toast('좋아요 표시한 곡을 못 불러왔어요' + (r && r.err ? ' (' + r.err + ')' : ''), 2600); return; }
+      await this.playUris(uris); toast('좋아요 표시한 곡 재생 ♪', 1600); }
+    else if(a === 'track'){ await this.playUris([u]); toast('재생할게요 ♪', 1400); }
     else if(a === 'queue'){ const r = await this.api('/me/player/queue?uri=' + encodeURIComponent(u), {method:'POST'}); toast(r && r.err ? '대기열에 넣지 못했어요' : '대기열에 넣었어요', 1600); return; }
     setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, 500);
   },
@@ -1195,8 +1205,9 @@ const Music = {
       else if(a === 'sheet') this.open('lib'); else if(a === 'open') this.open('now'); };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
     $('spBody').onclick = e=>{ const b = e.target.closest('button[data-a]'); if(b && !b.disabled) this.sheetAct(b); };
+    $('spBody').addEventListener('input', e=>{ if(e.target.id === 'spSeek') this.dragging = true; });
     $('spBody').onchange = e=>{ const t = e.target;
-      if(t.id === 'spSeek'){ this.api('/me/player/seek?position_ms=' + Math.round(+t.value), {method:'PUT'}); if(this.state){ this.state.progress_ms = +t.value; this.at = Date.now(); } }
+      if(t.id === 'spSeek'){ this.dragging = false; this.api('/me/player/seek?position_ms=' + Math.round(+t.value), {method:'PUT'}); if(this.state){ this.state.progress_ms = +t.value; this.at = Date.now(); } }
       if(t.id === 'spVol') this.api('/me/player/volume?volume_percent=' + t.value, {method:'PUT'}).then(r=>{ if(r && r.err) toast('이 기기는 음량을 바꿀 수 없어요', 2000); }); };
     $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
