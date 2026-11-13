@@ -753,7 +753,8 @@ function reward(){                                       // 집중 목표 한 �
   focusEndAt = 0; if(rig){ rig.expr = 'smile'; setTimeout(()=>{ if(rig.expr === 'smile') rig.expr = ''; }, 5000); }
   doves(); buzz([200, 100, 200]);
   if(rounds >= ROUNDS){ tone([523.25, 659.25, 783.99, 1046.5], 1.4); toast('Bleu Minuit · 세트 완성 ✦', 3200); }
-  else { tone([659.25, 783.99, 1046.5], 1); toast('✦ 별 ' + rounds*2 + '/8 · 잘했어요', 2600); }
+  else { tone([659.25, 783.99, 1046.5], 1); toast('✦ 별 ' + rounds*2 + '/8 · ' + (cur.leaves ? '잘했어요' : '한 번도 안 나갔어요'), 2800); }
+  if(!cur.leaves){ rec.clean = (rec.clean || 0) + 1; }
 }
 function phaseEnd(){
   clearInterval(tid);
@@ -831,6 +832,16 @@ $('subject').addEventListener('change', ()=>{ try{ localStorage.setItem('bleu.su
 $('go').onclick = ()=>start(false);
 $('warm').onclick = ()=>start(true);
 $('quit').onclick = quitBtn;
+// 집중 중에 앱을 나갔다 오면: 혼내지 않고 몇 초 다녀왔는지만 알려 주고, 한 번도 안 나간 집중엔 보너스
+let hideAt = 0;
+const focusing = () => (mode === 'run' || mode === 'over') && phase === 'focus';
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ hideAt = focusing() ? Date.now() : 0; return; }
+  if(hideAt && cur){ const sec = Math.round((Date.now() - hideAt)/1000); hideAt = 0;
+    if(sec >= 3){ cur.leaves = (cur.leaves || 0) + 1; cur.away = (cur.away || 0) + sec;
+      toast((sec < 60 ? sec + '초' : Math.round(sec/60) + '분') + ' 다녀왔어요 · 다시 여기로', 2600);
+      if(rig){ rig.point(650, 880); } setStatus('이번 집중에서 ' + cur.leaves + '번 나갔다 왔어요'); } }
+});
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && mode === 'run'){ tickOnce(); if(mode === 'run') keepAwake(true); } });   // 화면 꺼짐 방지는 앱을 다시 열면 새로 걸어야 한다
 
 { const d = new Date(), age = moonAge(d);
