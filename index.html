@@ -278,6 +278,28 @@
   #ytWin{position:absolute;left:0;top:0;z-index:-1;width:200px;height:200px;opacity:0;pointer-events:none;overflow:hidden}
   #ytBox,#ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
   #ytBar{display:none}
+  /* 검색: 유튜브처럼 큰 미리보기 + 길이 + 채널·조회수·올린 날 */
+  #spSheet.wide{padding:0} #spSheet.wide .pc{width:100%;height:100%;max-height:none;box-shadow:none;padding:calc(10px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom))}
+  #spSheet.wide .pc>small,#spSheet.wide .pc>b,#spSheet.wide #spTabs{margin-left:14px;margin-right:14px} #spSheet.wide .pb{margin:8px 14px 0}
+  #spSheet.wide #spBody{padding:0}
+  .yq{position:sticky;top:0;z-index:2;display:flex;gap:0;margin:0 14px 8px;background:#1d1d1d;border-radius:20px;overflow:hidden}
+  .yq input{flex:1;min-width:0;background:none;border:0;color:#fff;font:15px var(--sans);padding:9px 14px;outline:none;-webkit-appearance:none}
+  .yq button{width:48px;background:#2a2a2a;display:grid;place-items:center} .yq svg{width:20px;fill:#fff}
+  .chips{display:flex;gap:6px;margin:0 14px 10px} .chips button{padding:6px 12px;border-radius:8px;background:#272727;color:#fff;font-size:13px}
+  .chips button.on{background:#f1f1f1;color:#0f0f0f} .chips .ghost{margin-left:auto;background:none;color:#777;font-size:11px}
+  .yv{margin-bottom:16px;cursor:pointer}
+  .yv .th{position:relative;aspect-ratio:16/9;background:#222}
+  .yv .th img{width:100%;height:100%;object-fit:cover;display:block}
+  .yv .tag{position:absolute;right:8px;bottom:8px;background:#000c;color:#fff;font:600 11px var(--sans);padding:2px 5px;border-radius:4px;display:flex;gap:3px;align-items:center}
+  .yv .tag svg{width:12px;fill:#fff} .yv .tag.live{background:#c00}
+  .yv .meta{display:flex;gap:10px;padding:10px 14px 0;align-items:flex-start}
+  .yv .av{width:34px;height:34px;border-radius:50%;background:var(--bleu);color:#fff;display:grid;place-items:center;flex:none;font:600 14px var(--sans);font-style:normal}
+  .yv .meta>div{flex:1;min-width:0}
+  .yv h5{margin:0;font:500 14px/1.35 var(--sans);color:#f1f1f1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #spSheet .yv p{margin:3px 0 0;font:12px/1.4 var(--sans);color:#aaa;text-align:left}
+  #spSheet.wide .pc{background:#0f0f0f} #spSheet.wide .pc>b{font-size:20px}
+  .yv .keep{width:32px;height:32px;flex:none;display:grid;place-items:center} .yv .keep svg{width:20px;fill:#aaa}
+  #spBody .more{margin:4px 0 20px}
   #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
   #spBody form.row{margin-bottom:6px}
   /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
@@ -384,7 +406,6 @@
     <b>음악</b>
     <nav id="spTabs"><button data-t="lib" type="button">저장한 음악</button><button data-t="search" type="button">검색</button></nav>
     <div id="spBody"></div>
-    <label class="opt"><input id="spAuto" type="checkbox" checked> 집중하면 재생, 휴식엔 멈춤</label>
     <div class="pb"><button id="spClose" type="button">닫기</button></div>
   </div>
 </section>
@@ -1093,8 +1114,7 @@ const Music = {
   },
   skip(d){ if(!this._pl) return; if(this.cur && this.cur.type === 'playlist'){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
     else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
-  onFocus(){ if(this.auto && !this.playing) this.toggle(); },
-  onBreak(){ if(this.auto && this.playing && this._pl) this._pl.pauseVideo(); },
+  onFocus(){}, onBreak(){},
   parse(url){                                              // 유튜브 링크 → 영상/재생목록
     try{ const u = new URL(url.trim()); const list = u.searchParams.get('list'); let v = u.searchParams.get('v');
       if(!v && /youtu\.be$/.test(u.hostname)) v = u.pathname.slice(1);
@@ -1111,15 +1131,44 @@ const Music = {
     it.title = it.title || (it.type === 'playlist' ? '재생목록' : '영상'); 
     this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1400); this.renderSheet();
   },
-  async search(q){
+  async search(q, more){
     if(!this.key){ this.renderSheet(); return; }
-    this.q = q; $('spBody').querySelector('.res') && ($('spBody').querySelector('.res').innerHTML = '<p class="none">찾는 중…</p>');
-    try{ const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&type=video,playlist&q=' + encodeURIComponent(q) + '&key=' + encodeURIComponent(this.key));
-      const j = await r.json(); if(!r.ok){ toast('검색 실패 · ' + ((j.error && j.error.message) || r.status).toString().slice(0, 80), 5000); this.found = []; }
-      else this.found = (j.items || []).map(x=>({type:x.id.kind === 'youtube#playlist' ? 'playlist' : 'video', id:x.id.videoId || x.id.playlistId,
-        title:(new DOMParser().parseFromString(x.snippet.title, 'text/html').body.textContent), by:x.snippet.channelTitle, img:x.snippet.thumbnails && x.snippet.thumbnails.default && x.snippet.thumbnails.default.url})).filter(x=>x.id);
-    }catch(e){ toast('검색 실패 · 인터넷을 확인해 주세요', 3000); this.found = []; }
-    this.renderSheet();
+    if(!more){ this.q = q; this.found = []; this.next = ''; this.renderSheet(); }
+    if(this.busy) return; this.busy = true;
+    const K = '&key=' + encodeURIComponent(this.key);
+    try{
+      const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&type=' + (this.kind || 'video') + '&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(this.q) + (this.next ? '&pageToken=' + this.next : '') + K);
+      const j = await r.json();
+      if(!r.ok){ toast('검색 실패 · ' + String((j.error && j.error.message) || r.status).slice(0, 80), 5000); this.busy = false; return; }
+      this.next = j.nextPageToken || '';
+      const txt = h => new DOMParser().parseFromString(h, 'text/html').body.textContent;
+      const items = (j.items || []).map(x=>({type:x.id.kind === 'youtube#playlist' ? 'playlist' : 'video', id:x.id.videoId || x.id.playlistId,
+        title:txt(x.snippet.title), by:x.snippet.channelTitle, at:x.snippet.publishedAt, live:x.snippet.liveBroadcastContent === 'live',
+        img:(x.snippet.thumbnails.high || x.snippet.thumbnails.medium || x.snippet.thumbnails.default || {}).url})).filter(x=>x.id);
+      const vids = items.filter(x=>x.type === 'video').map(x=>x.id);
+      if(vids.length){ try{ const d = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=' + vids.join(',') + K)).json();
+        const m = {}; (d.items || []).forEach(v=>{ m[v.id] = v; });
+        items.forEach(x=>{ const v = m[x.id]; if(v){ x.dur = v.contentDetails && v.contentDetails.duration; x.views = v.statistics && +v.statistics.viewCount; } }); }catch(e){} }
+      if(this.kind === 'playlist'){ try{ const ids = items.map(x=>x.id).join(','); const d = await (await fetch('https://www.googleapis.com/youtube/v3/playlists?part=contentDetails&id=' + ids + K)).json();
+        const m = {}; (d.items || []).forEach(v=>{ m[v.id] = v.contentDetails.itemCount; }); items.forEach(x=>{ x.count = m[x.id]; }); }catch(e){} }
+      this.found = this.found.concat(items);
+    }catch(e){ toast('검색 실패 · 인터넷을 확인해 주세요', 3000); }
+    this.busy = false; this.renderResults();
+  },
+  fmtDur(iso){ if(!iso) return ''; const m = iso.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || []; const h = (+m[1] || 0)*24 + (+m[2] || 0), mi = +m[3] || 0, se = +m[4] || 0;
+    if(!h && !mi && !se) return ''; return (h ? h + ':' + String(mi).padStart(2, '0') : mi) + ':' + String(se).padStart(2, '0'); },
+  fmtViews(n){ if(n == null || isNaN(n)) return ''; return '조회수 ' + (n >= 1e8 ? (n/1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억회' : n >= 1e4 ? (n/1e4).toFixed(n >= 1e5 ? 0 : 1).replace(/\.0$/, '') + '만회' : n >= 1e3 ? (n/1e3).toFixed(1).replace(/\.0$/, '') + '천회' : n + '회'); },
+  fmtAgo(t){ if(!t) return ''; const s = (Date.now() - new Date(t))/1000, u = [[31536000,'년'],[2592000,'개월'],[604800,'주'],[86400,'일'],[3600,'시간'],[60,'분']];
+    for(const [k, n] of u) if(s >= k) return Math.floor(s/k) + n + ' 전'; return '방금 전'; },
+  renderResults(){
+    const box = $('ytRes'); if(!box) return;
+    if(!this.found) this.found = [];
+    if(!this.found.length){ box.innerHTML = this.busy ? '<p class="none">찾는 중…</p>' : this.q ? '<p class="none">찾지 못했어요</p>' : '<p class="none">듣고 싶은 걸 검색해요</p>'; return; }
+    box.innerHTML = this.found.map((x, i)=>'<article class="yv" data-a="play" data-s="found" data-i="' + i + '"><div class="th"><img loading="lazy" src="' + x.img + '" alt="">' +
+      (x.live ? '<span class="tag live">LIVE</span>' : x.type === 'playlist' ? '<span class="tag">' + SPI.list + (x.count ? x.count + '개' : '재생목록') + '</span>' : this.fmtDur(x.dur) ? '<span class="tag">' + this.fmtDur(x.dur) + '</span>' : '') +
+      '</div><div class="meta"><i class="av">' + esc((x.by || '?').slice(0, 1)) + '</i><div><h5>' + esc(x.title) + '</h5><p>' + esc(x.by || '') + (x.views != null ? ' · ' + this.fmtViews(x.views) : '') + (x.at ? ' · ' + this.fmtAgo(x.at) : '') + '</p></div>' +
+      '<button class="keep" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button></div></article>').join('') +
+      (this.next ? '<p class="none more">' + (this.busy ? '불러오는 중…' : '아래로 내리면 더 보여요') + '</p>' : '');
   },
   thumb(it){ return it.img || (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/default.jpg' : ''); },
   render(){
@@ -1131,7 +1180,7 @@ const Music = {
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
   renderSheet(tab){
-    if(tab) this.tab = tab; $('spAuto').checked = this.auto;
+    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search');
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
       (this.thumb(it) ? '<img src="' + this.thumb(it) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(it.title || '') + '</b><em>' + (it.type === 'playlist' ? '재생목록 · ' : '') + esc(it.by || '') + '</em></span></button>' +
@@ -1144,28 +1193,30 @@ const Music = {
     }
     if(this.tab === 'search'){
       if(!this.key){ box.innerHTML = '<p class="none">검색하려면 유튜브 API 키가 한 번 필요해요</p><form id="ytKey" class="row" autocomplete="off"><input id="ytKeyIn" placeholder="API 키 붙여 넣기"><button type="submit">저장</button></form>' +
-        '<p class="hint">키 만드는 법은 채팅에서 안내했어요. 키는 이 기기에만 저장돼요.</p>';
+        '<p class="hint">키는 이 기기에만 저장돼요.</p>';
         $('ytKey').onsubmit = e=>{ e.preventDefault(); this.key = $('ytKeyIn').value.trim(); this.save(); this.renderSheet(); }; return; }
-      box.innerHTML = '<form id="ytQ" class="row" autocomplete="off"><input id="ytQin" placeholder="곡, 가수, 분위기 (예: 비 오는 날 재즈)" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit">검색</button></form><div class="res">' +
-        (!this.found ? '<p class="none">찾아서 바로 틀고, + 로 저장해요</p>' : this.found.length ? this.found.map((x, i)=>li(x, i, 'found')).join('') : '<p class="none">찾지 못했어요</p>') + '</div>' +
-        '<p class="hint"><button type="button" data-a="forget" class="link">API 키 지우기</button></p>';
-      $('ytQ').onsubmit = e=>{ e.preventDefault(); const v = $('ytQin').value.trim(); $('ytQin').blur(); if(v) this.search(v); }; return;
+      const k = this.kind || 'video';
+      box.innerHTML = '<form id="ytQ" class="yq" autocomplete="off"><input id="ytQin" type="search" placeholder="검색" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit" aria-label="검색"><svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg></button></form>' +
+        '<nav class="chips"><button data-k="video" class="' + (k === 'video' ? 'on' : '') + '">동영상</button><button data-k="playlist" class="' + (k === 'playlist' ? 'on' : '') + '">재생목록</button><button data-a="forget" class="ghost">키 지우기</button></nav><div id="ytRes"></div>';
+      $('ytQ').onsubmit = e=>{ e.preventDefault(); const v = $('ytQin').value.trim(); $('ytQin').blur(); if(v) this.search(v); };
+      box.querySelector('.chips').onclick = e=>{ const c = e.target.closest('[data-k]'); if(!c) return; this.kind = c.dataset.k; this.renderSheet(); if(this.q) this.search(this.q); };
+      box.onscroll = ()=>{ if(this.next && !this.busy && box.scrollTop + box.clientHeight > box.scrollHeight - 400) this.search(this.q, true); };
+      this.renderResults(); return;
     }
   },
   act(b){
     const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open();
     if(a === 'play'){ const it = (src === 'lib' ? this.lib : this.found)[i]; if(it){ this.start(it); toast('재생할게요 ♪', 1200); } return; }
-    if(a === 'keep'){ const it = this.found[i]; if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
+    if(a === 'keep'){ const it = Object.assign({}, this.found[i]); if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
     if(a === 'del'){ this.lib.splice(i, 1); this.save(); this.renderSheet(); return; }
     if(a === 'forget'){ this.key = ''; this.found = null; this.save(); this.renderSheet(); }
   },
   init(){
     this.load();
     $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
-    $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
+    $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b){ e.stopPropagation(); this.act(b); } };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
-    $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
     $('ytClose').onclick = ()=>{ if(this._pl) this._pl.pauseVideo(); this.playing = false; $('ytWin').hidden = true; this.render(); };
     document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
