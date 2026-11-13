@@ -141,7 +141,13 @@
     #app{display:grid;grid-template-columns:minmax(300px,42%) 1fr;grid-template-rows:auto 1fr;padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
     #top{grid-column:1;grid-row:1;padding:calc(6px + env(safe-area-inset-top)) 12px 0 14px}
     #brand{margin-bottom:6px;padding:4px 8px} #brand::after{display:none}
-    #time{font-size:58px;margin-top:4px;box-shadow:5px 5px 0 var(--bleu)}
+    #time{font-size:48px;margin-top:2px;box-shadow:5px 5px 0 var(--bleu)}
+    #tbar{height:9px;margin-top:8px} #pomo{margin-top:6px!important} #row{margin-top:6px!important}
+    #music{min-height:0;padding:5px 6px 7px;margin-bottom:6px} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
+    #music .mt b{font-size:13px} #music button{height:28px} #music .pp{width:30px;height:30px}
+    #recent{margin-top:5px!important}
+    #go,#quit,#warm{height:36px!important} #sline{margin-bottom:5px!important} #bottom{padding-top:24px!important}
+    #brand{margin-bottom:4px!important}
     #moon{width:100px;height:100px;margin:-16px -10px -14px -8px}
     #moonTxt{font-size:9px}
     #pomo{margin-top:10px} #row{margin-top:10px;padding:2px 4px 2px 8px}
@@ -268,15 +274,17 @@
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
-  /* 유튜브 영상 창: 끌어서 옮기는 작은 액자 (유튜브 규칙상 200px 이상 보여야 함) */
-  #ytWin{position:fixed;right:10px;bottom:190px;z-index:25;width:200px;background:var(--ink);box-shadow:5px 5px 0 var(--bleu);outline:2px solid #fff}
+  /* 유튜브: 콜라주에 붙인 흑백 사진 액자 (캐릭터 뒤) */
+  #ytWin{position:absolute;left:6px;top:46%;z-index:1;padding:7px 7px 0;background:#f4f3ef;box-shadow:3px 4px 0 #0003, 6px 6px 0 var(--bleu);transform:rotate(-4deg);transform-origin:20% 80%}
   #ytWin[hidden]{display:none}
-  #ytBar{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;font:600 8px var(--sans);letter-spacing:.3em;color:#8b8ff5;touch-action:none;cursor:grab}
-  #ytBar button{color:#fff;font-size:16px;width:24px;height:20px;line-height:1} #ytBar span{flex:1}
-  /* 최소화: 작은 띠로 접고(소리는 계속) 탭하면 다시 펼침 */
-  #ytWin.min{width:112px} #ytWin.min #ytBox,#ytWin.min #ytBox iframe,#ytWin.min #ytFrame{width:112px;height:63px}
-  #ytWin.min #ytBar span{font-size:0} #ytWin.min #ytBar span::before{content:"♪";font-size:10px}
-  #ytBox{width:200px;height:200px;background:#000;display:grid;place-items:center} #ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
+  #ytBox{width:150px;height:150px;overflow:hidden;background:#111;position:relative}
+  #ytBox iframe,#ytFrame{width:150px;height:150px;display:block;filter:grayscale(1) contrast(1.15) brightness(.95)}
+  #ytBox::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,#0000 55%,#0005),repeating-linear-gradient(0deg,#0000 0 2px,#0000000f 2px 3px)}
+  #ytBar{display:flex;justify-content:space-between;align-items:center;height:22px;font:italic 9px var(--serif);letter-spacing:.2em;color:#555}
+  #ytBar button{width:20px;height:20px;color:#888;font-size:14px}
+  #ytWin .tape{position:absolute;width:46px;height:14px;background:#e9e8e3cc;box-shadow:0 1px 1px #0002;z-index:2}
+  #ytWin .t1{left:-12px;top:-5px;transform:rotate(-28deg)} #ytWin .t2{right:-10px;top:-4px;transform:rotate(24deg)}
+  @media (orientation:landscape) and (max-height:600px){ #ytWin{left:auto;right:18px;top:16%;transform:rotate(3deg)} #ytBox,#ytBox iframe,#ytFrame{width:130px;height:130px} }
   #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
   #spBody form.row{margin-bottom:6px}
   /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
@@ -353,6 +361,8 @@
       <svg id="haloF"></svg>
     </div>
     <div id="stageLbl"><b>CÉLESTE</b><span id="stageName">plâtre</span></div>
+    <div id="ytWin" hidden><i class="tape t1"></i><i class="tape t2"></i><div id="ytBox"><div id="ytFrame"></div></div>
+      <div id="ytBar"><span>TÉLÉ · MINUIT</span><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div></div>
     <div id="doves"></div>
   </main>
 
@@ -385,7 +395,7 @@
     <div class="pb"><button id="spClose" type="button">닫기</button></div>
   </div>
 </section>
-<div id="ytWin" hidden><div id="ytBar"><span>♪ YOUTUBE</span><button id="ytMin" type="button" aria-label="작게/크게">–</button><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div><div id="ytBox"><div id="ytFrame"></div></div></div>
+
 <div id="ga" hidden><small>VERROU</small><b>측면 버튼 세 번</b>
   <div class="side"><i></i><u></u></div>
   <p>지금 누르면 끝날 때까지 이 앱 밖으로 못 나가요<br>(처음 한 번은 화면에서 '시작')</p></div>
@@ -1164,15 +1174,7 @@ const Music = {
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
     $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
-    const setMin = v=>{ $('ytWin').classList.toggle('min', v); $('ytMin').textContent = v ? '□' : '–'; try{ localStorage.setItem('bleu.ytMin', v ? '1' : '0'); }catch(e){} };
-    try{ setMin(localStorage.getItem('bleu.ytMin') === '1'); }catch(e){}
-    $('ytMin').onclick = e=>{ e.stopPropagation(); setMin(!$('ytWin').classList.contains('min')); };
     $('ytClose').onclick = ()=>{ if(this._pl) this._pl.pauseVideo(); this.playing = false; $('ytWin').hidden = true; this.render(); };
-    // 영상 창 끌어서 옮기기
-    const w = $('ytWin'), bar = $('ytBar'); let sx, sy, ox, oy;
-    bar.addEventListener('pointerdown', e=>{ if(e.target.closest('button')) return; sx = e.clientX; sy = e.clientY; const r = w.getBoundingClientRect(); ox = r.left; oy = r.top; bar.setPointerCapture(e.pointerId); });
-    bar.addEventListener('pointermove', e=>{ if(sx == null) return; w.style.left = Math.max(0, Math.min(innerWidth - w.offsetWidth, ox + e.clientX - sx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - w.offsetHeight, oy + e.clientY - sy)) + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; });
-    bar.addEventListener('pointerup', ()=>{ sx = null; });
     document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
     this.render();
   }
