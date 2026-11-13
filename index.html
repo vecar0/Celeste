@@ -268,6 +268,14 @@
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
+  /* 유튜브 영상 창: 끌어서 옮기는 작은 액자 (유튜브 규칙상 200px 이상 보여야 함) */
+  #ytWin{position:fixed;right:10px;bottom:190px;z-index:25;width:200px;background:var(--ink);box-shadow:5px 5px 0 var(--bleu);outline:2px solid #fff}
+  #ytWin[hidden]{display:none}
+  #ytBar{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;font:600 8px var(--sans);letter-spacing:.3em;color:#8b8ff5;touch-action:none;cursor:grab}
+  #ytBar button{color:#fff;font-size:16px;width:24px;height:20px;line-height:1}
+  #ytBox{width:200px;height:200px;background:#000;display:grid;place-items:center} #ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
+  #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
+  #spBody form.row{margin-bottom:6px}
   /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
   #spSheet .pc{background:var(--ink) radial-gradient(circle,#ffffff10 1px,transparent 1.3px) 0 0/8px 8px;color:#fff;outline:0;box-shadow:7px 7px 0 var(--bleu)}
   #spSheet small{color:#8b8ff5} #spSheet b{color:#fff}
@@ -366,20 +374,15 @@
 </section>
 <section id="spSheet" hidden>
   <div class="pc">
-    <small>MUSIQUE · SPOTIFY</small>
+    <small>MUSIQUE · YOUTUBE</small>
     <b>음악</b>
-    <div id="spLink" hidden>
-      <p>연결이 거의 끝났어요. 아래 코드를 복사해서, 홈 화면 앱의 이 창 '연결 코드 붙여 넣기'에 넣어 주세요.</p>
-      <div class="row"><input id="spCode" readonly><button id="spCopy" type="button">복사</button></div>
-    </div>
-    <nav id="spTabs"><button data-t="now" type="button">지금</button><button data-t="lib" type="button">보관함</button><button data-t="search" type="button">검색</button><button data-t="queue" type="button">대기열</button></nav>
+    <nav id="spTabs"><button data-t="lib" type="button">저장한 음악</button><button data-t="search" type="button">검색</button></nav>
     <div id="spBody"></div>
     <label class="opt"><input id="spAuto" type="checkbox" checked> 집중하면 재생, 휴식엔 멈춤</label>
-    <details><summary>연결 코드 붙여 넣기</summary><p>로그인 후 다른 창에서 코드가 나왔다면 여기에 붙여 넣어요.</p>
-      <div class="row"><input id="spIn" placeholder="연결 코드" autocomplete="off"><button id="spPaste" type="button">연결</button></div></details>
-    <div class="pb"><button id="spOut" type="button">연결 끊기</button><button id="spClose" type="button">닫기</button></div>
+    <div class="pb"><button id="spClose" type="button">닫기</button></div>
   </div>
 </section>
+<div id="ytWin" hidden><div id="ytBar"><span>♪ YOUTUBE</span><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div><div id="ytBox"><div id="ytFrame"></div></div></div>
 <div id="ga" hidden><small>VERROU</small><b>측면 버튼 세 번</b>
   <div class="side"><i></i><u></u></div>
   <p>지금 누르면 끝날 때까지 이 앱 밖으로 못 나가요<br>(처음 한 번은 화면에서 '시작')</p></div>
@@ -1041,250 +1044,133 @@ function fit(){
 addEventListener('resize', fit); addEventListener('orientationchange', ()=>setTimeout(fit, 300)); addEventListener('pageshow', fit);
 setTimeout(fit, 400); setTimeout(fit, 1500);      // iOS는 처음 높이를 늦게 알려 준다
 
-/* ═══ 음악: 스포티파이 원격 조작 ═══
-   폰의 스포티파이 앱이 뒤에서 재생하고, 조작은 여기서(재생·멈춤·이전·다음·플레이리스트). 프리미엄 필요.
-   로그인은 PKCE(비밀값 없음). 아이폰 홈 화면 앱은 로그인 창이 따로 열려 저장 공간이 달라질 수 있어서,
-   돌아온 쪽에서 바로 토큰을 받고, 앱 저장 공간이 아니면 '연결 코드'를 보여 줘 붙여 넣게 한다 */
 const SPI = {"prev": `<svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>`, "next": `<svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>`, "play": `<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>`, "pause": `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`, "list": `<svg viewBox="0 0 24 24"><path d="M3 6h13v2H3zM3 11h13v2H3zM3 16h9v2H3zM18 10v8.2A2.5 2.5 0 1 0 20 20.6V12h2v-2z"/></svg>`, "shuffle": `<svg viewBox="0 0 24 24"><path d="M16 4l4 3-4 3V8h-2.2l-6 8H4v-2h2.8l6-8H16zM4 8h2.8l1.7 2.3-1.2 1.6L5.8 10H4zm12 6v2h-2.2l-1.7-2.3 1.2-1.6 1.5 1.9H16v-2l4 3-4 3z"/></svg>`, "repeat": `<svg viewBox="0 0 24 24"><path d="M7 7h10V4l4 4-4 4V9H9v3H7zm10 10H7v3l-4-4 4-4v3h8v-3h2z"/></svg>`, "repeat1": `<svg viewBox="0 0 24 24"><path d="M7 7h10V4l4 4-4 4V9H9v3H7zm10 10H7v3l-4-4 4-4v3h8v-3h2z"/><path d="M11 10h2v5h-2z"/></svg>`, "heart": `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.6 4.6 0 0 1 9-2 4.6 4.6 0 0 1 9 2c-2 4.6-9 9-9 9zm0-2.4c2.2-1.5 5.7-4.3 7-7A2.6 2.6 0 0 0 13.9 10L12 12.4 10.1 10A2.6 2.6 0 0 0 5 10.6c1.3 2.7 4.8 5.5 7 7z"/></svg>`, "heartOn": `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.6 4.6 0 0 1 9-2 4.6 4.6 0 0 1 9 2c-2 4.6-9 9-9 9z"/></svg>`, "device": `<svg viewBox="0 0 24 24"><path d="M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm1 2v14h8V4zm4 15.2a1 1 0 1 0 0 .1z"/></svg>`, "vol": `<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zm12 .5a4 4 0 0 1 0 5l-1.4-1.4a2 2 0 0 0 0-2.2z"/></svg>`, "plus": `<svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>`, "more": `<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`};
-const SP_ID = '47146c1c5ea44eaf968142dcbb920963';
-const SP_REDIRECT = location.origin + location.pathname;
-const SP_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-library-modify user-read-recently-played';
+/* ═══ 음악: 유튜브 ═══
+   Bleu Minuit 안에서 직접 재생(유튜브 공식 임베드 플레이어). 영상 창은 작은 액자로 화면에 떠 있고(유튜브 규칙상 보여야 함) 끌어서 옮길 수 있다.
+   검색은 유튜브 Data API 키가 있을 때만(키는 이 기기에만 저장). 키가 없어도 링크를 붙여 넣어 저장·재생할 수 있다 */
+const YT_PRESET = [
+  {type:'video', id:'lTRiuFIWV54', title:'1 A.M Study Session 📚 [lofi hip hop]', by:'Lofi Girl'},
+  {type:'video', id:'jfKfPfyJRdk', title:'lofi hip hop radio 📚 beats to relax/study to (라이브)', by:'Lofi Girl'},
+  {type:'video', id:'7NOSDKb0HlU', title:'lofi hip hop radio - beats to study/relax to (라이브)', by:'Chillhop Music'},
+];
 const Music = {
-  tok:null, state:null, timer:0, pls:null,
-  auto:true, ctx:'',
-  load(){ try{ this.tok = JSON.parse(localStorage.getItem('bleu.sp') || 'null'); const o = JSON.parse(localStorage.getItem('bleu.spOpt') || '{}'); this.auto = o.auto !== false; this.ctx = o.ctx || ''; }catch(e){} },
-  save(){ try{ localStorage.setItem('bleu.sp', JSON.stringify(this.tok)); localStorage.setItem('bleu.spOpt', JSON.stringify({auto:this.auto, ctx:this.ctx})); }catch(e){} },
-  b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); },
-  async login(){
-    const v = this.b64(crypto.getRandomValues(new Uint8Array(48)));
-    const ch = this.b64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)));
-    const q = new URLSearchParams({client_id:SP_ID, response_type:'code', redirect_uri:SP_REDIRECT, scope:SP_SCOPE,
-      code_challenge_method:'S256', code_challenge:ch, state:v});            // 돌아온 쪽이 어디든 바꿀 수 있게 검증값을 state로
-    location.href = 'https://accounts.spotify.com/authorize?' + q;
+  p:null, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
+  load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
+    this.key = o.key || ''; this.auto = o.auto !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
+  save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur})); }catch(e){} },
+  api(){                                                   // 유튜브 플레이어 스크립트는 처음 재생할 때 불러온다
+    if(this.apiP) return this.apiP;
+    return this.apiP = new Promise(res=>{ window.onYouTubeIframeAPIReady = res; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); });
   },
-  async tokenReq(body){
-    const r = await fetch('https://accounts.spotify.com/api/token', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams(Object.assign({client_id:SP_ID}, body))});
-    if(!r.ok) throw new Error('token ' + r.status);
-    const j = await r.json();
-    this.tok = {a:j.access_token, r:j.refresh_token || (this.tok && this.tok.r), s:j.scope || (this.tok && this.tok.s) || '', e:Date.now() + (j.expires_in - 60)*1000}; this.save();
+  async mount(){
+    if(this.p) return this.p; await this.api();
+    return this.p = new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%', playerVars:{playsinline:1, rel:0, modestbranding:1, origin:location.origin},
+      events:{onReady:()=>{ this.ready = true; res(pl); }, onStateChange:e=>this.onState(e)}}); });
   },
-  async handleRedirect(){                                  // ?code=…&state=… 로 돌아왔을 때
-    const u = new URL(location.href), code = u.searchParams.get('code'), v = u.searchParams.get('state'), err = u.searchParams.get('error');
-    if(!code && !err) return;
-    history.replaceState(null, '', SP_REDIRECT);
-    if(err){ toast('스포티파이 연결을 취소했어요', 2400); return; }
-    try{
-      await this.tokenReq({grant_type:'authorization_code', code, redirect_uri:SP_REDIRECT, code_verifier:v});
-      const standalone = navigator.standalone || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
-      if(!standalone && /iPhone|iPad/.test(navigator.userAgent)) this.showLinkCode();   // 홈 화면 앱 밖에서 돌아왔으면 코드 보여 주기
-      else toast('스포티파이 연결됨 ♪', 2200);
-    }catch(e){ toast('연결에 실패했어요 · 다시 시도해 주세요', 2800); }
-    this.render(); this.poll();
+  onState(e){
+    this.playing = e.data === YT.PlayerState.PLAYING;
+    if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
+    if(e.data === YT.PlayerState.ENDED && this.cur && this.cur.type === 'video') this.pl.playVideo();   // 영상 하나는 반복
+    this.render();
   },
-  showLinkCode(){ $('spCode').value = this.tok.r; $('spLink').hidden = false; $('spSheet').hidden = false; this.renderSheet(); },
-  async useLinkCode(code){ this.tok = {a:'', r:code.trim(), e:0}; try{ await this.tokenReq({grant_type:'refresh_token', refresh_token:this.tok.r}); toast('스포티파이 연결됨 ♪', 2200); }
-    catch(e){ this.tok = null; this.save(); toast('코드가 맞지 않아요', 2400); } this.render(); this.poll(); },
-  async api(path, opt = {}){
-    if(!this.tok) return null;
-    if(Date.now() > this.tok.e){ try{ await this.tokenReq({grant_type:'refresh_token', refresh_token:this.tok.r}); }catch(e){ this.tok = null; this.save(); this.render(); return null; } }
-    const r = await fetch('https://api.spotify.com/v1' + path, Object.assign({}, opt, {headers:Object.assign({Authorization:'Bearer ' + this.tok.a}, opt.body ? {'Content-Type':'application/json'} : {})}));
-    if(r.status === 401){ this.tok.e = 0; return this.api(path, opt); }
-    if(r.status === 204 || r.status === 202) return {};
-    if(!r.ok){ let m = '', msg = ''; try{ const e = (await r.json()).error || {}; m = e.reason || ''; msg = e.message || ''; }catch(e){}
-      this.lastErr = r.status + ' ' + (m || msg);
-      if(m === 'NO_ACTIVE_DEVICE' || /active device/i.test(msg)) return {noDevice:true, err:r.status, msg};
-      if(r.status === 403 && /PREMIUM/.test(m)) toast('스포티파이 프리미엄이 필요해요', 2600);
-      return {err:r.status, msg:msg || m}; }
-    const t = await r.text(); return t ? JSON.parse(t) : {};
+  get pl(){ return this._pl; },
+  async start(item){                                       // 저장한 것·검색 결과 재생
+    const pl = this._pl = await this.mount();
+    $('ytWin').hidden = false;
+    this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.save();
+    if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'}); else pl.loadVideoById(item.id);
+    pl.playVideo(); this.render();
   },
-  async poll(){
-    clearTimeout(this.timer); if(!this.tok){ this.render(); return; }
-    if(!document.hidden){ const s = await this.api('/me/player'); const was = this.state && this.state.item && this.state.item.id;
-      this.state = s && s.item ? s : (s && s.device ? s : null); this.at = Date.now(); this.render();
-      if(!$('spSheet').hidden && this.tab === 'now' && !this.dragging && (this.state && this.state.item && this.state.item.id) !== was) this.renderSheet(); }
-    this.timer = setTimeout(()=>this.poll(), this.state && this.state.is_playing ? 5000 : 12000);
+  async toggle(){
+    if(!this._pl || $('ytWin').hidden){ const it = this.cur || this.lib[0]; if(it) this.start(it); return; }
+    this.playing ? this._pl.pauseVideo() : this._pl.playVideo();
   },
-  sleep(ms){ return new Promise(r=>setTimeout(r, ms)); },
-  async target(playing){                                   // 명령 보낼 기기 고르기: 켜진 기기 중 재생 중 → 아이폰 → 첫 기기. 비활성이면 먼저 넘겨받는다
-    const d = await this.api('/me/player/devices'); const list = (d && d.devices) || [];
-    this.devs = list;
-    const pick = list.find(x=>x.is_active) || list.find(x=>x.type === 'Smartphone') || list[0];
-    if(!pick){ this.needWake = true; this.render(); toast('스포티파이가 잠들어 있어요 · 깨우기를 눌러 주세요', 3200); return null; }
-    this.needWake = false;
-    if(!pick.is_active){ await this.api('/me/player', {method:'PUT', body:JSON.stringify({device_ids:[pick.id], play:!!playing})}); await this.sleep(700); }
-    return pick.id;
+  skip(d){ if(!this._pl) return; if(this.cur && this.cur.type === 'playlist'){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
+    else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
+  onFocus(){ if(this.auto && !this.playing) this.toggle(); },
+  onBreak(){ if(this.auto && this.playing && this._pl) this._pl.pauseVideo(); },
+  parse(url){                                              // 유튜브 링크 → 영상/재생목록
+    try{ const u = new URL(url.trim()); const list = u.searchParams.get('list'); let v = u.searchParams.get('v');
+      if(!v && /youtu\.be$/.test(u.hostname)) v = u.pathname.slice(1);
+      if(!v){ const m = u.pathname.match(/\/(shorts|live|embed)\/([\w-]{11})/); if(m) v = m[2]; }
+      if(list && !v) return {type:'playlist', id:list};
+      if(v) return {type:'video', id:v.slice(0, 11), list};
+    }catch(e){} return null; },
+  async addLink(url){
+    const it = this.parse(url); if(!it){ toast('유튜브 링크를 못 알아봤어요', 2200); return; }
+    if(it.list && confirm('재생목록 전체를 저장할까요? (취소하면 이 영상만)')) { it.type = 'playlist'; it.id = it.list; }
+    delete it.list;
+    try{ const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(it.type === 'playlist' ? 'https://www.youtube.com/playlist?list=' + it.id : 'https://www.youtube.com/watch?v=' + it.id));
+      if(r.ok){ const j = await r.json(); it.title = j.title; it.by = j.author_name; } }catch(e){}
+    it.title = it.title || (it.type === 'playlist' ? '재생목록' : '영상'); 
+    this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1400); this.renderSheet();
   },
-  async device(){ return this.target(true); },
-  fail(errs){ const t = errs.filter(Boolean).join(' / ').slice(0, 100); this.lastErr = t; toast('재생이 안 됐어요 · ' + t, 6000); },
-  async send(path, method, body, id){                      // 기기를 지정해 보내고, 한 번 더 시도
-    const url = path + (path.includes('?') ? '&' : '?') + 'device_id=' + encodeURIComponent(id);
-    let r = await this.api(url, {method, body});
-    if(r && r.err){ await this.sleep(600); r = await this.api(url, {method, body}); }
-    return r;
+  async search(q){
+    if(!this.key){ this.renderSheet(); return; }
+    this.q = q; $('spBody').querySelector('.res') && ($('spBody').querySelector('.res').innerHTML = '<p class="none">찾는 중…</p>');
+    try{ const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&type=video,playlist&q=' + encodeURIComponent(q) + '&key=' + encodeURIComponent(this.key));
+      const j = await r.json(); if(!r.ok){ toast('검색 실패 · ' + ((j.error && j.error.message) || r.status).toString().slice(0, 80), 5000); this.found = []; }
+      else this.found = (j.items || []).map(x=>({type:x.id.kind === 'youtube#playlist' ? 'playlist' : 'video', id:x.id.videoId || x.id.playlistId,
+        title:(new DOMParser().parseFromString(x.snippet.title, 'text/html').body.textContent), by:x.snippet.channelTitle, img:x.snippet.thumbnails && x.snippet.thumbnails.default && x.snippet.thumbnails.default.url})).filter(x=>x.id);
+    }catch(e){ toast('검색 실패 · 인터넷을 확인해 주세요', 3000); this.found = []; }
+    this.renderSheet();
   },
-  async play(ctx){
-    toast('재생 요청 중…', 1000);
-    const id = await this.target(true); if(!id) return;
-    const c = ctx || (!(this.state && this.state.item) && this.ctx) || '';
-    const r = await this.send('/me/player/play', 'PUT', c ? JSON.stringify({context_uri:c}) : undefined, id);
-    if(r && r.err){ this.fail([r.err + ' ' + (r.msg || '')]); }
-    else if(this.state){ this.state.is_playing = true; this.render(); }
-    this.after(null, 700);
-  },
-  async playUris(uris){
-    toast('재생 요청 중…', 1000);
-    const id = await this.target(true); if(!id) return;
-    const r = await this.send('/me/player/play', 'PUT', JSON.stringify({uris}), id);
-    if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 800);
-  },
-  async playTrack(uri, ctx){                               // 곡 하나: ① 곡만 ② 앨범 안에서 그 곡부터 ③ 대기열에 넣고 넘기기
-    if(!uri || !/^spotify:/.test(uri)){ toast('곡 정보를 못 받았어요', 2400); return; }
-    toast('재생 요청 중…', 1000);
-    const id = await this.target(true); if(!id) return;
-    const tries = [JSON.stringify({uris:[uri]})]; if(ctx) tries.push(JSON.stringify({context_uri:ctx, offset:{uri}}));
-    let r, errs = [];
-    for(const body of tries){ r = await this.send('/me/player/play', 'PUT', body, id); if(r && !r.err) break; errs.push(r && (r.err + ' ' + (r.msg || ''))); }
-    if(!r || r.err){ const a = await this.send('/me/player/queue?uri=' + encodeURIComponent(uri), 'POST', undefined, id);
-      if(a && !a.err) r = await this.send('/me/player/next', 'POST', undefined, id); else errs.push(a && (a.err + ' ' + (a.msg || ''))); }
-    if(r && !r.err){ toast('재생할게요 ♪', 1400); if(this.state){ this.state.is_playing = true; this.render(); } this.after(null, 900); return; }
-    this.fail(errs);
-  },
-  wake(){ this.needWake = false; this.render(); location.href = 'spotify:'; },
-  after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + (r.msg ? ' ' + r.msg : '') + ')', 4000);
-    setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, ms); },
-  async pause(){ if(this.state){ this.state.is_playing = false; this.render(); }
-    const id = (this.state && this.state.device && this.state.device.id) || await this.target(false); if(!id) return;
-    const r = await this.send('/me/player/pause', 'PUT', undefined, id); if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 500); },
-  async skip(dir){ const id = (this.state && this.state.device && this.state.device.id) || await this.target(true); if(!id) return;
-    const r = await this.send('/me/player/' + (dir > 0 ? 'next' : 'previous'), 'POST', undefined, id); if(r && r.err) this.fail([r.err + ' ' + (r.msg || '')]); this.after(null, 800); },
-  toggle(){ this.state && this.state.is_playing ? this.pause() : this.play(); },
-  onFocus(){ if(this.tok && this.auto && !(this.state && this.state.is_playing)) this.play(this.state && this.state.item ? undefined : this.ctx || undefined); },
-  onBreak(){ if(this.tok && this.auto && this.state && this.state.is_playing) this.pause(); },
+  thumb(it){ return it.img || (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/default.jpg' : ''); },
   render(){
     const el = $('music'); if(!el) return;
-    if(!this.tok){ el.innerHTML = '<button class="mc" data-a="login"><i>MUSIQUE</i>스포티파이 연결</button><button class="mx" data-a="sheet" aria-label="음악 설정">' + SPI.more + '</button>'; return; }
-    if(this.needWake){ el.innerHTML = '<button class="mc" data-a="wake"><i>SPOTIFY</i>잠들어 있어요 · 눌러서 깨우기</button><button class="mx" data-a="sheet" aria-label="음악">' + SPI.list + '</button>'; return; }
-    const s = this.state, it = s && s.item, img = it && it.album && it.album.images && it.album.images[it.album.images.length - 1];
-    el.innerHTML = (img ? '<img src="' + img.url + '" alt="">' : '<i class="art">♪</i>') +
-      '<div class="mt" data-a="open"><small>' + (s && s.is_playing ? 'NOW PLAYING' : 'EN PAUSE') + '</small><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '재생을 누르면 시작해요') + '</span></div>' +
-      '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (s && s.is_playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="플레이리스트">' + SPI.list + '</button>' +
-      '<div class="bar"><i id="mBar"></i></div>';
-    this.at = Date.now(); this.tick();
+    const it = this.cur, img = it ? this.thumb(it) : '';
+    el.innerHTML = (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') +
+      '<div class="mt" data-a="sheet"><small>' + (this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
-  tab:'now', q:'', found:null,
-  open(tab){ $('spLink').hidden = true; $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
-  async renderSheet(tab){
-    if(tab) this.tab = tab;
-    $('spAuto').checked = this.auto; $('spOut').hidden = !this.tok;
+  open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  renderSheet(tab){
+    if(tab) this.tab = tab; $('spAuto').checked = this.auto;
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
-    const box = $('spBody');
-    if(!this.tok){ box.innerHTML = '<p class="none">스포티파이를 연결하면 여기서 다 조작할 수 있어요</p><button class="big" data-a="login">스포티파이 연결</button>'; return; }
-    const reauth = !SP_SCOPE.split(' ').every(x=>(this.tok.s || '').split(' ').includes(x))
-      ? '<div class="re">새 기능(좋아요·최근 재생)을 쓰려면 한 번 더 연결해 주세요 <button data-a="login">다시 연결</button></div>' : '';
-    const T = this.tab, li = (img, t, sub, attrs) => '<button class="li" ' + attrs + '>' + (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') + '<span><b>' + esc(t) + '</b>' + (sub ? '<em>' + esc(sub) + '</em>' : '') + '</span></button>';
-    const im = o => o && o.images && o.images.length ? o.images[o.images.length - 1].url : (o && o.album ? (o.album.images || []).slice(-1).map(x=>x.url)[0] : '');
-    if(T === 'now'){
-      const s = this.state, it = s && s.item, big = it && it.album && it.album.images && it.album.images[0];
-      if(!it){ box.innerHTML = reauth + '<p class="none">재생 중인 곡이 없어요. 보관함이나 검색에서 골라 보세요</p><button class="big" data-a="wake">스포티파이 깨우기</button><p class="diag">' + esc(this.lastErr ? '마지막 오류: ' + this.lastErr : '') + '</p>'; return; }
-      const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0), d = it.duration_ms, mm = ms => Math.floor(ms/60000) + ':' + String(Math.floor(ms/1000)%60).padStart(2,'0');
-      const vol = s.device && s.device.supports_volume !== false && s.device.volume_percent != null;
-      box.innerHTML = reauth + '<div class="now">' + (big ? '<img class="cover" src="' + big.url + '" alt="">' : '') +
-        '<b>' + esc(it.name) + '</b><em>' + esc((it.artists || []).map(a=>a.name).join(', ')) + ' · ' + esc(it.album ? it.album.name : '') + '</em>' +
-        '<input id="spSeek" type="range" min="0" max="' + d + '" value="' + Math.min(d, pos) + '"><div class="tm"><span>' + mm(pos) + '</span><span>' + mm(d) + '</span></div>' +
-        '<div class="ctl"><button data-a="shuffle" class="' + (s.shuffle_state ? 'on' : '') + '" aria-label="셔플">' + SPI.shuffle + '</button>' +
-        '<button data-a="prev">' + SPI.prev + '</button><button class="pp" data-a="toggle">' + (s.is_playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
-        '<button data-a="repeat" class="' + (s.repeat_state !== 'off' ? 'on' : '') + '" aria-label="반복">' + (s.repeat_state === 'track' ? SPI.repeat1 : SPI.repeat) + '</button></div>' +
-        '<div class="ctl2"><button data-a="like" class="' + (this.liked ? 'on' : '') + '">' + (this.liked ? SPI.heartOn : SPI.heart) + '<span>좋아요</span></button>' +
-        '<button data-a="devices">' + SPI.device + '<span>' + esc(s.device ? s.device.name : '기기') + '</span></button></div>' +
-        (vol ? '<label class="vol">' + SPI.vol + '<input id="spVol" type="range" min="0" max="100" value="' + s.device.volume_percent + '"></label>' : '<p class="note">이 기기는 앱에서 음량을 바꿀 수 없어요(아이폰은 버튼으로)</p>') +
-        '<div id="spDev"></div><p class="diag">' + esc((s.device ? '기기: ' + s.device.name : '') + (this.lastErr ? ' · 마지막 오류: ' + this.lastErr : '')) + '</p></div>';
-      this.checkLike(it.id); this.tick(); return;
-    }
-    if(T === 'lib'){
-      box.innerHTML = reauth + '<p class="none">불러오는 중…</p>';
-      if(!this.pls){ const r = await this.api('/me/playlists?limit=50'); this.pls = (r && r.items) || []; this.plsErr = r && r.err; }
-      const rp = await this.api('/me/player/recently-played?limit=15'); const seen = new Set();
-      const rec = ((rp && rp.items) || []).map(x=>x.track).filter(t=>t && !seen.has(t.id) && seen.add(t.id));
-      box.innerHTML = reauth + '<h4>바로 듣기</h4>' + li('', '좋아요 표시한 곡', '내 보관함 전체', 'data-a="liked"') +
-        (rec.length ? '<h4>최근 재생</h4>' + rec.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"' + (t.album && t.album.uri ? ' data-c="' + t.album.uri + '"' : ''))).join('') : '') +
-        '<h4>내 플레이리스트</h4>' + (this.pls.length ? this.pls.filter(Boolean).map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"' + (p.uri === this.ctx ? ' data-on="1"' : ''))).join('') : '<p class="none">플레이리스트를 못 불러왔어요' + (this.plsErr ? ' (' + this.plsErr + ')' : '') + '</p>');
+    const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
+      (this.thumb(it) ? '<img src="' + this.thumb(it) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(it.title || '') + '</b><em>' + (it.type === 'playlist' ? '재생목록 · ' : '') + esc(it.by || '') + '</em></span></button>' +
+      (src === 'lib' ? '<button class="add" data-a="del" data-i="' + i + '" aria-label="지우기">×</button>' : '<button class="add" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button>') + '</div>';
+    if(this.tab === 'lib'){
+      box.innerHTML = '<form id="ytAdd" class="row" autocomplete="off"><input id="ytUrl" placeholder="유튜브 링크 붙여 넣기 (영상·재생목록)" enterkeyhint="done"><button type="submit">저장</button></form>' +
+        '<h4>저장한 음악</h4>' + (this.lib.length ? this.lib.map((x, i)=>li(x, i, 'lib')).join('') : '<p class="none">아직 없어요</p>');
+      $('ytAdd').onsubmit = e=>{ e.preventDefault(); const v = $('ytUrl').value; $('ytUrl').blur(); if(v.trim()) this.addLink(v); };
       return;
     }
-    if(T === 'search'){
-      const f = this.found;
-      box.innerHTML = '<form id="spQ" class="row" autocomplete="off"><input id="spQin" placeholder="곡, 가수, 앨범, 플레이리스트" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit">검색</button></form>' +
-        (!f ? '<p class="none">듣고 싶은 걸 찾아서 바로 재생하거나 대기열에 넣어요</p>' :
-        (f.tracks.length ? '<h4>곡</h4>' + f.tracks.map(t=>'<div class="tr">' + li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"' + (t.album && t.album.uri ? ' data-c="' + t.album.uri + '"' : '')) + '<button class="add" data-a="queue" data-u="' + t.uri + '" aria-label="대기열에 추가">' + SPI.plus + '</button></div>').join('') : '') +
-        (f.artists.length ? '<h4>가수</h4>' + f.artists.map(a=>li(im(a), a.name, '인기곡 재생', 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
-        (f.albums.length ? '<h4>앨범</h4>' + f.albums.map(a=>li(im(a), a.name, (a.artists || []).map(x=>x.name).join(', '), 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
-        (f.playlists.length ? '<h4>플레이리스트</h4>' + f.playlists.map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"')).join('') : '') +
-        (!f.tracks.length && !f.artists.length && !f.albums.length && !f.playlists.length ? '<p class="none">찾지 못했어요</p>' : ''));
-      $('spQ').onsubmit = async e=>{ e.preventDefault(); this.q = $('spQin').value.trim(); if(!this.q) return; $('spQin').blur();
-        const r = await this.api('/search?type=track,artist,album,playlist&limit=8&q=' + encodeURIComponent(this.q)) || {};
-        const g = k => ((r[k] && r[k].items) || []).filter(Boolean);
-        this.found = {tracks:g('tracks'), artists:g('artists'), albums:g('albums'), playlists:g('playlists')}; this.renderSheet(); };
-      return;
-    }
-    if(T === 'queue'){
-      box.innerHTML = '<p class="none">불러오는 중…</p>';
-      const r = await this.api('/me/player/queue'); const q = ((r && r.queue) || []).slice(0, 20), c = r && r.currently_playing;
-      box.innerHTML = (c ? '<h4>지금</h4>' + li(im(c), c.name, (c.artists || []).map(a=>a.name).join(', '), 'disabled') : '') +
-        '<h4>다음 곡</h4>' + (q.length ? q.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'disabled')).join('') : '<p class="none">대기열이 비어 있어요. 검색에서 + 로 넣을 수 있어요</p>');
+    if(this.tab === 'search'){
+      if(!this.key){ box.innerHTML = '<p class="none">검색하려면 유튜브 API 키가 한 번 필요해요</p><form id="ytKey" class="row" autocomplete="off"><input id="ytKeyIn" placeholder="API 키 붙여 넣기"><button type="submit">저장</button></form>' +
+        '<p class="hint">키 만드는 법은 채팅에서 안내했어요. 키는 이 기기에만 저장돼요.</p>';
+        $('ytKey').onsubmit = e=>{ e.preventDefault(); this.key = $('ytKeyIn').value.trim(); this.save(); this.renderSheet(); }; return; }
+      box.innerHTML = '<form id="ytQ" class="row" autocomplete="off"><input id="ytQin" placeholder="곡, 가수, 분위기 (예: 비 오는 날 재즈)" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit">검색</button></form><div class="res">' +
+        (!this.found ? '<p class="none">찾아서 바로 틀고, + 로 저장해요</p>' : this.found.length ? this.found.map((x, i)=>li(x, i, 'found')).join('') : '<p class="none">찾지 못했어요</p>') + '</div>' +
+        '<p class="hint"><button type="button" data-a="forget" class="link">API 키 지우기</button></p>';
+      $('ytQ').onsubmit = e=>{ e.preventDefault(); const v = $('ytQin').value.trim(); $('ytQin').blur(); if(v) this.search(v); }; return;
     }
   },
-  tick(){                                                  // 곡 진행 줄: 받아 온 위치에서 시간만큼 흘려 보낸다
-    const s = this.state, el = $('mBar'); if(!el || !s || !s.item) return;
-    const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0);
-    el.style.width = Math.min(100, pos/s.item.duration_ms*100) + '%';
-    const sk = $('spSeek'); if(sk && document.activeElement !== sk && !this.dragging){ sk.value = Math.min(sk.max, pos);
-      const tm = document.querySelector('.now .tm span'); if(tm) tm.textContent = Math.floor(pos/60000) + ':' + String(Math.floor(pos/1000)%60).padStart(2,'0'); }
-    clearTimeout(this.tt); if(s.is_playing) this.tt = setTimeout(()=>this.tick(), 1000);
-  },
-  async checkLike(id){ if(!id || this.likeId === id) return; this.likeId = id;
-    const r = await this.api('/me/library/contains?uris=' + encodeURIComponent('spotify:track:' + id)); const v = Array.isArray(r) && r[0];
-    if(v !== this.liked){ this.liked = v; if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); } },
-  async sheetAct(b){ try{ await this.sheetAct2(b); }catch(e){ toast('오류: ' + (e && e.message || e), 5000); } },
-  async sheetAct2(b){
-    const a = b.dataset.a, u = b.dataset.u, s = this.state || {};
-    if(a === 'login') return this.login(); if(a === 'wake') return this.wake();
-    if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1);
-    if(a === 'shuffle'){ const v = !s.shuffle_state; const r = await this.api('/me/player/shuffle?state=' + v, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.shuffle_state = v; this.renderSheet(); } return this.after(r, 900); }
-    else if(a === 'repeat'){ const nx = {off:'context', context:'track', track:'off'}[s.repeat_state || 'off']; const r = await this.api('/me/player/repeat?state=' + nx, {method:'PUT'}); if(this.state && !(r && r.err)){ this.state.repeat_state = nx; this.renderSheet(); } return this.after(r, 900); }
-    else if(a === 'like'){ const it = s.item; if(!it) return; const r = await this.api('/me/library?uris=' + encodeURIComponent(it.uri || 'spotify:track:' + it.id), {method:this.liked ? 'DELETE' : 'PUT'});
-      if(r && r.err){ toast('좋아요를 바꾸지 못했어요', 2200); return; } this.liked = !this.liked; this.renderSheet(); return; }
-    else if(a === 'devices'){ const d = await this.api('/me/player/devices'); const list = (d && d.devices) || [];
-      $('spDev').innerHTML = list.length ? list.map(x=>'<button class="li' + (x.is_active ? ' on' : '') + '" data-a="transfer" data-u="' + x.id + '">' + SPI.device + '<span><b>' + esc(x.name) + '</b><em>' + esc(x.type) + (x.is_active ? ' · 재생 중' : '') + '</em></span></button>').join('') : '<p class="none">켜져 있는 기기가 없어요. 스포티파이 앱을 열어 두세요</p>'; return; }
-    else if(a === 'transfer'){ await this.api('/me/player', {method:'PUT', body:JSON.stringify({device_ids:[u], play:true})}); toast('여기서 재생해요', 1600); }
-    else if(a === 'ctx'){ this.ctx = u; this.save(); await this.play(u); toast('재생할게요 ♪', 1400); }
-    else if(a === 'liked'){ const r = await this.api('/me/tracks?limit=50'); const uris = ((r && r.items) || []).map(x=>x.track && x.track.uri).filter(Boolean);
-      if(!uris.length){ toast('좋아요 표시한 곡을 못 불러왔어요' + (r && r.err ? ' (' + r.err + ')' : ''), 2600); return; }
-      await this.playUris(uris); toast('좋아요 표시한 곡 재생 ♪', 1600); }
-    else if(a === 'track'){ await this.playTrack(u, b.dataset.c); }
-    else if(a === 'queue'){ const r = await this.api('/me/player/queue?uri=' + encodeURIComponent(u), {method:'POST'}); toast(r && r.err ? '대기열에 넣지 못했어요' : '대기열에 넣었어요', 1600); return; }
-    setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, 500);
+  act(b){
+    const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
+    if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open();
+    if(a === 'play'){ const it = (src === 'lib' ? this.lib : this.found)[i]; if(it){ this.start(it); toast('재생할게요 ♪', 1200); } return; }
+    if(a === 'keep'){ const it = this.found[i]; if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
+    if(a === 'del'){ this.lib.splice(i, 1); this.save(); this.renderSheet(); return; }
+    if(a === 'forget'){ this.key = ''; this.found = null; this.save(); this.renderSheet(); }
   },
   init(){
     this.load();
-    $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
-      if(a === 'login') this.login(); else if(a === 'wake') this.wake(); else if(a === 'toggle') this.toggle(); else if(a === 'prev') this.skip(-1); else if(a === 'next') this.skip(1);
-      else if(a === 'sheet') this.open('lib'); else if(a === 'open') this.open('now'); };
+    $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
+    $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
-    $('spBody').onclick = e=>{ const b = e.target.closest('button[data-a]'); if(b && !b.disabled) this.sheetAct(b); };
-    $('spBody').addEventListener('input', e=>{ if(e.target.id === 'spSeek') this.dragging = true; });
-    $('spBody').onchange = e=>{ const t = e.target;
-      if(t.id === 'spSeek'){ this.dragging = false; this.api('/me/player/seek?position_ms=' + Math.round(+t.value), {method:'PUT'}); if(this.state){ this.state.progress_ms = +t.value; this.at = Date.now(); } }
-      if(t.id === 'spVol') this.api('/me/player/volume?volume_percent=' + t.value, {method:'PUT'}).then(r=>{ if(r && r.err) toast('이 기기는 음량을 바꿀 수 없어요', 2000); }); };
     $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
-    $('spOut').onclick = ()=>{ this.tok = null; this.state = null; this.pls = null; this.save(); this.render(); this.renderSheet(); };
-    $('spCopy').onclick = ()=>{ $('spCode').select(); try{ navigator.clipboard.writeText($('spCode').value); }catch(e){} toast('복사했어요 · 홈 화면 앱에 붙여 넣어요', 2600); };
-    $('spPaste').onclick = ()=>{ const v = $('spIn').value; if(v.trim()) this.useLinkCode(v); $('spIn').value = ''; };
-    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) this.poll(); });
-    this.render(); this.handleRedirect().then(()=>this.poll());
+    $('ytClose').onclick = ()=>{ if(this._pl) this._pl.pauseVideo(); this.playing = false; $('ytWin').hidden = true; this.render(); };
+    // 영상 창 끌어서 옮기기
+    const w = $('ytWin'), bar = $('ytBar'); let sx, sy, ox, oy;
+    bar.addEventListener('pointerdown', e=>{ sx = e.clientX; sy = e.clientY; const r = w.getBoundingClientRect(); ox = r.left; oy = r.top; bar.setPointerCapture(e.pointerId); });
+    bar.addEventListener('pointermove', e=>{ if(sx == null) return; w.style.left = Math.max(0, Math.min(innerWidth - w.offsetWidth, ox + e.clientX - sx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - w.offsetHeight, oy + e.clientY - sy)) + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; });
+    bar.addEventListener('pointerup', ()=>{ sx = null; });
+    document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
+    this.render();
   }
 };
-
 Music.init();
 
 /* ═══ 오프라인: 한 번 열면 그림·코드가 기기에 저장된다 ═══ */
