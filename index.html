@@ -143,7 +143,7 @@
     #brand{margin-bottom:6px;padding:4px 8px} #brand::after{display:none}
     #time{font-size:48px;margin-top:2px;box-shadow:5px 5px 0 var(--bleu)}
     #tbar{height:9px;margin-top:8px} #pomo{margin-top:6px!important} #row{margin-top:6px!important}
-    #music{min-height:0;padding:5px 6px 7px;margin-bottom:6px} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
+    #app>#music{position:absolute;right:calc(14px + env(safe-area-inset-right));bottom:30px;z-index:9;width:min(340px,40vw);min-height:0;padding:5px 6px 7px;margin:0} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
     #music .mt b{font-size:13px} #music button{height:28px} #music .pp{width:30px;height:30px}
     #recent{margin-top:5px!important}
     #go,#quit,#warm{height:36px!important} #sline{margin-bottom:5px!important} #bottom{padding-top:24px!important}
@@ -274,10 +274,29 @@
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
-  /* 유튜브: 화면엔 안 보이게(소리만). 재생이 막히지 않도록 크기는 유지하고 투명하게 맨 뒤에 둔다 */
-  #ytWin{position:absolute;left:0;top:0;z-index:-1;width:200px;height:200px;opacity:0;pointer-events:none;overflow:hidden}
-  #ytBox,#ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
-  #ytBar{display:none}
+  /* 유튜브 플레이어: 평소엔 안 보이게(소리만), '지금' 화면을 열면 그 자리에 실제 영상으로 */
+  #ytWin{position:fixed;left:0;top:0;z-index:0;width:200px;height:200px;opacity:0;pointer-events:none;overflow:hidden}
+  #ytWin.show{z-index:40;opacity:1;pointer-events:auto;outline:3px solid #fff;box-shadow:7px 7px 0 var(--bleu);background:#000}
+  #ytBox,#ytBox iframe,#ytFrame{width:100%;height:100%;display:block}
+  /* 지금 화면 */
+  #ytNow{text-align:left}
+  #ytNow .vidspot{width:100%;aspect-ratio:16/9;margin:4px 0 16px;background:#000}
+  #ytNow .ti{font:600 16px/1.35 var(--sans);color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+  #ytNow .ch{display:flex;align-items:center;gap:10px;margin:10px 0 14px;width:100%;text-align:left}
+  #ytNow .ch i{width:30px;height:30px;border-radius:50%;background:var(--bleu);color:#fff;display:grid;place-items:center;font:600 13px var(--sans);font-style:normal;flex:none}
+  #ytNow .ch span{flex:1;min-width:0;font:13px var(--sans);color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #ytNow .ch em{font:10px 'American Typewriter','Courier New',monospace;color:#8b8ff5;font-style:normal;letter-spacing:.1em}
+  #ytNow input[type=range]{width:100%;accent-color:var(--bleu);height:18px;margin:0}
+  #ytNow .tm{display:flex;justify-content:space-between;font:10px monospace;color:#888}
+  #ytNow .ctl{display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px}
+  #ytNow .ctl button{width:44px;height:44px;display:grid;place-items:center;color:#fff} #ytNow .ctl svg{width:22px;fill:currentColor}
+  #ytNow .ctl .pp{width:60px;height:60px;background:var(--bleu);box-shadow:4px 4px 0 #fff}
+  #ytNow .ctl .on{color:#8b8ff5} #ytNow .ctl .lbl{display:flex;flex-direction:column;align-items:center;gap:2px;width:52px} #ytNow .ctl .lbl small{font:9px var(--sans);letter-spacing:.06em;color:inherit}
+  #ytNow h4{margin:18px 0 6px}
+  /* 채널 */
+  .chhead{display:flex;align-items:center;gap:10px;margin:0 14px 12px} .chhead button{color:#fff;font-size:20px;width:30px}
+  .chhead b{font:600 16px var(--sans)!important;margin:0!important;color:#fff} .chhead i{width:36px;height:36px;border-radius:50%;background:var(--bleu);display:grid;place-items:center;font:600 15px var(--sans);font-style:normal;color:#fff}
+  .yv .meta .chlink{color:#aaa;text-decoration:none}
   /* 검색: 유튜브처럼 큰 미리보기 + 길이 + 채널·조회수·올린 날 */
   #spSheet.wide{padding:0} #spSheet.wide .pc{width:100%;height:100%;max-height:none;box-shadow:none;padding:calc(10px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom))}
   #spSheet.wide .pc>small,#spSheet.wide .pc>b,#spSheet.wide #spTabs{margin-left:14px;margin-right:14px} #spSheet.wide .pb{margin:8px 14px 0}
@@ -355,6 +374,7 @@
   @media (prefers-reduced-motion:reduce){ .layer .o canvas,.tw,.orb{animation:none} }
   #loading{position:absolute;inset:0;display:grid;place-items:center;font:italic 13px var(--serif);color:var(--grey);z-index:1}
 </style></head><body>
+<div id="ytWin" hidden><div id="ytBox"><div id="ytFrame"></div></div></div>
 <div id="app">
   <svg id="bg1" class="layer"></svg><div id="bgo" class="layer"></div><svg id="bg2" class="layer"></svg>
   <header id="top">
@@ -378,8 +398,6 @@
       <svg id="haloF"></svg>
     </div>
     <div id="stageLbl"><b>CÉLESTE</b><span id="stageName">plâtre</span></div>
-    <div id="ytWin" hidden><div id="ytBox"><div id="ytFrame"></div></div>
-      <div id="ytBar"><span>TÉLÉ · MINUIT</span><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div></div>
     <div id="doves"></div>
   </main>
 
@@ -1061,6 +1079,7 @@ function fit(){
   const h = appH() + 'px';
   for(const el of [document.documentElement, document.body, $('app')]){ el.style.height = h; el.style.minHeight = h; }
   const st = $('stage'), land = matchMedia('(orientation:landscape) and (max-height:600px)').matches;
+  { const m = $('music'); if(land && m.parentNode !== $('app')) $('app').appendChild(m); else if(!land && m.parentNode === $('app')) $('bottom').insertBefore(m, $('sline')); }   // 가로: 음악 줄은 무대 오른쪽 아래로
   // 난간 윗선(원화 y 2018)을 아래 띠(세로: 패널 위 마름모 띠 / 가로: 무대 아래 띠)에 딱 맞춘다 → 팔짱 낀 팔이 띠 위에 얹힌 모양
   const H = (land ? st.clientHeight - 20 : $('bottom').getBoundingClientRect().top - st.getBoundingClientRect().top) + 2, BOT = 2018;   // 띠 윗선까지
   const sc = Math.min(H / (BOT - 245), st.clientWidth*(land ? .98 : 1.02) / 980);   // 980 = 팔 폭, 40 = 헤일로 여유
@@ -1085,8 +1104,8 @@ const YT_PRESET = [
 const Music = {
   p:null, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
-    this.key = o.key || ''; this.auto = o.auto !== false; this.loop = o.loop; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
-  save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur, loop:this.loop})); }catch(e){} },
+    this.key = o.key || ''; this.auto = o.auto !== false; this.loop = !!o.loop; this.autoplay = o.autoplay !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
+  save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur, loop:this.loop, autoplay:this.autoplay})); }catch(e){} },
   api(){                                                   // 유튜브 플레이어 스크립트는 처음 재생할 때 불러온다
     if(this.apiP) return this.apiP;
     return this.apiP = new Promise(res=>{ window.onYouTubeIframeAPIReady = res; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); });
@@ -1094,12 +1113,13 @@ const Music = {
   async mount(){
     if(this.p) return this.p; await this.api();
     return this.p = new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%', playerVars:{playsinline:1, rel:0, modestbranding:1, origin:location.origin},
-      events:{onReady:()=>{ this.ready = true; res(pl); }, onStateChange:e=>this.onState(e)}}); });
+      events:{onReady:()=>{ this.ready = true; res(pl); }, onStateChange:e=>this.onState(e),
+        onError:()=>{ if(this.radio && this.cur){ this.radio = false; this._pl.loadVideoById(this.cur.id); } }}}); });   // 믹스가 안 되면 그 영상만
   },
   onState(e){
     this.playing = e.data === YT.PlayerState.PLAYING;
     if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
-    if(e.data === YT.PlayerState.ENDED && this.cur && this.cur.type === 'video'){ if(this.loop !== false) this._pl.playVideo(); else this.skip(1); }   // 영상 하나: 반복 또는 다음 저장곡
+    if(e.data === YT.PlayerState.ENDED && this.loop){ this._pl.seekTo(0, true); this._pl.playVideo(); }   // 한 곡 반복
     if(e.data === YT.PlayerState.PLAYING && this.cur){ const d = this._pl.getVideoData(); if(d && d.video_id) this.vid = d.video_id; }
     this.render(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet();
   },
@@ -1108,14 +1128,17 @@ const Music = {
     const pl = this._pl = await this.mount();
     $('ytWin').hidden = false;
     this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.save();
-    if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'}); else pl.loadVideoById(item.id);
+    this.radio = false; this.chId = item.ch || '';
+    if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'});
+    else if(this.autoplay !== false && !this.loop){ this.radio = true; pl.loadPlaylist({list:'RD' + item.id, listType:'playlist', index:0}); }   // 유튜브가 고른 다음 곡들
+    else pl.loadVideoById(item.id);
     pl.playVideo(); this.render();
   },
   async toggle(){
     if(!this._pl || $('ytWin').hidden){ const it = this.cur || this.lib[0]; if(it) this.start(it); return; }
     this.playing ? this._pl.pauseVideo() : this._pl.playVideo();
   },
-  skip(d){ if(!this._pl) return; if(this.cur && this.cur.type === 'playlist'){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
+  skip(d){ if(!this._pl) return; if(this.cur && (this.cur.type === 'playlist' || this.radio)){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
     else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
   onFocus(){}, onBreak(){},
   parse(url){                                              // 유튜브 링크 → 영상/재생목록
@@ -1136,17 +1159,17 @@ const Music = {
   },
   async search(q, more){
     if(!this.key){ this.renderSheet(); return; }
-    if(!more){ this.q = q; this.found = []; this.next = ''; this.renderSheet(); }
+    if(!more){ if(q != null) this.q = q; this.found = []; this.next = ''; this.renderSheet(); }
     if(this.busy) return; this.busy = true;
     const K = '&key=' + encodeURIComponent(this.key);
     try{
-      const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&type=' + (this.kind || 'video') + '&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(this.q) + (this.next ? '&pageToken=' + this.next : '') + K);
+      const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&type=' + (this.chan ? 'video&order=date&channelId=' + this.chan.id : (this.kind || 'video') + '&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(this.q)) + (this.next ? '&pageToken=' + this.next : '') + K);
       const j = await r.json();
       if(!r.ok){ toast('검색 실패 · ' + String((j.error && j.error.message) || r.status).slice(0, 80), 5000); this.busy = false; return; }
       this.next = j.nextPageToken || '';
       const txt = h => new DOMParser().parseFromString(h, 'text/html').body.textContent;
       const items = (j.items || []).map(x=>({type:x.id.kind === 'youtube#playlist' ? 'playlist' : 'video', id:x.id.videoId || x.id.playlistId,
-        title:txt(x.snippet.title), by:x.snippet.channelTitle, at:x.snippet.publishedAt, live:x.snippet.liveBroadcastContent === 'live',
+        title:txt(x.snippet.title), by:x.snippet.channelTitle, ch:x.snippet.channelId, at:x.snippet.publishedAt, live:x.snippet.liveBroadcastContent === 'live',
         img:(x.snippet.thumbnails.high || x.snippet.thumbnails.medium || x.snippet.thumbnails.default || {}).url})).filter(x=>x.id);
       const vids = items.filter(x=>x.type === 'video').map(x=>x.id);
       if(vids.length){ try{ const d = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=' + vids.join(',') + K)).json();
@@ -1158,6 +1181,7 @@ const Music = {
     }catch(e){ toast('검색 실패 · 인터넷을 확인해 주세요', 3000); }
     this.busy = false; this.renderResults();
   },
+  openChannel(id, name){ this.chan = {id, name}; $('spSheet').hidden = false; this.renderSheet('search'); this.search(null); },
   fmtDur(iso){ if(!iso) return ''; const m = iso.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || []; const h = (+m[1] || 0)*24 + (+m[2] || 0), mi = +m[3] || 0, se = +m[4] || 0;
     if(!h && !mi && !se) return ''; return (h ? h + ':' + String(mi).padStart(2, '0') : mi) + ':' + String(se).padStart(2, '0'); },
   fmtViews(n){ if(n == null || isNaN(n)) return ''; return '조회수 ' + (n >= 1e8 ? (n/1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억회' : n >= 1e4 ? (n/1e4).toFixed(n >= 1e5 ? 0 : 1).replace(/\.0$/, '') + '만회' : n >= 1e3 ? (n/1e3).toFixed(1).replace(/\.0$/, '') + '천회' : n + '회'); },
@@ -1169,7 +1193,7 @@ const Music = {
     if(!this.found.length){ box.innerHTML = this.busy ? '<p class="none">찾는 중…</p>' : this.q ? '<p class="none">찾지 못했어요</p>' : '<p class="none">듣고 싶은 걸 검색해요</p>'; return; }
     box.innerHTML = this.found.map((x, i)=>'<article class="yv" data-a="play" data-s="found" data-i="' + i + '"><div class="th"><img loading="lazy" src="' + x.img + '" alt="">' +
       (x.live ? '<span class="tag live">LIVE</span>' : x.type === 'playlist' ? '<span class="tag">' + SPI.list + (x.count ? x.count + '개' : '재생목록') + '</span>' : this.fmtDur(x.dur) ? '<span class="tag">' + this.fmtDur(x.dur) + '</span>' : '') +
-      '</div><div class="meta"><i class="av">' + esc((x.by || '?').slice(0, 1)) + '</i><div><h5>' + esc(x.title) + '</h5><p>' + esc(x.by || '') + (x.views != null ? ' · ' + this.fmtViews(x.views) : '') + (x.at ? ' · ' + this.fmtAgo(x.at) : '') + '</p></div>' +
+      '</div><div class="meta"><i class="av" data-a="ch" data-i="' + i + '">' + esc((x.by || '?').slice(0, 1)) + '</i><div><h5>' + esc(x.title) + '</h5><p><span class="chlink" data-a="ch" data-i="' + i + '">' + esc(x.by || '') + '</span>' + (x.views != null ? ' · ' + this.fmtViews(x.views) : '') + (x.at ? ' · ' + this.fmtAgo(x.at) : '') + '</p></div>' +
       '<button class="keep" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button></div></article>').join('') +
       (this.next ? '<p class="none more">' + (this.busy ? '불러오는 중…' : '아래로 내리면 더 보여요') + '</p>' : '');
   },
@@ -1182,6 +1206,13 @@ const Music = {
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
+    const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot');
+    const on = spot && !$('spSheet').hidden && this.tab === 'now' && this._pl;
+    w.classList.toggle('show', !!on);
+    if(on){ const r = spot.getBoundingClientRect(); Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px'}); requestAnimationFrame(()=>this.place()); }
+    else Object.assign(w.style, {left:'0', top:'0', width:'200px', height:'200px'});
+  },
   nowTick(){                                               // 지금 화면: 진행 막대·시간
     clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
     const d = pl.getDuration ? pl.getDuration() : 0, t = pl.getCurrentTime ? pl.getCurrentTime() : 0, mm = x=>{ x = Math.max(0, Math.floor(x)); const h = Math.floor(x/3600), m = Math.floor(x/60)%60, s = x%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
@@ -1190,21 +1221,22 @@ const Music = {
   },
   renderNow(box){
     const it = this.cur, pl = this._pl;
-    if(!it){ box.innerHTML = '<p class="none">재생 중인 음악이 없어요. 저장한 음악이나 검색에서 골라요</p>'; return; }
-    const vid = this.vid || (it.type === 'video' ? it.id : ''), big = vid ? 'https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg' : (it.img || '');
+    if(!it){ box.innerHTML = '<p class="none">재생 중인 음악이 없어요. 저장한 음악이나 검색에서 골라요</p>'; this.place(); return; }
     const list = pl && pl.getPlaylist ? pl.getPlaylist() : null, idx = pl && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
-    box.innerHTML = '<div id="ytNow" class="now">' + (big ? '<img class="cover" src="' + big + '" alt="">' : '') +
-      '<b>' + esc(this.title || it.title || '') + '</b><em>' + esc(this.by || it.by || '') + (it.type === 'playlist' && list ? ' · 재생목록 ' + (idx + 1) + '/' + list.length : '') + '</em>' +
+    const by = this.by || it.by || '';
+    box.innerHTML = '<div id="ytNow">' + (pl ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+      '<h3 class="ti">' + esc(this.title || it.title || '') + '</h3>' +
+      '<button class="ch" data-a="chan"><i>' + esc(by.slice(0, 1) || '♪') + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
-      '<div class="ctl"><button data-a="loop" class="' + (this.loop !== false ? 'on' : '') + '" aria-label="반복">' + SPI.repeat1 + '</button><button data-a="prev">' + SPI.prev + '</button>' +
+      '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
-      '<button data-a="sheet" aria-label="목록">' + SPI.list + '</button></div>' +
-      (list && list.length > 1 ? '<h4>다음 곡</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>'<button class="li" data-a="pi" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + (idx + 2 + k) + '번째 곡</b><em>눌러서 바로 듣기</em></span></button>').join('') : '') + '</div>';
+      '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
+      (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>'<button class="li" data-a="pi" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + (k + 1) + '</b><em>눌러서 바로 듣기</em></span></button>').join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
-    this.nowTick();
+    this.nowTick(); this.place();
   },
   renderSheet(tab){
-    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search');
+    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); if(this.tab !== 'now') this.place();
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
     if(this.tab === 'now'){ document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === 'now')); this.renderNow($('spBody')); return; }
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
@@ -1223,7 +1255,9 @@ const Music = {
       const k = this.kind || 'video';
       box.innerHTML = '<form id="ytQ" class="yq" autocomplete="off"><input id="ytQin" type="search" placeholder="검색" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit" aria-label="검색"><svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg></button></form>' +
         '<nav class="chips"><button data-k="video" class="' + (k === 'video' ? 'on' : '') + '">동영상</button><button data-k="playlist" class="' + (k === 'playlist' ? 'on' : '') + '">재생목록</button><button data-a="forget" class="ghost">키 지우기</button></nav><div id="ytRes"></div>';
-      $('ytQ').onsubmit = e=>{ e.preventDefault(); const v = $('ytQin').value.trim(); $('ytQin').blur(); if(v) this.search(v); };
+      if(this.chan){ box.insertAdjacentHTML('afterbegin', '<div class="chhead"><button type="button" data-a="unchan" aria-label="뒤로">‹</button><i>' + esc(this.chan.name.slice(0, 1)) + '</i><b>' + esc(this.chan.name) + '</b></div>');
+        box.querySelector('#ytQ').style.display = 'none'; box.querySelector('.chips').style.display = 'none'; }
+      $('ytQ').onsubmit = e=>{ e.preventDefault(); const v = $('ytQin').value.trim(); $('ytQin').blur(); if(v){ this.chan = null; this.search(v); } };
       box.querySelector('.chips').onclick = e=>{ const c = e.target.closest('[data-k]'); if(!c) return; this.kind = c.dataset.k; this.renderSheet(); if(this.q) this.search(this.q); };
       box.onscroll = ()=>{ if(this.next && !this.busy && box.scrollTop + box.clientHeight > box.scrollHeight - 400) this.search(this.q, true); };
       this.renderResults(); return;
@@ -1232,7 +1266,11 @@ const Music = {
   act(b){
     const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open('lib'); if(a === 'now') return this.open('now');
+    if(a === 'unchan'){ this.chan = null; this.found = []; this.renderSheet(); if(this.q) this.search(this.q); return; }
     if(a === 'loop'){ this.loop = !this.loop; this.save(); this.renderSheet(); return; }
+    if(a === 'autoplay'){ this.autoplay = this.autoplay === false; this.save(); toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); this.renderSheet(); return; }
+    if(a === 'chan'){ const id = this.chId || (this.cur && this.cur.ch); if(id && this.key){ this.openChannel(id, this.by || this.cur.by); } else if(!this.key) toast('채널 보기는 검색 키가 있어야 해요', 2000); return; }
+    if(a === 'ch'){ const x = this.found[i]; if(x && x.ch) this.openChannel(x.ch, x.by); return; }
     if(a === 'pi'){ this._pl && this._pl.playVideoAt(i); return; }
     if(a === 'play'){ const it = (src === 'lib' ? this.lib : this.found)[i]; if(it){ this.start(it); toast('재생할게요 ♪', 1200); } return; }
     if(a === 'keep'){ const it = Object.assign({}, this.found[i]); if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
@@ -1244,8 +1282,7 @@ const Music = {
     $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
     $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b){ e.stopPropagation(); this.act(b); } };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
-    $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
-    $('ytClose').onclick = ()=>{ if(this._pl) this._pl.pauseVideo(); this.playing = false; $('ytWin').hidden = true; this.render(); };
+    $('spClose').onclick = ()=>{ $('spSheet').hidden = true; this.place(); };
     document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
     this.render();
   }
