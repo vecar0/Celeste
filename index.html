@@ -133,7 +133,8 @@
   #stats::after{content:"";position:absolute;right:-9px;top:-9px;width:18px;height:18px;background:var(--bleu);
     clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
   #toast{position:fixed;left:50%;top:64%;transform:translate(-50%,-50%);z-index:20;background:var(--ink);color:var(--paper);
-    padding:10px 18px;font:italic 15px var(--serif);opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
+    padding:10px 18px;font:italic 15px var(--serif);opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;max-width:90vw}
+  #toast:not(:empty){white-space:normal;text-align:center;width:max-content}
   #toast.on{opacity:1}
   /* 가로: 왼쪽 시간·버튼, 오른쪽 무대 */
   @media (orientation:landscape) and (max-height:600px){
@@ -1088,10 +1089,11 @@ const Music = {
     const r = await fetch('https://api.spotify.com/v1' + path, Object.assign({}, opt, {headers:Object.assign({Authorization:'Bearer ' + this.tok.a}, opt.body ? {'Content-Type':'application/json'} : {})}));
     if(r.status === 401){ this.tok.e = 0; return this.api(path, opt); }
     if(r.status === 204 || r.status === 202) return {};
-    if(!r.ok){ let m = ''; try{ m = (await r.json()).error.reason || ''; }catch(e){}
-      if(m === 'NO_ACTIVE_DEVICE' || r.status === 404) return {noDevice:true};
+    if(!r.ok){ let m = '', msg = ''; try{ const e = (await r.json()).error || {}; m = e.reason || ''; msg = e.message || ''; }catch(e){}
+      this.lastErr = r.status + ' ' + (m || msg);
+      if(m === 'NO_ACTIVE_DEVICE' || /active device/i.test(msg)) return {noDevice:true, err:r.status, msg};
       if(r.status === 403 && /PREMIUM/.test(m)) toast('스포티파이 프리미엄이 필요해요', 2600);
-      return {err:r.status}; }
+      return {err:r.status, msg:msg || m}; }
     const t = await r.text(); return t ? JSON.parse(t) : {};
   },
   async poll(){
@@ -1118,22 +1120,21 @@ const Music = {
     let r = await this.api('/me/player/play', {method:'PUT', body});
     if(r && r.noDevice){ const id = await this.device(); if(id) r = await this.api('/me/player/play?device_id=' + id, {method:'PUT', body}); }
     this.after(r); },
-  async playTrack(uri, ctx){
-    const tries = [];
+  async playTrack(uri, ctx){                               // 곡 하나: ① 곡만 ② 앨범 안에서 그 곡부터 ③ 대기열에 넣고 넘기기
+    if(!uri || !/^spotify:/.test(uri)){ toast('곡 정보를 못 받았어요', 2400); return; }
+    toast('재생 요청 중…', 1200);
+    const dev = this.state && this.state.device && this.state.device.id;     // 지금 재생 중인 기기에 바로 (없으면 스포티파이가 고르게)
+    const q = dev ? '?device_id=' + encodeURIComponent(dev) : '', tries = [JSON.stringify({uris:[uri]})];
     if(ctx) tries.push(JSON.stringify({context_uri:ctx, offset:{uri}}));
-    tries.push(JSON.stringify({uris:[uri]}));
-    let r, id = '';
-    for(const body of tries){
-      r = await this.api('/me/player/play' + id, {method:'PUT', body});
-      if(r && r.noDevice){ const d = await this.device(); if(!d) return; id = '?device_id=' + d; r = await this.api('/me/player/play' + id, {method:'PUT', body}); }
-      if(r && !r.err && !r.noDevice) break;
-    }
-    if(r && (r.err || r.noDevice)){                       // 마지막 방법: 대기열에 넣고 바로 넘기기
-      const q = await this.api('/me/player/queue?uri=' + encodeURIComponent(uri), {method:'POST'});
-      if(q && !q.err){ r = await this.api('/me/player/next', {method:'POST'}); }
-    }
-    if(r && !r.err){ toast('재생할게요 ♪', 1400); if(this.state){ this.state.is_playing = true; this.render(); } }
-    this.after(r, 900);
+    let r, errs = [];
+    let qq = q;
+    for(const body of tries){ r = await this.api('/me/player/play' + qq, {method:'PUT', body});
+      if(r && r.noDevice){ const d = await this.device(); if(!d) return; qq = '?device_id=' + encodeURIComponent(d); r = await this.api('/me/player/play' + qq, {method:'PUT', body}); }
+      if(r && !r.err) break; errs.push(r && (r.err + ' ' + (r.msg || ''))); }
+    if(!r || r.err){ const a = await this.api('/me/player/queue?uri=' + encodeURIComponent(uri) + qq.replace('?', '&'), {method:'POST'});
+      if(a && !a.err){ r = await this.api('/me/player/next' + qq, {method:'POST'}); } else errs.push(a && (a.err + ' ' + (a.msg || ''))); }
+    if(r && !r.err){ toast('재생할게요 ♪', 1400); if(this.state){ this.state.is_playing = true; this.render(); } this.after(null, 900); return; }
+    toast('재생이 안 됐어요 · ' + errs.filter(Boolean).join(' / ').slice(0, 90), 6000);
   },
   after(r, ms = 700){ if(r && r.err) toast('스포티파이가 거절했어요 (' + r.err + ') · 스포티파이 앱을 한 번 열어 주세요', 3000);
     setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, ms); },
@@ -1224,7 +1225,8 @@ const Music = {
   async checkLike(id){ if(!id || this.likeId === id) return; this.likeId = id;
     const r = await this.api('/me/library/contains?uris=' + encodeURIComponent('spotify:track:' + id)); const v = Array.isArray(r) && r[0];
     if(v !== this.liked){ this.liked = v; if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); } },
-  async sheetAct(b){
+  async sheetAct(b){ try{ await this.sheetAct2(b); }catch(e){ toast('오류: ' + (e && e.message || e), 5000); } },
+  async sheetAct2(b){
     const a = b.dataset.a, u = b.dataset.u, s = this.state || {};
     if(a === 'login') return this.login();
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1);
