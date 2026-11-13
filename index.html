@@ -274,17 +274,10 @@
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
-  /* 유튜브: 콜라주에 붙인 흑백 사진 액자 (캐릭터 뒤) */
-  #ytWin{position:absolute;left:6px;top:46%;z-index:1;padding:7px 7px 0;background:#f4f3ef;box-shadow:3px 4px 0 #0003, 6px 6px 0 var(--bleu);transform:rotate(-4deg);transform-origin:20% 80%}
-  #ytWin[hidden]{display:none}
-  #ytBox{width:150px;height:150px;overflow:hidden;background:#111;position:relative}
-  #ytBox iframe,#ytFrame{width:150px;height:150px;display:block;filter:grayscale(1) contrast(1.15) brightness(.95)}
-  #ytBox::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,#0000 55%,#0005),repeating-linear-gradient(0deg,#0000 0 2px,#0000000f 2px 3px)}
-  #ytBar{display:flex;justify-content:space-between;align-items:center;height:22px;font:italic 9px var(--serif);letter-spacing:.2em;color:#555}
-  #ytBar button{width:20px;height:20px;color:#888;font-size:14px}
-  #ytWin .tape{position:absolute;width:46px;height:14px;background:#e9e8e3cc;box-shadow:0 1px 1px #0002;z-index:2}
-  #ytWin .t1{left:-12px;top:-5px;transform:rotate(-28deg)} #ytWin .t2{right:-10px;top:-4px;transform:rotate(24deg)}
-  @media (orientation:landscape) and (max-height:600px){ #ytWin{left:auto;right:18px;top:16%;transform:rotate(3deg)} #ytBox,#ytBox iframe,#ytFrame{width:130px;height:130px} }
+  /* 유튜브: 화면엔 안 보이게(소리만). 재생이 막히지 않도록 크기는 유지하고 투명하게 맨 뒤에 둔다 */
+  #ytWin{position:absolute;left:0;top:0;z-index:-1;width:200px;height:200px;opacity:0;pointer-events:none;overflow:hidden}
+  #ytBox,#ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
+  #ytBar{display:none}
   #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
   #spBody form.row{margin-bottom:6px}
   /* 음악 창: 검은 레코드 슬리브 — 음악 줄과 같은 결 */
@@ -361,7 +354,7 @@
       <svg id="haloF"></svg>
     </div>
     <div id="stageLbl"><b>CÉLESTE</b><span id="stageName">plâtre</span></div>
-    <div id="ytWin" hidden><i class="tape t1"></i><i class="tape t2"></i><div id="ytBox"><div id="ytFrame"></div></div>
+    <div id="ytWin" hidden><div id="ytBox"><div id="ytFrame"></div></div>
       <div id="ytBar"><span>TÉLÉ · MINUIT</span><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div></div>
     <div id="doves"></div>
   </main>
