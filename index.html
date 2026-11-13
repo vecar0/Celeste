@@ -272,7 +272,10 @@
   #ytWin{position:fixed;right:10px;bottom:190px;z-index:25;width:200px;background:var(--ink);box-shadow:5px 5px 0 var(--bleu);outline:2px solid #fff}
   #ytWin[hidden]{display:none}
   #ytBar{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;font:600 8px var(--sans);letter-spacing:.3em;color:#8b8ff5;touch-action:none;cursor:grab}
-  #ytBar button{color:#fff;font-size:16px;width:24px;height:20px;line-height:1}
+  #ytBar button{color:#fff;font-size:16px;width:24px;height:20px;line-height:1} #ytBar span{flex:1}
+  /* 최소화: 작은 띠로 접고(소리는 계속) 탭하면 다시 펼침 */
+  #ytWin.min{width:112px} #ytWin.min #ytBox,#ytWin.min #ytBox iframe,#ytWin.min #ytFrame{width:112px;height:63px}
+  #ytWin.min #ytBar span{font-size:0} #ytWin.min #ytBar span::before{content:"♪";font-size:10px}
   #ytBox{width:200px;height:200px;background:#000;display:grid;place-items:center} #ytBox iframe,#ytFrame{width:200px;height:200px;display:block}
   #spBody .hint{font:10px monospace;color:#888;text-align:center;margin:12px 0} #spBody .link{color:#8b8ff5;text-decoration:underline;font:inherit}
   #spBody form.row{margin-bottom:6px}
@@ -382,7 +385,7 @@
     <div class="pb"><button id="spClose" type="button">닫기</button></div>
   </div>
 </section>
-<div id="ytWin" hidden><div id="ytBar"><span>♪ YOUTUBE</span><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div><div id="ytBox"><div id="ytFrame"></div></div></div>
+<div id="ytWin" hidden><div id="ytBar"><span>♪ YOUTUBE</span><button id="ytMin" type="button" aria-label="작게/크게">–</button><button id="ytClose" type="button" aria-label="음악 끄기">×</button></div><div id="ytBox"><div id="ytFrame"></div></div></div>
 <div id="ga" hidden><small>VERROU</small><b>측면 버튼 세 번</b>
   <div class="side"><i></i><u></u></div>
   <p>지금 누르면 끝날 때까지 이 앱 밖으로 못 나가요<br>(처음 한 번은 화면에서 '시작')</p></div>
@@ -1161,10 +1164,13 @@ const Music = {
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
     $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
+    const setMin = v=>{ $('ytWin').classList.toggle('min', v); $('ytMin').textContent = v ? '□' : '–'; try{ localStorage.setItem('bleu.ytMin', v ? '1' : '0'); }catch(e){} };
+    try{ setMin(localStorage.getItem('bleu.ytMin') === '1'); }catch(e){}
+    $('ytMin').onclick = e=>{ e.stopPropagation(); setMin(!$('ytWin').classList.contains('min')); };
     $('ytClose').onclick = ()=>{ if(this._pl) this._pl.pauseVideo(); this.playing = false; $('ytWin').hidden = true; this.render(); };
     // 영상 창 끌어서 옮기기
     const w = $('ytWin'), bar = $('ytBar'); let sx, sy, ox, oy;
-    bar.addEventListener('pointerdown', e=>{ sx = e.clientX; sy = e.clientY; const r = w.getBoundingClientRect(); ox = r.left; oy = r.top; bar.setPointerCapture(e.pointerId); });
+    bar.addEventListener('pointerdown', e=>{ if(e.target.closest('button')) return; sx = e.clientX; sy = e.clientY; const r = w.getBoundingClientRect(); ox = r.left; oy = r.top; bar.setPointerCapture(e.pointerId); });
     bar.addEventListener('pointermove', e=>{ if(sx == null) return; w.style.left = Math.max(0, Math.min(innerWidth - w.offsetWidth, ox + e.clientX - sx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - w.offsetHeight, oy + e.clientY - sy)) + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; });
     bar.addEventListener('pointerup', ()=>{ sx = null; });
     document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
