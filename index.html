@@ -203,18 +203,44 @@
   #music .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--bleu);width:0}
   #spSheet{position:fixed;inset:0;z-index:32;background:#12121299;display:grid;place-items:center;padding:16px}
   #spSheet[hidden]{display:none}
-  #spSheet .pc{width:min(380px,100%);max-height:88%;overflow:auto;background:var(--paper2);outline:1px solid var(--ink);box-shadow:6px 6px 0 var(--bleu);padding:16px}
+  #spSheet .pc{width:min(380px,100%);height:min(680px,88%);display:flex;flex-direction:column;overflow:hidden;background:var(--paper2);outline:1px solid var(--ink);box-shadow:6px 6px 0 var(--bleu);padding:16px}
   #spSheet small{font:600 9px var(--sans);letter-spacing:.34em;color:var(--bleu)}
   #spSheet b{display:block;font:400 22px var(--serif);margin:2px 0 8px}
   #spSheet p{font:11px/1.5 'American Typewriter','Courier New',monospace;color:#555;margin:4px 0 8px}
   #spSheet .opt{display:flex;gap:8px;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px dashed #0002}
   #spSheet .row{display:flex;gap:6px} #spSheet .row input{flex:1;min-width:0;font:14px monospace;padding:6px;border:1px solid var(--ink);border-radius:0;-webkit-user-select:text;user-select:text}
   #spSheet .row button{background:var(--ink);color:#fff;padding:0 12px}
-  #spList{display:grid;gap:4px;margin:8px 0}
-  #spList button{display:flex;align-items:center;gap:8px;text-align:left;padding:4px;background:#fff;outline:1px solid #0002;font-size:13px}
-  #spList button.on{outline:2px solid var(--bleu)}
-  #spList img,#spList .art{width:36px;height:36px;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--bleu);color:#fff;font-style:normal}
-  #spList .none{text-align:center}
+  #spTabs{display:flex;margin:4px 0 10px;border-bottom:1px solid var(--ink)}
+  #spTabs button{flex:1;padding:8px 0 7px;font:13px var(--sans);letter-spacing:.08em;color:#777;border-bottom:3px solid transparent;margin-bottom:-1px}
+  #spTabs button.on{color:var(--ink);border-bottom-color:var(--bleu)}
+  #spBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px}
+  #spBody h4{margin:12px 0 6px;font:600 9px var(--sans);letter-spacing:.3em;color:var(--bleu)}
+  #spBody .none{text-align:center;font:11px/1.5 'American Typewriter','Courier New',monospace;color:#777;margin:18px 0}
+  #spBody .li{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:5px;background:#fff;outline:1px solid #0001;margin-bottom:4px;font-size:13px;color:var(--ink)}
+  #spBody .li[data-on],#spBody .li.on{outline:2px solid var(--bleu)}
+  #spBody .li img,#spBody .li .art,#spBody .li svg{width:40px;height:40px;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--bleu);color:#fff;font-style:normal}
+  #spBody .li svg{background:none;fill:var(--ink);padding:8px}
+  #spBody .li span{min-width:0;display:flex;flex-direction:column}
+  #spBody .li b{display:block;margin:0;font:400 14px/1.3 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #spBody .li em{font:10px 'American Typewriter','Courier New',monospace;color:#777;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #spBody .tr{display:flex;gap:4px;align-items:stretch} #spBody .tr .li{flex:1;min-width:0}
+  #spBody .add{width:44px;background:var(--ink);margin-bottom:4px;display:grid;place-items:center} #spBody .add svg{width:18px;fill:#fff}
+  #spBody .big{display:block;width:100%;height:44px;background:var(--bleu);color:#fff;letter-spacing:.1em}
+  #spBody .re{font-size:12px;background:#fff;outline:1px dashed var(--bleu);padding:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  #spBody .re button{background:var(--bleu);color:#fff;padding:5px 10px;flex:none}
+  .now{text-align:center}
+  .now .cover{width:62%;aspect-ratio:1;object-fit:cover;outline:3px solid #fff;box-shadow:6px 6px 0 var(--bleu);transform:rotate(-2deg);margin:6px 0 14px}
+  .now>b{display:block;font:italic 400 20px var(--serif)} .now>em{display:block;font:11px 'American Typewriter','Courier New',monospace;color:#666;font-style:normal;margin:2px 0 10px}
+  .now input[type=range]{width:100%;accent-color:var(--bleu)}
+  .now .tm{display:flex;justify-content:space-between;font:10px monospace;color:#777;margin-top:-2px}
+  .now .ctl{display:flex;justify-content:space-between;align-items:center;margin:8px 4px}
+  .now .ctl button{width:44px;height:44px;display:grid;place-items:center;color:var(--ink)} .now .ctl svg{width:22px;fill:currentColor}
+  .now .ctl .on{color:var(--bleu)} .now .ctl .pp{width:58px;height:58px;background:var(--bleu);color:#fff;box-shadow:4px 4px 0 var(--ink)}
+  .now .ctl2{display:flex;gap:8px;margin:6px 0} .now .ctl2 button{flex:1;display:flex;gap:6px;align-items:center;justify-content:center;height:38px;background:#fff;outline:1px solid #0002;font-size:12px;min-width:0}
+  .now .ctl2 button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .now .ctl2 svg{width:16px;flex:none;fill:var(--ink)} .now .ctl2 .on svg{fill:var(--bleu)}
+  .now .vol{display:flex;gap:8px;align-items:center;margin-top:6px} .now .vol svg{width:18px;fill:var(--ink)}
+  .now .note{font:10px monospace;color:#888;margin:8px 0 0}
+  #spDev{text-align:left;margin-top:8px}
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
   #spOut[hidden]{display:none}
@@ -285,13 +311,14 @@
 <section id="spSheet" hidden>
   <div class="pc">
     <small>MUSIQUE · SPOTIFY</small>
-    <b>집중할 때 듣는 음악</b>
+    <b>음악</b>
     <div id="spLink" hidden>
       <p>연결이 거의 끝났어요. 아래 코드를 복사해서, 홈 화면 앱의 이 창 '연결 코드 붙여 넣기'에 넣어 주세요.</p>
       <div class="row"><input id="spCode" readonly><button id="spCopy" type="button">복사</button></div>
     </div>
+    <nav id="spTabs"><button data-t="now" type="button">지금</button><button data-t="lib" type="button">보관함</button><button data-t="search" type="button">검색</button><button data-t="queue" type="button">대기열</button></nav>
+    <div id="spBody"></div>
     <label class="opt"><input id="spAuto" type="checkbox" checked> 집중하면 재생, 휴식엔 멈춤</label>
-    <div id="spList"></div>
     <details><summary>연결 코드 붙여 넣기</summary><p>로그인 후 다른 창에서 코드가 나왔다면 여기에 붙여 넣어요.</p>
       <div class="row"><input id="spIn" placeholder="연결 코드" autocomplete="off"><button id="spPaste" type="button">연결</button></div></details>
     <div class="pb"><button id="spOut" type="button">연결 끊기</button><button id="spClose" type="button">닫기</button></div>
@@ -928,10 +955,10 @@ setTimeout(fit, 400); setTimeout(fit, 1500);      // iOS는 처음 높이를 늦
    폰의 스포티파이 앱이 뒤에서 재생하고, 조작은 여기서(재생·멈춤·이전·다음·플레이리스트). 프리미엄 필요.
    로그인은 PKCE(비밀값 없음). 아이폰 홈 화면 앱은 로그인 창이 따로 열려 저장 공간이 달라질 수 있어서,
    돌아온 쪽에서 바로 토큰을 받고, 앱 저장 공간이 아니면 '연결 코드'를 보여 줘 붙여 넣게 한다 */
-const SPI = {"prev": `<svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>`, "next": `<svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>`, "play": `<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>`, "pause": `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`, "list": `<svg viewBox="0 0 24 24"><path d="M3 6h13v2H3zM3 11h13v2H3zM3 16h9v2H3zM18 10v8.2A2.5 2.5 0 1 0 20 20.6V12h2v-2z"/></svg>`, "more": `<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`};
+const SPI = {"prev": `<svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>`, "next": `<svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>`, "play": `<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>`, "pause": `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>`, "list": `<svg viewBox="0 0 24 24"><path d="M3 6h13v2H3zM3 11h13v2H3zM3 16h9v2H3zM18 10v8.2A2.5 2.5 0 1 0 20 20.6V12h2v-2z"/></svg>`, "shuffle": `<svg viewBox="0 0 24 24"><path d="M16 4l4 3-4 3V8h-2.2l-6 8H4v-2h2.8l6-8H16zM4 8h2.8l1.7 2.3-1.2 1.6L5.8 10H4zm12 6v2h-2.2l-1.7-2.3 1.2-1.6 1.5 1.9H16v-2l4 3-4 3z"/></svg>`, "repeat": `<svg viewBox="0 0 24 24"><path d="M7 7h10V4l4 4-4 4V9H9v3H7zm10 10H7v3l-4-4 4-4v3h8v-3h2z"/></svg>`, "repeat1": `<svg viewBox="0 0 24 24"><path d="M7 7h10V4l4 4-4 4V9H9v3H7zm10 10H7v3l-4-4 4-4v3h8v-3h2z"/><path d="M11 10h2v5h-2z"/></svg>`, "heart": `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.6 4.6 0 0 1 9-2 4.6 4.6 0 0 1 9 2c-2 4.6-9 9-9 9zm0-2.4c2.2-1.5 5.7-4.3 7-7A2.6 2.6 0 0 0 13.9 10L12 12.4 10.1 10A2.6 2.6 0 0 0 5 10.6c1.3 2.7 4.8 5.5 7 7z"/></svg>`, "heartOn": `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.6 4.6 0 0 1 9-2 4.6 4.6 0 0 1 9 2c-2 4.6-9 9-9 9z"/></svg>`, "device": `<svg viewBox="0 0 24 24"><path d="M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm1 2v14h8V4zm4 15.2a1 1 0 1 0 0 .1z"/></svg>`, "vol": `<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zm12 .5a4 4 0 0 1 0 5l-1.4-1.4a2 2 0 0 0 0-2.2z"/></svg>`, "plus": `<svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>`, "more": `<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`};
 const SP_ID = '47146c1c5ea44eaf968142dcbb920963';
 const SP_REDIRECT = location.origin + location.pathname;
-const SP_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
+const SP_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-library-modify user-read-recently-played';
 const Music = {
   tok:null, state:null, timer:0, pls:null,
   auto:true, ctx:'',
@@ -950,7 +977,7 @@ const Music = {
       body:new URLSearchParams(Object.assign({client_id:SP_ID}, body))});
     if(!r.ok) throw new Error('token ' + r.status);
     const j = await r.json();
-    this.tok = {a:j.access_token, r:j.refresh_token || (this.tok && this.tok.r), e:Date.now() + (j.expires_in - 60)*1000}; this.save();
+    this.tok = {a:j.access_token, r:j.refresh_token || (this.tok && this.tok.r), s:j.scope || (this.tok && this.tok.s) || '', e:Date.now() + (j.expires_in - 60)*1000}; this.save();
   },
   async handleRedirect(){                                  // ?code=…&state=… 로 돌아왔을 때
     const u = new URL(location.href), code = u.searchParams.get('code'), v = u.searchParams.get('state'), err = u.searchParams.get('error');
@@ -1007,20 +1034,71 @@ const Music = {
     if(!this.tok){ el.innerHTML = '<button class="mc" data-a="login"><i>MUSIQUE</i>스포티파이 연결</button><button class="mx" data-a="sheet" aria-label="음악 설정">' + SPI.more + '</button>'; return; }
     const s = this.state, it = s && s.item, img = it && it.album && it.album.images && it.album.images[it.album.images.length - 1];
     el.innerHTML = (img ? '<img src="' + img.url + '" alt="">' : '<i class="art">♪</i>') +
-      '<div class="mt"><small>' + (s && s.is_playing ? 'NOW PLAYING' : 'EN PAUSE') + '</small><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '재생을 누르면 시작해요') + '</span></div>' +
+      '<div class="mt" data-a="open"><small>' + (s && s.is_playing ? 'NOW PLAYING' : 'EN PAUSE') + '</small><b>' + esc(it ? it.name : '재생 중인 곡 없음') + '</b><span>' + esc(it ? (it.artists || []).map(a=>a.name).join(', ') : '재생을 누르면 시작해요') + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (s && s.is_playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="플레이리스트">' + SPI.list + '</button>' +
       '<div class="bar"><i id="mBar"></i></div>';
     this.at = Date.now(); this.tick();
   },
-  async renderSheet(){
-    $('spAuto').checked = this.auto;
-    $('spOut').hidden = !this.tok;
-    const box = $('spList');
-    if(!this.tok){ box.innerHTML = '<p class="none">연결하면 내 플레이리스트가 여기 나와요</p>'; return; }
-    if(!this.pls){ box.innerHTML = '<p class="none">불러오는 중…</p>'; const r = await this.api('/me/playlists?limit=40'); this.pls = (r && r.items) || []; }
-    box.innerHTML = this.pls.length ? this.pls.map(p=>{ const im = p.images && p.images.length ? p.images[p.images.length - 1].url : '';
-      return '<button data-u="' + p.uri + '" class="' + (p.uri === this.ctx ? 'on' : '') + '">' + (im ? '<img src="' + im + '" alt="">' : '<i class="art">♪</i>') + '<span>' + esc(p.name) + '</span></button>'; }).join('')
-      : '<p class="none">플레이리스트를 못 불러왔어요</p>';
+  tab:'now', q:'', found:null,
+  open(tab){ $('spLink').hidden = true; $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  async renderSheet(tab){
+    if(tab) this.tab = tab;
+    $('spAuto').checked = this.auto; $('spOut').hidden = !this.tok;
+    document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
+    const box = $('spBody');
+    if(!this.tok){ box.innerHTML = '<p class="none">스포티파이를 연결하면 여기서 다 조작할 수 있어요</p><button class="big" data-a="login">스포티파이 연결</button>'; return; }
+    const reauth = !SP_SCOPE.split(' ').every(x=>(this.tok.s || '').split(' ').includes(x))
+      ? '<div class="re">새 기능(좋아요·최근 재생)을 쓰려면 한 번 더 연결해 주세요 <button data-a="login">다시 연결</button></div>' : '';
+    const T = this.tab, li = (img, t, sub, attrs) => '<button class="li" ' + attrs + '>' + (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') + '<span><b>' + esc(t) + '</b>' + (sub ? '<em>' + esc(sub) + '</em>' : '') + '</span></button>';
+    const im = o => o && o.images && o.images.length ? o.images[o.images.length - 1].url : (o && o.album ? (o.album.images || []).slice(-1).map(x=>x.url)[0] : '');
+    if(T === 'now'){
+      const s = this.state, it = s && s.item, big = it && it.album && it.album.images && it.album.images[0];
+      if(!it){ box.innerHTML = reauth + '<p class="none">재생 중인 곡이 없어요. 보관함이나 검색에서 골라 보세요</p>'; return; }
+      const pos = (s.progress_ms || 0) + (s.is_playing ? Date.now() - this.at : 0), d = it.duration_ms, mm = ms => Math.floor(ms/60000) + ':' + String(Math.floor(ms/1000)%60).padStart(2,'0');
+      const vol = s.device && s.device.supports_volume !== false && s.device.volume_percent != null;
+      box.innerHTML = reauth + '<div class="now">' + (big ? '<img class="cover" src="' + big.url + '" alt="">' : '') +
+        '<b>' + esc(it.name) + '</b><em>' + esc((it.artists || []).map(a=>a.name).join(', ')) + ' · ' + esc(it.album ? it.album.name : '') + '</em>' +
+        '<input id="spSeek" type="range" min="0" max="' + d + '" value="' + Math.min(d, pos) + '"><div class="tm"><span>' + mm(pos) + '</span><span>' + mm(d) + '</span></div>' +
+        '<div class="ctl"><button data-a="shuffle" class="' + (s.shuffle_state ? 'on' : '') + '" aria-label="셔플">' + SPI.shuffle + '</button>' +
+        '<button data-a="prev">' + SPI.prev + '</button><button class="pp" data-a="toggle">' + (s.is_playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
+        '<button data-a="repeat" class="' + (s.repeat_state !== 'off' ? 'on' : '') + '" aria-label="반복">' + (s.repeat_state === 'track' ? SPI.repeat1 : SPI.repeat) + '</button></div>' +
+        '<div class="ctl2"><button data-a="like" class="' + (this.liked ? 'on' : '') + '">' + (this.liked ? SPI.heartOn : SPI.heart) + '<span>좋아요</span></button>' +
+        '<button data-a="devices">' + SPI.device + '<span>' + esc(s.device ? s.device.name : '기기') + '</span></button></div>' +
+        (vol ? '<label class="vol">' + SPI.vol + '<input id="spVol" type="range" min="0" max="100" value="' + s.device.volume_percent + '"></label>' : '<p class="note">이 기기는 앱에서 음량을 바꿀 수 없어요(아이폰은 버튼으로)</p>') +
+        '<div id="spDev"></div></div>';
+      this.checkLike(it.id); return;
+    }
+    if(T === 'lib'){
+      box.innerHTML = reauth + '<p class="none">불러오는 중…</p>';
+      if(!this.pls){ const r = await this.api('/me/playlists?limit=50'); this.pls = (r && r.items) || []; }
+      const rp = await this.api('/me/player/recently-played?limit=15'); const seen = new Set();
+      const rec = ((rp && rp.items) || []).map(x=>x.track).filter(t=>t && !seen.has(t.id) && seen.add(t.id));
+      box.innerHTML = reauth + '<h4>바로 듣기</h4>' + li('', '좋아요 표시한 곡', '내 보관함 전체', 'data-a="liked"') +
+        (rec.length ? '<h4>최근 재생</h4>' + rec.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"')).join('') : '') +
+        '<h4>내 플레이리스트</h4>' + (this.pls.length ? this.pls.filter(Boolean).map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"' + (p.uri === this.ctx ? ' data-on="1"' : ''))).join('') : '<p class="none">플레이리스트를 못 불러왔어요</p>');
+      return;
+    }
+    if(T === 'search'){
+      const f = this.found;
+      box.innerHTML = '<form id="spQ" class="row" autocomplete="off"><input id="spQin" placeholder="곡, 가수, 앨범, 플레이리스트" value="' + esc(this.q) + '" enterkeyhint="search"><button type="submit">검색</button></form>' +
+        (!f ? '<p class="none">듣고 싶은 걸 찾아서 바로 재생하거나 대기열에 넣어요</p>' :
+        (f.tracks.length ? '<h4>곡</h4>' + f.tracks.map(t=>'<div class="tr">' + li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'data-a="track" data-u="' + t.uri + '"') + '<button class="add" data-a="queue" data-u="' + t.uri + '" aria-label="대기열에 추가">' + SPI.plus + '</button></div>').join('') : '') +
+        (f.artists.length ? '<h4>가수</h4>' + f.artists.map(a=>li(im(a), a.name, '인기곡 재생', 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
+        (f.albums.length ? '<h4>앨범</h4>' + f.albums.map(a=>li(im(a), a.name, (a.artists || []).map(x=>x.name).join(', '), 'data-a="ctx" data-u="' + a.uri + '"')).join('') : '') +
+        (f.playlists.length ? '<h4>플레이리스트</h4>' + f.playlists.map(p=>li(im(p), p.name, (p.owner && p.owner.display_name) || '', 'data-a="ctx" data-u="' + p.uri + '"')).join('') : '') +
+        (!f.tracks.length && !f.artists.length && !f.albums.length && !f.playlists.length ? '<p class="none">찾지 못했어요</p>' : ''));
+      $('spQ').onsubmit = async e=>{ e.preventDefault(); this.q = $('spQin').value.trim(); if(!this.q) return; $('spQin').blur();
+        const r = await this.api('/search?type=track,artist,album,playlist&limit=8&q=' + encodeURIComponent(this.q)) || {};
+        const g = k => ((r[k] && r[k].items) || []).filter(Boolean);
+        this.found = {tracks:g('tracks'), artists:g('artists'), albums:g('albums'), playlists:g('playlists')}; this.renderSheet(); };
+      return;
+    }
+    if(T === 'queue'){
+      box.innerHTML = '<p class="none">불러오는 중…</p>';
+      const r = await this.api('/me/player/queue'); const q = ((r && r.queue) || []).slice(0, 20), c = r && r.currently_playing;
+      box.innerHTML = (c ? '<h4>지금</h4>' + li(im(c), c.name, (c.artists || []).map(a=>a.name).join(', '), 'disabled') : '') +
+        '<h4>다음 곡</h4>' + (q.length ? q.map(t=>li(im(t), t.name, (t.artists || []).map(a=>a.name).join(', '), 'disabled')).join('') : '<p class="none">대기열이 비어 있어요. 검색에서 + 로 넣을 수 있어요</p>');
+    }
   },
   tick(){                                                  // 곡 진행 줄: 받아 온 위치에서 시간만큼 흘려 보낸다
     const s = this.state, el = $('mBar'); if(!el || !s || !s.item) return;
@@ -1028,12 +1106,37 @@ const Music = {
     el.style.width = Math.min(100, pos/s.item.duration_ms*100) + '%';
     clearTimeout(this.tt); if(s.is_playing) this.tt = setTimeout(()=>this.tick(), 1000);
   },
+  async checkLike(id){ if(!id || this.likeId === id) return; this.likeId = id;
+    const r = await this.api('/me/tracks/contains?ids=' + id); const v = Array.isArray(r) && r[0];
+    if(v !== this.liked){ this.liked = v; if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); } },
+  async sheetAct(b){
+    const a = b.dataset.a, u = b.dataset.u, s = this.state || {};
+    if(a === 'login') return this.login();
+    if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1);
+    if(a === 'shuffle'){ await this.api('/me/player/shuffle?state=' + !s.shuffle_state, {method:'PUT'}); }
+    else if(a === 'repeat'){ const nx = {off:'context', context:'track', track:'off'}[s.repeat_state || 'off']; await this.api('/me/player/repeat?state=' + nx, {method:'PUT'}); }
+    else if(a === 'like'){ const it = s.item; if(!it) return; const r = await this.api('/me/tracks?ids=' + it.id, {method:this.liked ? 'DELETE' : 'PUT'});
+      if(r && r.err){ toast('좋아요를 바꾸지 못했어요', 2200); return; } this.liked = !this.liked; this.renderSheet(); return; }
+    else if(a === 'devices'){ const d = await this.api('/me/player/devices'); const list = (d && d.devices) || [];
+      $('spDev').innerHTML = list.length ? list.map(x=>'<button class="li' + (x.is_active ? ' on' : '') + '" data-a="transfer" data-u="' + x.id + '">' + SPI.device + '<span><b>' + esc(x.name) + '</b><em>' + esc(x.type) + (x.is_active ? ' · 재생 중' : '') + '</em></span></button>').join('') : '<p class="none">켜져 있는 기기가 없어요. 스포티파이 앱을 열어 두세요</p>'; return; }
+    else if(a === 'transfer'){ await this.api('/me/player', {method:'PUT', body:JSON.stringify({device_ids:[u], play:true})}); toast('여기서 재생해요', 1600); }
+    else if(a === 'ctx'){ this.ctx = u; this.save(); await this.play(u); toast('재생할게요 ♪', 1400); }
+    else if(a === 'liked'){ const me = this.meId || (this.meId = ((await this.api('/me')) || {}).id); if(!me) return; await this.play('spotify:user:' + me + ':collection'); toast('좋아요 표시한 곡 재생 ♪', 1600); }
+    else if(a === 'track'){ let r = await this.api('/me/player/play', {method:'PUT', body:JSON.stringify({uris:[u]})});
+      if(r && r.noDevice){ const id = await this.device(); if(id) await this.api('/me/player/play?device_id=' + id, {method:'PUT', body:JSON.stringify({uris:[u]})}); } toast('재생할게요 ♪', 1400); }
+    else if(a === 'queue'){ const r = await this.api('/me/player/queue?uri=' + encodeURIComponent(u), {method:'POST'}); toast(r && r.err ? '대기열에 넣지 못했어요' : '대기열에 넣었어요', 1600); return; }
+    setTimeout(async ()=>{ await this.poll(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet(); }, 500);
+  },
   init(){
     this.load();
-    $('music').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; const a = b.dataset.a;
+    $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
       if(a === 'login') this.login(); else if(a === 'toggle') this.toggle(); else if(a === 'prev') this.skip(-1); else if(a === 'next') this.skip(1);
-      else if(a === 'sheet'){ $('spLink').hidden = true; $('spSheet').hidden = false; this.renderSheet(); } };
-    $('spList').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; this.ctx = b.dataset.u; this.save(); this.play(this.ctx); this.renderSheet(); };
+      else if(a === 'sheet') this.open('lib'); else if(a === 'open') this.open('now'); };
+    $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
+    $('spBody').onclick = e=>{ const b = e.target.closest('button[data-a]'); if(b && !b.disabled) this.sheetAct(b); };
+    $('spBody').onchange = e=>{ const t = e.target;
+      if(t.id === 'spSeek'){ this.api('/me/player/seek?position_ms=' + Math.round(+t.value), {method:'PUT'}); if(this.state){ this.state.progress_ms = +t.value; this.at = Date.now(); } }
+      if(t.id === 'spVol') this.api('/me/player/volume?volume_percent=' + t.value, {method:'PUT'}).then(r=>{ if(r && r.err) toast('이 기기는 음량을 바꿀 수 없어요', 2000); }); };
     $('spAuto').onchange = e=>{ this.auto = e.target.checked; this.save(); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; };
     $('spOut').onclick = ()=>{ this.tok = null; this.state = null; this.pls = null; this.save(); this.render(); this.renderSheet(); };
