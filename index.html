@@ -92,7 +92,16 @@
   #go{flex:1;height:52px;background:var(--bleu);color:#fff;font:600 15px var(--sans);letter-spacing:.2em;box-shadow:5px 5px 0 var(--ink)}
   #go.run{background:var(--ink)}
   #quit{width:88px;height:52px;border:1px solid var(--ink);font-size:13px;letter-spacing:.1em}
-  #quit[hidden]{display:none}
+  #quit[hidden],#warm[hidden]{display:none}
+  #warm{width:88px;height:52px;border:1px solid var(--ink);background:#fff;font:italic 15px var(--serif)}
+  #time small{font-size:.5em;vertical-align:.5em;color:var(--bleu)}
+  /* 남은 시간 막대: 줄어드는 파란 띠 + 5분 눈금 */
+  #tbar{grid-column:1/3;position:relative;height:12px;margin-top:12px;background:#fff;outline:1px solid var(--ink);overflow:hidden}
+  #tbar::before{content:"";position:absolute;inset:0;width:calc(var(--f,1)*100%);background:var(--bleu);transition:width 1s linear}
+  #tbar::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(100%/var(--n,5) - 1px),#ffffffcc calc(100%/var(--n,5) - 1px) calc(100%/var(--n,5)))}
+  #tbar.rest::before{background:#8a8a86}
+  #tbar.over::before{animation:pulse 1.6s ease-in-out infinite alternate}
+  @keyframes pulse{from{opacity:.55}to{opacity:1}}
   #stats{position:relative;display:flex;margin:4px 0 12px;border:1px solid var(--ink);background:#fff;box-shadow:5px 5px 0 var(--bleu)}
   #stats div{flex:1;text-align:center;padding:10px 0 8px}
   #stats div+div{border-left:1px dashed #0003}
@@ -202,6 +211,7 @@
     <div id="brand"><button id="date" type="button"></button><b>BLEU <i>MINUIT</i></b></div>
     <div id="time">25<span>:</span>00</div>
     <div id="moonBox"><canvas id="moon"></canvas><div id="moonTxt"></div></div>
+    <div id="tbar"></div>
     <div id="pomo"></div>
     <div id="row">
       <input id="subject" placeholder="무엇에 집중할까요" maxlength="20" enterkeyhint="done" autocomplete="off">
@@ -225,7 +235,7 @@
   <div id="stageBand"></div>
   <footer id="bottom">
     <div id="sline"><span id="status">시간을 고르고 시작하세요</span><span id="mini"></span></div>
-    <div id="btns"><button id="go">집중 시작</button><button id="quit" hidden>그만두기</button></div>
+    <div id="btns"><button id="go">집중 시작</button><button id="quit" hidden>그만두기</button><button id="warm" type="button">5분만</button></div>
   </footer>
 </div>
 <div id="toast"></div>
@@ -233,10 +243,10 @@
   <div class="pc">
     <small>AVANT MINUIT</small>
     <b>오늘의 체크리스트</b>
-    <p>시작하기 전에 오늘 할 일을 적어요. 전부 체크한 날에만 콜라주 조각이 붙어요.</p>
+    <p>오늘 할 일을 적어요. 언제 적어도 괜찮아요. 전부 체크하고 한 번 이상 집중한 날엔 콜라주 조각이 붙어요.</p>
     <div id="preList"></div>
     <form id="preAdd" autocomplete="off"><input id="preIn" placeholder="할 일 (예: 수학 문제집 3장)" maxlength="30" enterkeyhint="done"><button type="submit">추가</button></form>
-    <div class="pb"><button id="preCancel" type="button">닫기</button><button id="preGo" type="button" disabled>이대로 시작</button></div>
+    <div class="pb"><button id="preCancel" type="button">닫기</button><button id="preGo" type="button" disabled>저장</button></div>
   </div>
 </section>
 <section id="cal" hidden>
@@ -652,7 +662,7 @@ $('preAdd').onsubmit = e=>{ e.preventDefault(); const t = $('preIn').value.trim(
 $('preList').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; const k = keyOf();
   plans[k].splice(+b.dataset.i, 1); if(!plans[k].length) delete plans[k]; savePlans(); paintPre(); paintStats(); };
 $('preCancel').onclick = ()=>{ $('pre').hidden = true; $('preIn').blur(); };
-$('preGo').onclick = ()=>{ $('pre').hidden = true; $('preIn').blur(); start(); };
+$('preGo').onclick = ()=>{ $('pre').hidden = true; $('preIn').blur(); toast('저장했어요', 1400); };
 $('calClose').onclick = ()=>{ $('cal').hidden = true; paintStats(); };
 $('calPrev').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth() - 1); paintCal(); };
 $('calNext').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth() + 1); paintCal(); };
@@ -677,88 +687,124 @@ function tone(freqs, dur, type = 'sine', vol = .12){
 /* ═══ 타이머: 포모도로 ═══
    집중 → 짧은 휴식 → … 4번째 집중이 끝나면 긴 휴식. 셀레스트의 색은 한 세트(집중 4번)에 걸쳐 돌아온다.
    휴식은 집중이 끝나면 저절로 시작, 휴식이 끝나면 다음 집중은 눌러서 시작 */
-const POMO = [[25, 5, 15], [50, 10, 20], [15, 3, 10]], ROUNDS = 4;
-let pomo = 0, phase = 'focus', rounds = 0;          // rounds = 이번 세트에서 끝낸 집중 수
+const POMO = [[10, 2, 10], [25, 5, 15], [50, 10, 20]], ROUNDS = 4, WARM = 5*60;
+let pomo = 1, phase = 'focus', rounds = 0, waitUntil = 0, overFrom = 0;          // rounds = 이번 세트에서 끝낸 집중 수
 let total = 1500, remain = 1500, endAt = 0, mode = 'idle', tid = null, wake = null;
-try{ pomo = clamp(+localStorage.getItem('bleu.pomo') || 0, 0, POMO.length - 1); }catch(e){}
+try{ const v = localStorage.getItem('bleu.pomo2'); if(v != null) pomo = clamp(+v, 0, POMO.length - 1); }catch(e){}
 const mins = () => POMO[pomo][0];
 // 셀레스트: 집중 중엔 살아 움직이고, 시작 전·휴식·멈춤엔 석고로 굳는다. 집중이 막 끝나면 잠깐(미소 볼 시간) 뒤에 굳는다
 let focusEndAt = 0;
-const plasterWanted = () => !(mode === 'run' && phase === 'focus') && Date.now() - focusEndAt > 2600;
+const plasterWanted = () => !((mode === 'run' || mode === 'over') && phase === 'focus') && Date.now() - focusEndAt > 2600;
 function progress(){
   if(mode === 'finished') return 1;
   if(mode === 'idle') return 0;
-  const f = phase === 'focus' && (mode === 'run' || mode === 'paused') ? (total - remain)/total : 0;
+  const f = phase === 'focus' && (mode === 'run' || mode === 'paused') && cur ? Math.min(1, cur.sec/(mins()*60)) : 0;
   return Math.min(1, (rounds + f)/ROUNDS);
 }
 function paint(){
-  const m = Math.floor(remain/60), s = remain % 60;
-  $('time').innerHTML = String(m).padStart(2,'0') + '<span>:</span>' + String(s).padStart(2,'0');
+  const over = mode === 'over', v = over ? Math.floor((Date.now() - overFrom)/1000) : remain, m = Math.floor(v/60), s = v % 60;
+  $('time').innerHTML = (over ? '<small>+</small>' : '') + String(m).padStart(2,'0') + '<span>:</span>' + String(s).padStart(2,'0');
+  // 남은 시간을 눈으로: 줄어드는 막대 (5분마다 눈금)
+  const bar = $('tbar'), frac = over ? 1 : mode === 'idle' || mode === 'finished' || mode === 'wait' ? 1 : remain/Math.max(1, total);
+  bar.style.setProperty('--f', frac); bar.style.setProperty('--n', Math.max(1, Math.round(total/300)));
+  bar.className = (phase !== 'focus' && mode !== 'idle' ? 'rest' : '') + (over ? ' over' : '') + (mode === 'run' ? ' run' : '');
   $('time').classList.toggle('rest', phase !== 'focus' && mode !== 'idle');
   const p = progress();
   paintMoon(p);
   $('stageName').textContent = plasterWanted() ? 'plâtre' : 'éveil';
-  $('quit').hidden = mode === 'idle' || mode === 'finished' && phase === 'focus';
+  $('quit').hidden = !(mode === 'run' || mode === 'paused' || mode === 'wait' && waitUntil);
+  $('warm').hidden = !(mode === 'idle' || mode === 'finished' || mode === 'wait' && !waitUntil);
   // 세트 표시: ●●○○ + 지금 단계
   const dots = Array.from({length:ROUNDS}, (_, i)=>'<i class="' + (i < rounds ? 'on' : i === rounds && phase === 'focus' && mode !== 'idle' ? 'now' : '') + '"></i>').join('');
   const lbl = mode === 'idle' ? 'POMODORO · 집중 ' + POMO[pomo][0] + ' / 휴식 ' + POMO[pomo][1]
-    : phase === 'focus' ? 'FOCUS ' + Math.min(rounds + 1, ROUNDS) + '/' + ROUNDS : phase === 'long' ? 'LONGUE PAUSE · 긴 휴식' : 'PAUSE · 휴식';
+    : over ? 'FLOW · 목표 달성, 계속 세는 중' : phase === 'focus' ? 'FOCUS ' + Math.min(rounds + 1, ROUNDS) + '/' + ROUNDS : phase === 'long' ? 'LONGUE PAUSE · 긴 휴식' : 'PAUSE · 휴식';
   $('pomo').innerHTML = dots + '<span>' + lbl + '</span>';
 }
 async function keepAwake(on){ try{ if(on && 'wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); else if(wake){ await wake.release(); wake = null; } }catch(e){} }
 function setStatus(t){ $('status').textContent = t; }
 function toast(t, ms = 2400){ const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('on'), ms); }
-function setPomo(i){ pomo = i; try{ localStorage.setItem('bleu.pomo', i); }catch(e){}
+function setPomo(i){ pomo = i; try{ localStorage.setItem('bleu.pomo2', i); }catch(e){}
   phase = 'focus'; total = remain = mins()*60;
   document.querySelectorAll('#presets button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.i === i))); paint(); }
 function setGo(t, run){ $('go').textContent = t; $('go').classList.toggle('run', !!run); }
-function runPhase(ph){                                   // 한 단계(집중/휴식/긴 휴식) 시작
-  phase = ph; total = remain = POMO[pomo][ph === 'focus' ? 0 : ph === 'break' ? 1 : 2]*60;
-  mode = 'run'; endAt = Date.now() + remain*1000;
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }   // 안드로이드만 (아이폰 사파리는 진동을 지원하지 않음)
+function setQuit(t){ $('quit').textContent = t; }
+function runPhase(ph, warm){                             // 한 단계(집중/휴식/긴 휴식) 시작
+  phase = ph; total = remain = ph === 'focus' ? (warm ? WARM : mins()*60) : POMO[pomo][ph === 'break' ? 1 : 2]*60;
+  mode = 'run'; waitUntil = 0; endAt = Date.now() + remain*1000;
   clearInterval(tid); tid = setInterval(tickOnce, 1000); keepAwake(true);
-  if(ph === 'focus'){ cur = {s:subjOf(), t:Date.now(), sec:0, mins:mins()}; $('subject').disabled = true; if(rig) rig.expr = '';
-    setGo('잠시 멈춤', true); setStatus(cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); }
-  else { setGo('휴식 건너뛰기', false); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요'); }
+  if(ph === 'focus'){ cur = {s:subjOf(), t:Date.now(), sec:0, mins:mins(), warm:!!warm, rewarded:false}; $('subject').disabled = true; if(rig) rig.expr = '';
+    setGo('잠시 멈춤', true); setQuit(warm ? '여기까지' : '그만두기');
+    setStatus(warm ? '딱 5분만 해 봐요' : cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); }
+  else { setGo('휴식 건너뛰기', false); setQuit('그만두기'); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요 · 끝나면 알려 줄게요'); }
   paint();
 }
 function tickOnce(){
+  if(mode === 'wait'){ waitTick(); return; }
+  if(mode === 'over'){ rec.todaySec++; if(cur) cur.sec++; if(rec.todaySec % 15 === 0) saveRec(); paint(); paintStats(); return; }
   const was = remain; remain = Math.max(0, Math.round((endAt - Date.now())/1000));
   const add = Math.max(0, was - remain);
   if(phase === 'focus'){ rec.todaySec += add; if(cur) cur.sec += add; if(rec.todaySec % 15 < add) saveRec(); }
   paint(); paintStats(); if(remain <= 0) phaseEnd();
 }
+function reward(){                                       // 집중 목표 한 번 달성: 바로 보상
+  if(!cur || cur.rewarded) return; cur.rewarded = true;
+  rounds++; rec.done++; rec.best = Math.max(rec.best, mins());
+  focusEndAt = 0; if(rig){ rig.expr = 'smile'; setTimeout(()=>{ if(rig.expr === 'smile') rig.expr = ''; }, 5000); }
+  doves(); buzz([200, 100, 200]);
+  if(rounds >= ROUNDS){ tone([523.25, 659.25, 783.99, 1046.5], 1.4); toast('Bleu Minuit · 세트 완성 ✦', 3200); }
+  else { tone([659.25, 783.99, 1046.5], 1); toast('✦ 별 ' + rounds*2 + '/8 · 잘했어요', 2600); }
+}
 function phaseEnd(){
   clearInterval(tid);
   if(phase === 'focus'){
-    focusEndAt = Date.now(); setTimeout(paint, 2700);
-    rounds++; rec.done++; setTimeout(()=>checkStamp(keyOf()), 0); rec.best = Math.max(rec.best, mins()); commit(true); $('subject').disabled = false;
-    if(rounds >= ROUNDS){                                // 세트 완주: 색을 다 되찾고 긴 휴식
-      tone([523.25, 659.25, 783.99, 1046.5], 1.4); if(rig) rig.expr = 'smile'; doves(); toast('Bleu Minuit', 3000);
-      runPhase('long'); mode = 'run'; return;
+    if(cur && cur.warm && !cur.extended){                // 5분 성공 → 끊지 않고 원래 시간까지 이어서
+      cur.extended = true; total = mins()*60; remain = Math.max(60, total - cur.sec); endAt = Date.now() + remain*1000;
+      tone([659.25, 880], .6, 'sine', .08); buzz(120); toast('5분 성공 ✦ 이어서 가 볼까요', 2600);
+      setStatus('그만하고 싶으면 \'여기까지\''); tid = setInterval(tickOnce, 1000); paint(); return;
     }
-    tone([659.25, 783.99], .9); runPhase('break'); return;
+    reward();                                            // 목표 달성 → 몰입을 끊지 않고 넘긴 시간을 계속 센다
+    mode = 'over'; overFrom = Date.now(); tid = setInterval(tickOnce, 1000);
+    setGo('쉬기', false); setStatus('목표 달성 ✦ 계속해도 돼요 · 쉬려면 눌러요'); paint(); paintStats(); return;
   }
-  // 휴식 끝
-  tone([783.99, 659.25], .9, 'sine', .1); keepAwake(false);
-  if(phase === 'long'){ rounds = 0; mode = 'finished'; phase = 'focus'; total = remain = mins()*60;
-    setGo('새 세트 시작'); setStatus('세트를 마쳤어요 · 셀레스트는 그대로 깨어 있어요'); paint(); paintStats(); return; }
-  mode = 'wait'; phase = 'focus'; total = remain = mins()*60;
-  setGo('다음 집중 ' + (rounds + 1) + '/' + ROUNDS); setStatus('휴식 끝 · 준비되면 눌러요'); paint();
+  // 휴식 끝: 분명하게 알리고 10초 뒤 다음 집중 자동 시작(취소 가능)
+  tone([783.99, 659.25, 783.99, 1046.5], 1.1, 'sine', .14); buzz([300, 150, 300, 150, 300]);
+  if(phase === 'long'){ rounds = 0; }
+  mode = 'wait'; phase = 'focus'; total = remain = mins()*60; waitUntil = Date.now() + 10000;
+  tid = setInterval(tickOnce, 1000); setGo('지금 시작'); setQuit('나중에'); waitTick();
 }
-function start(){                                        // 큰 버튼
+function waitTick(){
+  if(!waitUntil){ return; }
+  const left = Math.ceil((waitUntil - Date.now())/1000);
+  if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } runPhase('focus'); return; }
+  setStatus('휴식 끝 · ' + left + '초 뒤 다음 집중이 시작돼요'); paint();
+}
+function toBreak(){                                      // 집중을 마치고 휴식으로
+  clearInterval(tid); focusEndAt = Date.now(); setTimeout(paint, 2700);
+  if(cur) rec.best = Math.max(rec.best, Math.round(cur.sec/60));
+  commit(true); $('subject').disabled = false; setTimeout(()=>checkStamp(keyOf()), 0);
+  runPhase(rounds >= ROUNDS ? 'long' : 'break');
+}
+function start(warm){                                    // 큰 버튼
+  if(mode === 'over'){ toBreak(); return; }
   if(mode === 'run' && phase === 'focus'){ pause(); return; }
   if(mode === 'run'){ remain = 0; phaseEnd(); return; }   // 휴식 건너뛰기
   if(mode === 'paused'){ mode = 'run'; endAt = Date.now() + remain*1000; clearInterval(tid); tid = setInterval(tickOnce, 1000); keepAwake(true);
     setGo('잠시 멈춤', true); setStatus(cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); paint(); return; }
-  if((mode === 'idle' || mode === 'finished') && !(plans[keyOf()] || []).length){ openPre(); return; }   // 시작 전에 오늘 체크리스트부터
   if(mode === 'idle' || mode === 'finished'){ rounds = 0; if(rig) rig.expr = ''; }
-  runPhase('focus');
+  clearInterval(tid); runPhase('focus', warm === true);
 }
 function pause(){ mode = 'paused'; clearInterval(tid); keepAwake(false); saveRec();
   setGo('이어서 집중'); setStatus('잠시 멈췄어요'); paint(); }
+function quitBtn(){
+  if(mode === 'wait'){ waitUntil = 0; clearInterval(tid); keepAwake(false); setQuit('그만두기'); setStatus('준비되면 눌러요'); paint(); return; }
+  if(cur && cur.warm && phase === 'focus' && (mode === 'run' || mode === 'paused')){   // 5분 시작: 그만둬도 실패가 아님
+    if(cur.sec >= 60){ toast('시작한 것만으로 충분해요', 2400); toBreak(); return; } }
+  giveUp();
+}
 function giveUp(){ const spent = phase === 'focus' && cur ? Math.floor(cur.sec/60) : 0, was = rounds;
-  clearInterval(tid); keepAwake(false); saveRec(); if(phase === 'focus') commit(false); $('subject').disabled = false;
-  mode = 'idle'; phase = 'focus'; rounds = 0; total = remain = mins()*60; setGo('집중 시작');
+  clearInterval(tid); waitUntil = 0; keepAwake(false); saveRec(); if(phase === 'focus') commit(false); $('subject').disabled = false;
+  mode = 'idle'; phase = 'focus'; rounds = 0; total = remain = mins()*60; setGo('집중 시작'); setQuit('그만두기');
   if(rig && (spent >= 1 || was)){ rig.expr = 'frown'; setTimeout(()=>{ if(mode === 'idle' && rig.expr === 'frown') rig.expr = ''; }, 4500); }
   tone([392, 277.18], 1.6, 'triangle', .08);
   setStatus(spent >= 1 || was ? '세트를 멈췄어요 · 집중한 시간은 기록에 남았어요' : '시간을 고르고 시작하세요'); paint(); }
@@ -776,14 +822,15 @@ $('presets').innerHTML = POMO.map((v, i)=>'<button data-i="'+i+'" aria-pressed="
 $('presets').onclick = e=>{ const b = e.target.closest('button'); if(!b) return;
   if(mode !== 'idle' && mode !== 'finished'){ toast('세트 중엔 바꿀 수 없어요', 1700); return; }
   setPomo(+b.dataset.i); };
-$('recent').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.cal){ openCal(); return; }
+$('recent').onclick = e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.cal){ openPre(); return; }
   if(b.dataset.i != null){ toggleItem(keyOf(), +b.dataset.i); return; } if(mode === 'run') return; $('subject').value = b.dataset.s; };
 $('subject').addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); $('subject').blur(); } });
 $('subject').addEventListener('blur', ()=>setTimeout(()=>{ window.scrollTo(0, 0); fit(); }, 60));
 try{ $('subject').value = localStorage.getItem('bleu.subj') || ''; }catch(e){}
 $('subject').addEventListener('change', ()=>{ try{ localStorage.setItem('bleu.subj', $('subject').value.trim()); }catch(e){} });
-$('go').onclick = start;
-$('quit').onclick = giveUp;
+$('go').onclick = ()=>start(false);
+$('warm').onclick = ()=>start(true);
+$('quit').onclick = quitBtn;
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && mode === 'run'){ tickOnce(); if(mode === 'run') keepAwake(true); } });   // 화면 꺼짐 방지는 앱을 다시 열면 새로 걸어야 한다
 
 { const d = new Date(), age = moonAge(d);
