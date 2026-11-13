@@ -1116,10 +1116,24 @@ const Music = {
       events:{onReady:()=>{ this.ready = true; res(pl); }, onStateChange:e=>this.onState(e),
         onError:()=>{ if(this.radio && this.cur){ this.radio = false; this._pl.loadVideoById(this.cur.id); } }}}); });   // 믹스가 안 되면 그 영상만
   },
+  // 광고 소리 끄기(추정): 유튜브는 앱에 광고 중인지 알려 주지 않으므로,
+  // 재생을 기다리는데 본편 시간이 흐르지 않으면 광고로 보고 음소거 → 본편 시간이 다시 흐르면 소리 켬
+  adWatch(){
+    clearInterval(this.aw); if(this.adMute === false) return;
+    let last = -1, still = 0;
+    this.aw = setInterval(()=>{ const p = this._pl; if(!p || !p.getPlayerState) return;
+      const st = p.getPlayerState(), t = p.getCurrentTime ? p.getCurrentTime() : 0;
+      const want = this.want;                                       // 사용자가 재생을 원하는 중
+      const moving = t > last + .2 && st === 1; still = moving ? 0 : still + 1; last = t;
+      const ad = want && (st === -1 || st === 3 || (st === 1 && still >= 3));
+      if(ad && !p.isMuted()){ p.mute(); this.muted = true; this.render(); }
+      else if(!ad && moving && this.muted){ p.unMute(); this.muted = false; this.render(); }
+    }, 600);
+  },
   onState(e){
-    this.playing = e.data === YT.PlayerState.PLAYING;
+    this.playing = e.data === YT.PlayerState.PLAYING; if(e.data === 2 || e.data === 0) this.want = false;
     if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
-    if(e.data === YT.PlayerState.ENDED && this.loop){ this._pl.seekTo(0, true); this._pl.playVideo(); }   // 한 곡 반복
+    if(e.data === YT.PlayerState.ENDED && this.loop){ this._pl.seekTo(0, true); this._pl.playVideo(); this.want = true; }   // 한 곡 반복
     if(e.data === YT.PlayerState.PLAYING && this.cur){ const d = this._pl.getVideoData(); if(d && d.video_id) this.vid = d.video_id; }
     this.render(); if(!$('spSheet').hidden && this.tab === 'now') this.renderSheet();
   },
@@ -1132,11 +1146,11 @@ const Music = {
     if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'});
     else if(this.autoplay !== false && !this.loop){ this.radio = true; pl.loadPlaylist({list:'RD' + item.id, listType:'playlist', index:0}); }   // 유튜브가 고른 다음 곡들
     else pl.loadVideoById(item.id);
-    pl.playVideo(); this.render();
+    pl.playVideo(); this.want = true; this.adWatch(); this.render();
   },
   async toggle(){
     if(!this._pl || $('ytWin').hidden){ const it = this.cur || this.lib[0]; if(it) this.start(it); return; }
-    this.playing ? this._pl.pauseVideo() : this._pl.playVideo();
+    if(this.playing){ this.want = false; this._pl.pauseVideo(); } else { this.want = true; this._pl.playVideo(); this.adWatch(); }
   },
   skip(d){ if(!this._pl) return; if(this.cur && (this.cur.type === 'playlist' || this.radio)){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
     else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
@@ -1202,7 +1216,7 @@ const Music = {
     const el = $('music'); if(!el) return;
     const it = this.cur, img = it ? this.thumb(it) : '';
     el.innerHTML = (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') +
-      '<div class="mt" data-a="now"><small>' + (this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
