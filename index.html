@@ -94,6 +94,10 @@
   #lockSheet small{font:600 9px var(--sans);letter-spacing:.34em;color:var(--bleu)} #lockSheet b{display:block;font:400 22px var(--serif);margin:2px 0 8px}
   #lockSheet h4{margin:12px 0 4px;font:600 12px var(--sans)} #lockSheet ol,#lockSheet p{margin:0;padding-left:18px;font:12px/1.6 var(--sans);color:#333} #lockSheet p{padding:0}
   #lockSheet .opt{display:flex;gap:8px;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #0002}
+  #lockSheet .pc{max-height:88%;overflow:auto}
+  #lockSheet .how{margin:8px 0;font-size:12px;background:#fff;outline:1px solid #0002;padding:8px 10px} #lockSheet .how summary{cursor:pointer;color:var(--bleu)}
+  #lockSheet .how p{margin:2px 0 6px} #lockSheet .how p b{display:inline;font:600 12px var(--sans);margin:0}
+  #lockSheet .test{width:100%;height:36px;margin-top:6px;border:1px solid var(--ink);background:#fff;font-size:12px}
   #lockSheet .pb{display:flex;margin-top:14px} #lockSheet .pb button{flex:1;height:44px;background:var(--bleu);color:#fff;letter-spacing:.1em}
   #btns{display:flex;gap:10px}
   #go{flex:1;height:52px;background:var(--bleu);color:#fff;font:600 15px var(--sans);letter-spacing:.2em;box-shadow:5px 5px 0 var(--ink)}
@@ -336,6 +340,21 @@
     <small>VERROU · 집중 잠금</small>
     <b>나가지 않게</b>
     <label class="opt"><input id="lockChk" type="checkbox"> 잠금 켜기: 집중 중 10초 넘게 나가면 그 시간은 빼고 세요</label>
+    <label class="opt"><input id="scChk" type="checkbox"> 집중 시작하면 단축어로 다른 앱 막기</label>
+    <label class="opt"><input id="scBrk" type="checkbox"> 휴식 동안엔 풀어 주기</label>
+    <details class="how"><summary>단축어 만드는 법 (처음 한 번, 3분)</summary>
+      <h4>① '공부' 집중 모드</h4>
+      <p>설정 → 집중 모드 → + → 사용자화 → 이름 '공부'. 알림 허용에서 필요한 사람·앱만 남겨요.</p>
+      <h4>② 단축어 'Bleu 잠금'</h4>
+      <p>단축어 앱 → + → 동작 추가 '집중 모드 설정' → '공부'를 '켬', '끌 때까지'. 이름을 정확히 <b>Bleu 잠금</b>으로.</p>
+      <h4>③ 단축어 'Bleu 해제'</h4>
+      <p>같은 방법으로 '집중 모드 설정' → '공부'를 '끔'. 이름 <b>Bleu 해제</b>.</p>
+      <h4>④ 자동화: 딴짓 앱 막기</h4>
+      <p>단축어 앱 → 자동화 → + → '앱' → 인스타그램·유튜브 등 막을 앱 선택 → '열릴 때' → '즉시 실행'.<br>
+      동작: '현재 집중 모드 가져오기' → '만약' [현재 집중 모드]가 '공부'이면 → '알림 보기'(예: 셀레스트가 기다려요) → '홈 화면으로 이동'.</p>
+      <p>이제 집중 시작을 누르면 단축어가 잠깐 열렸다 닫혀요. 화면 아래 막대를 오른쪽으로 쓸어 Bleu Minuit으로 돌아오면 돼요.</p>
+    </details>
+    <button id="scTest" type="button" class="test">단축어 시험 실행</button>
     <h4>아예 못 나가게 하려면 (아이폰 '사용법 유도')</h4>
     <ol><li>설정 → 손쉬운 사용 → 사용법 유도 → 켜기, 암호 설정</li>
       <li>Bleu Minuit을 연 상태에서 측면 버튼을 세 번 누르고 '시작'</li>
@@ -663,6 +682,12 @@ function commit(done){ if(!cur) return;
   cur = null; saveRec(); paintStats(); }
 const esc = t => t.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtMin = sec => { const m = Math.round(sec/60); return m >= 60 ? Math.floor(m/60)+'시간 '+(m%60)+'분' : m+'분'; };
+// 단축어 연결: 세트를 시작하면 'Bleu 잠금'(공부 집중 모드 켜기), 세트를 끝내거나 그만두면 'Bleu 해제'를 실행한다.
+// 공부 집중 모드가 켜져 있는 동안 고른 앱을 열면, 단축어 자동화가 홈 화면으로 돌려보낸다
+let shortcut = false, scBreak = false, scAway = 0;
+try{ shortcut = localStorage.getItem('bleu.sc') === '1'; scBreak = localStorage.getItem('bleu.scBreak') === '1'; }catch(e){}
+function runShortcut(name){ if(!shortcut) return; scAway = Date.now();               // 이번 이탈은 셈하지 않는다
+  setTimeout(()=>{ location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(name); }, 350); }
 let strict = true;                                        // 집중 잠금(기본 켬)
 try{ strict = localStorage.getItem('bleu.strict') !== '0'; }catch(e){}
 const LOCK_ON = '<svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>',
@@ -753,9 +778,12 @@ function paintPlan(){
     : '<div class="none">' + (past ? '할 일이 없던 날이에요' : '할 일을 적어 두고 하나씩 체크해요') + '</div>';
 }
 $('date').onclick = ()=>openCal();
-$('mini').addEventListener('click', e=>{ if(e.target.closest('#lockBtn')){ $('lockChk').checked = strict; $('lockSheet').hidden = false; } });
+$('mini').addEventListener('click', e=>{ if(e.target.closest('#lockBtn')){ $('lockChk').checked = strict; $('scChk').checked = shortcut; $('scBrk').checked = scBreak; $('lockSheet').hidden = false; } });
 $('lockChk').onchange = e=>{ strict = e.target.checked; try{ localStorage.setItem('bleu.strict', strict ? '1' : '0'); }catch(_){} paintMini(); };
 $('lockClose').onclick = ()=>{ $('lockSheet').hidden = true; };
+$('scChk').onchange = e=>{ shortcut = e.target.checked; try{ localStorage.setItem('bleu.sc', shortcut ? '1' : '0'); }catch(_){} };
+$('scBrk').onchange = e=>{ scBreak = e.target.checked; try{ localStorage.setItem('bleu.scBreak', scBreak ? '1' : '0'); }catch(_){} };
+$('scTest').onclick = ()=>{ const was = shortcut; shortcut = true; runShortcut('Bleu 잠금'); shortcut = was; };
 function openPre(){ $('pre').hidden = false; paintPre(); setTimeout(()=>$('preIn').focus(), 50); }
 function paintPre(){ const list = plans[keyOf()] || [];
   $('preList').innerHTML = list.map((it, i)=>'<div class="it"><span>' + esc(it.t) + '</span><button type="button" data-i="' + i + '" aria-label="지우기">×</button></div>').join('');
@@ -839,7 +867,7 @@ function runPhase(ph, warm){                             // 한 단계(집중/�
   if(ph === 'focus'){ cur = {s:subjOf(), t:Date.now(), sec:0, mins:mins(), warm:!!warm, rewarded:false}; $('subject').disabled = true; if(rig) rig.expr = '';
     setGo('잠시 멈춤', true); setQuit(warm ? '여기까지' : '그만두기');
     setStatus(warm ? '딱 5분만 해 봐요' : cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); Music.onFocus(); }
-  else { setGo('휴식 건너뛰기', false); setQuit('그만두기'); Music.onBreak(); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요 · 끝나면 알려 줄게요'); }
+  else { setGo('휴식 건너뛰기', false); setQuit('그만두기'); Music.onBreak(); if(scBreak && ph === 'break') runShortcut('Bleu 해제'); setStatus(ph === 'long' ? '한 세트 끝 · 길게 쉬어요' : '잠깐 쉬어요 · 끝나면 알려 줄게요'); }
   paint();
 }
 function tickOnce(){
@@ -873,14 +901,14 @@ function phaseEnd(){
   }
   // 휴식 끝: 분명하게 알리고 10초 뒤 다음 집중 자동 시작(취소 가능)
   tone([783.99, 659.25, 783.99, 1046.5], 1.1, 'sine', .14); buzz([300, 150, 300, 150, 300]);
-  if(phase === 'long'){ rounds = 0; }
+  if(phase === 'long'){ rounds = 0; runShortcut('Bleu 해제'); }
   mode = 'wait'; phase = 'focus'; total = remain = mins()*60; waitUntil = Date.now() + 10000;
   tid = setInterval(tickOnce, 1000); setGo('지금 시작'); setQuit('나중에'); waitTick();
 }
 function waitTick(){
   if(!waitUntil){ return; }
   const left = Math.ceil((waitUntil - Date.now())/1000);
-  if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } runPhase('focus'); return; }
+  if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } if(scBreak) runShortcut('Bleu 잠금'); runPhase('focus'); return; }
   setStatus('휴식 끝 · ' + left + '초 뒤 다음 집중이 시작돼요'); paint();
 }
 function toBreak(){                                      // 집중을 마치고 휴식으로
@@ -895,7 +923,7 @@ function start(warm){                                    // 큰 버튼
   if(mode === 'run'){ remain = 0; phaseEnd(); return; }   // 휴식 건너뛰기
   if(mode === 'paused'){ mode = 'run'; endAt = Date.now() + remain*1000; clearInterval(tid); tid = setInterval(tickOnce, 1000); keepAwake(true);
     setGo('잠시 멈춤', true); setStatus(cur.s + ' · 집중 ' + (rounds + 1) + '/' + ROUNDS); paint(); return; }
-  if(mode === 'idle' || mode === 'finished'){ rounds = 0; if(rig) rig.expr = ''; }
+  if(mode === 'idle' || mode === 'finished' || scBreak && mode === 'wait'){ if(mode !== 'wait'){ rounds = 0; if(rig) rig.expr = ''; } runShortcut('Bleu 잠금'); }
   clearInterval(tid); runPhase('focus', warm === true);
 }
 function pause(){ mode = 'paused'; clearInterval(tid); keepAwake(false); saveRec();
@@ -906,7 +934,8 @@ function quitBtn(){
     if(cur.sec >= 60){ toast('시작한 것만으로 충분해요', 2400); toBreak(); return; } }
   giveUp();
 }
-function giveUp(){ const spent = phase === 'focus' && cur ? Math.floor(cur.sec/60) : 0, was = rounds;
+function giveUp(){ if(mode !== 'idle') runShortcut('Bleu 해제');
+  const spent = phase === 'focus' && cur ? Math.floor(cur.sec/60) : 0, was = rounds;
   clearInterval(tid); waitUntil = 0; keepAwake(false); saveRec(); if(phase === 'focus') commit(false); $('subject').disabled = false;
   mode = 'idle'; phase = 'focus'; rounds = 0; total = remain = mins()*60; setGo('집중 시작'); setQuit('그만두기');
   if(rig && (spent >= 1 || was)){ rig.expr = 'frown'; setTimeout(()=>{ if(mode === 'idle' && rig.expr === 'frown') rig.expr = ''; }, 4500); }
@@ -940,6 +969,7 @@ let hideAt = 0;
 const focusing = () => (mode === 'run' || mode === 'over') && phase === 'focus';
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ hideAt = focusing() ? Date.now() : 0; return; }
+  if(hideAt && scAway && hideAt - scAway < 3000){ hideAt = 0; scAway = 0; return; }   // 단축어 실행으로 잠깐 나갔다 온 건 이탈이 아님
   if(hideAt && cur){ const sec = Math.round((Date.now() - hideAt)/1000); hideAt = 0;
     if(sec >= 3){ cur.leaves = (cur.leaves || 0) + 1; cur.away = (cur.away || 0) + sec;
       const t = sec < 60 ? sec + '초' : Math.round(sec/60) + '분';
