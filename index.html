@@ -441,8 +441,14 @@
 
   #ytNow .ch i img{width:100%;height:100%;object-fit:cover;border-radius:50%} #ytNow .ch i{overflow:hidden}
   #ytNow .blk{margin:-8px 0 10px;font:12px/1.4 var(--sans);color:#8b8ff5}
+
+  #ytAd{position:absolute;inset:0;z-index:2;background:#0f0f0f;display:grid;place-items:center;overflow:hidden;pointer-events:auto}
+  #ytAd[hidden]{display:none}
+  #ytAd img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(14px) grayscale(1) brightness(.45);transform:scale(1.15)}
+  #ytAd span{position:relative;color:#fff;font:600 14px var(--sans);text-align:center;letter-spacing:.04em}
+  #ytAd small{display:block;margin-top:4px;font:400 11px var(--sans);color:#bbb}
 </style></head><body>
-<div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div></div>
+<div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
   <svg id="bg1" class="layer"></svg><div id="bgo" class="layer"></div><svg id="bg2" class="layer"></svg>
   <header id="top">
@@ -1217,25 +1223,30 @@ const Music = {
     this.ws = setTimeout(()=>{ const st = this._pl && this._pl.getPlayerState ? this._pl.getPlayerState() : -1;
       if(this.want && !this.playing && (st === -1 || st === 5 || st === 2)){ this.blocked = true; this.open('now'); toast('아이폰이 자동 재생을 막았어요 · 영상을 한 번 눌러 주세요', 3600); } }, 2500);
   },
-  // 광고 소리 끄기(추정): 유튜브는 광고 중인지 알려 주지 않는다. '재생 중'인데 본편 시간이 3번 연속 멈춰 있으면 광고로 보고 음소거.
-  // 아이폰은 음소거를 풀 때 영상을 멈춰 버리는 일이 있어서, 그런 일이 한 번이라도 생기면 이 기능을 스스로 끈다.
+  // 광고 가리기(추정): 유튜브는 광고 중인지 알려 주지 않는다. '재생 중'인데 본편 시간이 0.8초 넘게 멈춰 있으면 광고로 보고
+  // 소리를 끄고 영상 위를 덮는다 → 본편 시간이 다시 흐르면 소리 켜고 걷어 낸다.
   adWatch(){
-    clearInterval(this.aw); if(this.adMute === false) return;
+    clearInterval(this.aw);
     let last = -1, still = 0;
     this.aw = setInterval(()=>{ const p = this._pl; if(!p || !p.getPlayerState) return;
-      const st = p.getPlayerState(), t = p.getCurrentTime() || 0, moving = st === 1 && t > last + .2;
+      const st = p.getPlayerState(), t = p.getCurrentTime() || 0, moving = st === 1 && t > last + .15;
       still = st === 1 && !moving ? still + 1 : 0; last = t;
-      if(this.want && still >= 3 && !this.muted){ p.mute(); this.muted = true; this.render(); }
-      else if(moving && this.muted){ p.unMute(); this.muted = false; this.render(); this.unmAt = Date.now(); }
-    }, 600);
+      if(this.want && still >= 2 && !this.muted) this.adCover(true);
+      else if(moving && this.muted) this.adCover(false);
+    }, 400);
+  },
+  adCover(on){
+    const p = this._pl, el = $('ytAd'); this.muted = on;
+    if(on){ p.mute(); el.querySelector('img').src = this.vid ? 'https://i.ytimg.com/vi/' + this.vid + '/hqdefault.jpg' : ''; }
+    else { p.unMute(); this.unmAt = Date.now(); }
+    el.hidden = !on; this.render();
   },
   onState(e){
     const S = YT.PlayerState, pl = this._pl, d = pl && pl.getVideoData ? pl.getVideoData() : null;
     this.playing = e.data === S.PLAYING;
     if(this.playing){ this.want = true; this.blocked = false; clearTimeout(this.ws); }
-    if(e.data === S.PAUSED && this.want && this.unmAt && Date.now() - this.unmAt < 1500){   // 음소거 해제가 멈춤을 부름(아이폰) → 기능 끄고 다시 재생
-      this.adMute = false; clearInterval(this.aw); pl.playVideo(); toast('이 기기에선 광고 음소거를 껐어요', 2000); return; }
-    if(e.data === S.PAUSED || e.data === S.ENDED) this.want = false;
+    if(e.data === S.PAUSED && this.want && this.unmAt && Date.now() - this.unmAt < 1500){ this.unmAt = 0; pl.playVideo(); return; }   // 소리 켤 때 아이폰이 멈추면 다시 재생
+    if(e.data === S.PAUSED || e.data === S.ENDED){ this.want = false; if(this.muted) this.adCover(false); }
     if(d && d.video_id){
       if(this.playing && this.radio && d.video_id !== this.vid && d.title) this.addPlayed({type:'video', id:d.video_id, title:d.title, by:d.author});   // 자동 재생으로 들은 곡도 기록
       if(d.video_id !== this.vid){ this.vid = d.video_id; if(this.radio || (this.cur && this.cur.type === 'playlist')) this.chId = ''; }
