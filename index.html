@@ -554,7 +554,30 @@
   .tiw{position:relative;padding-right:46px} .nstk{position:absolute;right:-2px;top:-30px;width:44px;mix-blend-mode:multiply;transform:rotate(12deg);pointer-events:none}
   .ndeco{display:flex;justify-content:space-between;align-items:flex-end;margin:14px 6px 0;height:74px;pointer-events:none}
   .ndeco img{height:100%;width:auto;mix-blend-mode:multiply;opacity:.9} .ndeco img:nth-child(1){height:62px;transform:rotate(-8deg)} .ndeco img:nth-child(3){height:56px;transform:scaleX(-1) rotate(-6deg)}
-  @media (orientation:landscape) and (max-height:600px){ .ndeco{display:none} }
+  @media (orientation:landscape) and (max-height:600px){ .ndeco,#ytNow .arm{display:none!important} }
+
+  /* 플레이리스트: 오브젝트는 이름 옆에만 */
+  .pn{display:flex!important;align-items:center;gap:4px;min-width:0} .pn span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nst{flex:none;width:26px;height:26px;object-fit:contain;mix-blend-mode:multiply;transform:rotate(-8deg)} .plh .nst{width:40px;height:40px}
+  .plc{width:112px!important;padding:0!important}
+  /* 지금: 콜라주 장식 */
+  #spSheet:not(.wide) #ytNow{position:relative}
+  #spSheet:not(.wide) #ytNow .vidspot{margin-top:24px}
+  #ytNow .tape{position:absolute;top:-6px;width:64px;height:20px;background:#d8d4c6e6;box-shadow:0 1px 0 #0001;z-index:1}
+  #ytNow .tape.t1{left:-6px;transform:rotate(-10deg)} #ytNow .tape.t2{right:-4px;transform:rotate(8deg);background:#1e22d6cc}
+  #ytNow .arm{position:absolute;right:-26px;width:120px;top:250px;opacity:.16;mix-blend-mode:multiply;pointer-events:none;transform:rotate(14deg)}
+  #spSheet:not(.wide) #ytNow .ctl{position:relative}
+  #ytNow .wg{position:absolute;top:50%;width:70px;opacity:.32;mix-blend-mode:multiply;pointer-events:none;z-index:0}
+  #ytNow .wg.l{left:calc(50% - 92px);transform:translateY(-50%) scaleX(-1) rotate(-6deg)} #ytNow .wg.r{left:calc(50% + 20px);transform:translateY(-50%) rotate(-6deg)}
+  #ytNow .ctl button{position:relative;z-index:1}
+  .ndeco{position:relative;display:block!important;height:120px!important;margin:18px 0 0!important}
+  .ndeco img{position:absolute;height:auto!important;mix-blend-mode:multiply;opacity:1;transform:none}
+  .ndeco .pp1{position:absolute;left:22%;bottom:14px;width:46%;height:30px;background:var(--bleu);transform:rotate(-2deg)}
+  .ndeco .pp2{position:absolute;left:30%;bottom:36px;width:30%;height:44px;background:#fff;outline:1px solid var(--ink);transform:rotate(3deg)}
+  .ndeco .cd{left:2%;bottom:6px;width:64px!important} .ndeco .rs{left:34%;bottom:20px;width:96px!important;transform:rotate(-6deg)}
+  .ndeco .hg{left:60%;bottom:10px;width:48px!important;transform:rotate(8deg)} .ndeco .dv{right:0;top:0;width:70px!important;transform:scaleX(-1) rotate(-10deg)}
+  .ndeco .st{left:24%;top:4px;width:18px!important} .ndeco .st2{right:30%;top:30px;width:12px!important}
+  .ndeco span{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font:italic 11px var(--serif);color:#8a8a86;letter-spacing:.12em}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1452,7 +1475,7 @@ const Music = {
   objFor(id){ const O = ['dove','roses','lily','crescent','candelabra','hourglass','wing','crown','iris','perfume','watch','mirror','saturn','book','keyhand','moon','cherub','birdcage'];
     let h = 0; for(const c of String(id)) h = (h*31 + c.charCodeAt(0)) >>> 0; return PARTS + 'obj_' + O[h % O.length] + '.webp'; },
   coverHTML(t){ const th = t.items.slice(0, 4).map(x=>'<i style="background-image:url(https://i.ytimg.com/vi/' + x.id + '/mqdefault.jpg)"></i>').join('');
-    return '<div class="pcov' + (t.items.length < 4 ? ' one' : '') + '">' + (th || '<i></i>') + '<img class="stk" src="' + this.objFor(t.id) + '" alt=""></div>'; },
+    return '<div class="pcov' + (t.items.length < 4 ? ' one' : '') + '">' + (th || '<i></i>') + '</div>'; },
   trackHTML(x, i, src, on){
     return '<div class="tr lc"><button class="li' + (on ? ' on' : '') + '" data-a="' + (src === 'pl' ? 'plplay' : 'play') + '" data-s="' + src + '" data-i="' + i + '">' +
       (this.thumb(x) ? '<img src="' + this.thumb(x) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(x.title || '') + '</b><em>' + (x.type === 'playlist' ? '유튜브 재생목록 · ' : '') + esc(x.by || '') + (x.dur && this.fmtDur(x.dur) ? ' · ' + this.fmtDur(x.dur) : '') + '</em></span></button>' +
@@ -1463,7 +1486,7 @@ const Music = {
     if(op){                                                // 플레이리스트 안
       const playing = this.cur && this.cur.type === 'mylist' && this.cur.id === 'L' + op.id;
       box.innerHTML = '<div class="pld"><button class="back" data-a="closelist" aria-label="뒤로">‹ 저장한 음악</button>' +
-        '<div class="plh">' + this.coverHTML(op) + '<div><small>PLAYLIST · N°' + String(L.indexOf(op) + 1).padStart(2, '0') + '</small><h3>' + esc(op.name) + '</h3><p>' + op.items.length + '곡</p></div></div>' +
+        '<div class="plh">' + this.coverHTML(op) + '<div><small>PLAYLIST · N°' + String(L.indexOf(op) + 1).padStart(2, '0') + '</small><h3 class="pn"><span>' + esc(op.name) + '</span><img class="nst" src="' + this.objFor(op.id) + '" alt=""></h3><p>' + op.items.length + '곡</p></div></div>' +
         '<div class="plb"><button class="pri" data-a="plplay" data-i="0">' + SPI.play + '전체 재생</button><button data-a="plshuf">' + SPI.shuffle + '섞어서</button><button data-a="pladd">' + SPI.plus + '곡 담기</button></div>' +
         '<div class="plb2"><button data-a="plren">이름 바꾸기</button><button data-a="pldel">플레이리스트 지우기</button></div>' +
         (op.items.length ? op.items.map((x, i)=>this.trackHTML(x, i, 'pl', playing && this.vid === x.id)).join('') : '<p class="none">아직 비어 있어요 · ‘곡 담기’로 채워요</p>') + '</div>';
@@ -1472,7 +1495,7 @@ const Music = {
     box.innerHTML = '<form id="ytAdd" class="row" autocomplete="off"><input id="ytUrl" placeholder="유튜브 링크 붙여 넣기 (영상·재생목록)" enterkeyhint="done"><button type="submit">저장</button></form>' +
       '<h4 class="sth">내 플레이리스트<img class="stk" src="' + PARTS + 'obj_dove.webp" alt=""></h4>' +
       '<div class="pls"><button class="plc new" data-a="newlist"><div class="pcov"><span>+</span></div><b>새 플레이리스트</b><em>만들기</em></button>' +
-      L.map(t=>'<button class="plc" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b>' + esc(t.name) + '</b><em>' + t.items.length + '곡</em></button>').join('') + '</div>' +
+      L.map(t=>'<button class="plc" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b class="pn"><span>' + esc(t.name) + '</span><img class="nst" src="' + this.objFor(t.id) + '" alt=""></b><em>' + t.items.length + '곡</em></button>').join('') + '</div>' +
       '<h4 class="sth">저장한 곡<img class="stk r" src="' + PARTS + 'obj_roses.webp" alt=""></h4>' +
       (this.lib.length ? this.lib.map((x, i)=>this.trackHTML(x, i, 'lib', this.cur && this.cur.id === x.id)).join('') : '<p class="none">아직 없어요</p>') +
       '<img class="libend" src="' + PARTS + 'obj_lily.webp" alt="">';
@@ -1771,15 +1794,15 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow">' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+    box.innerHTML = '<div id="ytNow"><i class="tape t1"></i><i class="tape t2"></i><img class="arm" src="' + PARTS + 'obj_armillary.webp" alt="">' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
       '<div class="tiw"><h3 class="ti">' + esc(this.title || it.title || '') + '</h3><img class="nstk" src="' + PARTS + 'obj_crescent.webp" alt=""></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
-      '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
+      '<div class="ctl"><img class="wg l" src="' + PARTS + 'obj_wing.webp" alt=""><img class="wg r" src="' + PARTS + 'obj_wing.webp" alt=""><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      '<div class="ndeco"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""><img src="' + PARTS + 'obj_dove.webp" alt=""></div>' +
+      '<div class="ndeco"><i class="pp1"></i><i class="pp2"></i><img class="cd" src="' + PARTS + 'obj_candelabra.webp" alt=""><img class="rs" src="' + PARTS + 'obj_roses.webp" alt=""><img class="hg" src="' + PARTS + 'obj_hourglass.webp" alt=""><img class="dv" src="' + PARTS + 'obj_dove.webp" alt=""><img class="st" src="' + PARTS + 'halo_star_blue.webp" alt=""><img class="st2" src="' + PARTS + 'halo_star_blue.webp" alt=""><span>— stay until midnight —</span></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
