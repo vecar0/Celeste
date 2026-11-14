@@ -143,12 +143,14 @@
     #brand{margin-bottom:6px;padding:4px 8px} #brand::after{display:none}
     #time{font-size:48px;margin-top:2px;box-shadow:5px 5px 0 var(--bleu)}
     #tbar{height:9px;margin-top:8px} #pomo{margin-top:6px!important} #row{margin-top:6px!important}
-    #lrow{grid-column:1/3;display:flex;align-items:center;gap:10px;margin-top:6px;min-width:0}
-    #lrow>#recent{margin:0!important;flex:0 1 auto;min-width:0;max-width:38%}
-    #lrow>#music{flex:1 1 0;min-width:0;margin:0;padding:4px 6px;min-height:0;gap:2px;justify-content:space-between;box-shadow:3px 3px 0 var(--bleu)} #lrow #music .mt{display:none} #lrow #music img,#lrow #music .art{width:36px!important;height:36px!important;margin-right:auto;cursor:pointer} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
+    #top>#music{grid-column:1/3;margin:6px 0 0;padding:0 6px;height:36px;box-sizing:border-box;min-height:0;gap:4px;box-shadow:3px 3px 0 var(--bleu)}
+    #top>#music .mt{cursor:pointer} #top>#music .mt span{display:none} #top>#music .mt b{font-size:13px}
+    #top>#music.ad .mt small{display:block!important;color:#ff7a7a;letter-spacing:.12em}
+    #top>#music img,#top>#music .art{cursor:pointer} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
     #music .mt b{font-size:13px} #music button{height:28px} #music .pp{width:30px;height:30px}
-    #recent{margin-top:5px!important}
-    #go,#quit,#warm{height:36px!important} #sline{margin-bottom:5px!important} #bottom{padding-top:24px!important}
+    #top{grid-auto-flow:row dense} #pomo{grid-column:1!important} #recent{grid-column:2!important;justify-self:end;align-self:center;margin-top:6px!important}
+    #pomo span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0} #pomo{min-width:0} #recent button{font-size:10px;padding:2px 6px}   /* 가로: '오늘 할 일'은 POMODORO 줄 오른쪽으로 */
+    #go,#quit,#warm{height:36px!important} #sline{margin-bottom:5px!important} #bottom{padding-top:18px!important}
     #brand{margin-bottom:4px!important}
     #moon{width:100px;height:100px;margin:-16px -10px -14px -8px}
     #moonTxt{font-size:9px}
@@ -395,6 +397,9 @@
   .orb{animation:orb 16s ease-in-out infinite alternate}
   @keyframes orb{0%{transform:rotate(-3deg) translateY(-5px) scaleY(.94)}50%{transform:rotate(.5deg) translateY(4px) scaleY(1.05)}100%{transform:rotate(3deg) translateY(-2px) scaleY(.97)}}
   .layer{will-change:transform}
+  @media (orientation:landscape) and (max-height:400px){   /* 작은 가로 화면: 패널이 아래 띠를 넘지 않게 조금씩 줄임 */
+    #time{font-size:42px!important} #tbar{margin-top:6px!important} #brand{margin-bottom:2px!important} #top>#music{margin-top:4px}
+  }
   @media (prefers-reduced-motion:reduce){ .layer .o canvas,.tw,.orb{animation:none} }
   #loading{position:absolute;inset:0;display:grid;place-items:center;font:italic 13px var(--serif);color:var(--grey);z-index:1}
   #spSheet,#spSheet *{font-family:var(--sans)!important;font-style:normal!important}   /* 음악 화면은 한 글꼴로 */
@@ -448,6 +453,8 @@
   #ytAd img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(14px) grayscale(1) brightness(.45);transform:scale(1.15)}
   #ytAd span{position:relative;color:#fff;font:600 14px var(--sans);text-align:center;letter-spacing:.04em}
   #ytAd small{display:block;margin-top:4px;font:400 11px var(--sans);color:#bbb}
+
+  #music .mt b.st{display:none} #top>#music .mt b{display:none} #top>#music .mt b.st{display:block}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1159,9 +1166,9 @@ function fit(){
   const h = appH() + 'px';
   for(const el of [document.documentElement, document.body, $('app')]){ el.style.height = h; el.style.minHeight = h; }
   const st = $('stage'), land = matchMedia('(orientation:landscape) and (max-height:600px)').matches;
-  { const m = $('music'), r = $('recent'); let row = $('lrow');                       // 가로: 음악 줄은 '오늘 할 일' 옆 같은 줄 → 셀레스테도 안 가리고 패널도 안 넘침
-    if(land){ if(!row){ row = document.createElement('div'); row.id = 'lrow'; r.parentNode.insertBefore(row, r); } if(r.parentNode !== row) row.appendChild(r); if(m.parentNode !== row) row.appendChild(m); }
-    else { if(row){ row.parentNode.insertBefore(r, row); row.remove(); } if(m.parentNode !== $('bottom')) $('bottom').insertBefore(m, $('sline')); } }
+  { const m = $('music'), r = $('recent');                                           // 가로: '오늘 할 일' 아래에 음악 한 줄(셀레스테 안 가림)
+    if(land){ if(m.previousElementSibling !== r) r.after(m); }
+    else if(m.parentNode !== $('bottom')) $('bottom').insertBefore(m, $('sline')); }
   // 난간 윗선(원화 y 2018)을 아래 띠(세로: 패널 위 마름모 띠 / 가로: 무대 아래 띠)에 딱 맞춘다 → 팔짱 낀 팔이 띠 위에 얹힌 모양
   const H = (land ? st.clientHeight - 20 : $('bottom').getBoundingClientRect().top - st.getBoundingClientRect().top) + 2, BOT = 2018;   // 띠 윗선까지
   const sc = Math.min(H / (BOT - 245), st.clientWidth*(land ? .98 : 1.02) / 980);   // 980 = 팔 폭, 40 = 헤일로 여유
@@ -1559,11 +1566,18 @@ const Music = {
   },
   thumb(it){ if(it === this.cur && this.vid) return 'https://i.ytimg.com/vi/' + this.vid + '/mqdefault.jpg';   // 지금 나오는 영상
     return it.img || (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/default.jpg' : ''); },
+  short(t){                                                // 가로 음악 줄용 짧은 제목: 따옴표 속 곡명 → 없으면 [..] (..) 【..】 · ' / ' · ' | ' 뒤를 뗀다
+    const q = String(t || '').match(/['‘"“]([^'’"”]{2,40})['’"”]/); if(q) return q[1];   // 'Maid My Way'처럼 따옴표 속이 곡명
+    let x = String(t || '').replace(/\[[^\]]*\]|\([^)]*\)|【[^】]*】|「[^」]*」/g, ' ');
+    x = x.split(/\s[\/|｜]\s|\s\/\s?|\s?｜\s?/)[0];
+    x = x.replace(/\b(cover|official|mv|m\/v|lyrics?|audio|video|full ver\.?)\b/gi, '').replace(/\s+/g, ' ').trim();
+    return x || String(t || '');
+  },
   render(){
-    const el = $('music'); if(!el) return;
+    const el = $('music'); if(!el) return; el.classList.toggle('ad', !!this.muted);
     const it = this.cur, img = it ? this.thumb(it) : '';
     el.innerHTML = (img ? '<img data-a="now" src="' + img + '" alt="">' : '<i class="art" data-a="now">♪</i>') +
-      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><b class="st">' + esc(this.short(this.title || (it ? it.title : '음악 고르기'))) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
