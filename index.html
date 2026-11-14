@@ -730,6 +730,11 @@
 
   #spSheet:not(.wide) #ytNow .vidspot{background:none!important}
   #spSheet:not(.wide) #ytNow .li::before{content:counter(n,upper-roman)!important;width:30px;font:italic 400 14px var(--serif)}
+
+  #warm[hidden],#quit[hidden]{display:none!important}   /* 집중 중에는 5분만 숨김(위 display 지정이 hidden을 덮던 것) */
+  #go,#quit{white-space:nowrap;overflow:hidden}
+  #quit{flex:none;width:auto!important;min-width:88px;padding:0 14px;font:500 13px var(--sans);letter-spacing:.12em;background:var(--paper2);box-shadow:5px 5px 0 var(--ink)}
+  @media (orientation:landscape) and (max-height:600px){ #go{letter-spacing:.12em} #quit{box-shadow:4px 4px 0 var(--ink)} }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
