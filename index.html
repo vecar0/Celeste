@@ -747,6 +747,16 @@
     #tbar{height:10px!important;box-shadow:0 0 0 3px var(--paper2),3px 3px 0 3px var(--ink)}
   }
   @media (orientation:landscape) and (max-height:420px){ #time{font-size:60px!important} }
+
+  /* ⋮ 아래 오브젝트 */
+  #spSheet.wide .yv .meta,#spSheet.wide .cv{position:relative}
+  .kstk{position:absolute;right:6px;bottom:6px;width:34px;height:34px;object-fit:contain;mix-blend-mode:multiply;opacity:.85;pointer-events:none}
+  #spSheet.wide .yv .kstk{bottom:-4px;right:2px;width:38px;height:38px}
+  #spSheet.wide .yv h5,#spSheet.wide .cv h5{padding-right:6px}
+  /* 추천 채널 줄: 크기·글씨 정돈 */
+  .chrow{align-items:flex-start}
+  #spSheet .chc b{display:-webkit-box!important;margin:8px 0 0!important;font:500 11px/1.35 var(--sans)!important;color:var(--ink)!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
+  .chc img{display:block;margin:0 auto}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1809,6 +1819,10 @@ const Music = {
         if(t === 'singleplaylist' && pl[0]){ const items = await this.plItems(pl[0], 10, '', ''); return {ic:'note', title:x.snippet.title || (pm[pl[0]] || {}).title || '재생목록', items}; }
         if(t === 'multipleplaylists' || t === 'allplaylists') return {ic:'list', title:x.snippet.title || '재생목록', items:pl.map(p=>pm[p]).filter(Boolean)};
         if(t === 'recentuploads' && up) return {ic:'note', title:'동영상', items:await this.plItems(up, 10, name, id)};
+        if(t === 'multiplechannels' && x.contentDetails && x.contentDetails.channels){   // 채널 주인이 고른 추천 채널
+          const d = await Music.gj('https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResults=50&id=' + x.contentDetails.channels.slice(0, 50).join(',') + K);
+          const items = (d.items || []).map(c=>{ const tt = c.snippet.thumbnails || {}, img = (tt.medium || tt.default || {}).url; if(img) this.avs[c.id] = img; return {type:'channel', id:c.id, title:c.snippet.title, img}; });
+          return {kind:'chans', title:x.snippet.title || '추천 채널', items}; }
         if(t === 'popularuploads'){ const d = await Music.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=viewCount&maxResults=10&channelId=' + id + K);
           return {ic:'fire', title:'인기 동영상', items:(d.items || []).map(v=>({type:'video', id:v.id.videoId, title:new DOMParser().parseFromString(v.snippet.title, 'text/html').body.textContent, by:name, ch:id, at:v.snippet.publishedAt, img:(v.snippet.thumbnails.medium || {}).url})).filter(v=>v.id)}; }
         return null; });
@@ -1862,8 +1876,8 @@ const Music = {
         : '<span class="chlink" data-a="ch" data-i="' + i + '">' + esc(x.by || '') + '</span>' + (x.live ? '' : (x.views != null ? ' · ' + this.fmtViews(x.views) : '') + (x.at ? ' · ' + this.fmtAgo(x.at) : ''));
       return '<article class="yv' + (x.type === 'playlist' ? ' pl' : '') + '" data-a="play" data-s="found" data-i="' + i + '"><div class="th"><img loading="lazy" src="' + x.img + '" alt="">' +
         (x.live ? '<span class="tag live">● 실시간</span>' : x.type === 'playlist' ? '<span class="tag">' + SPI.list + (x.count ? '동영상 ' + x.count + '개' : '재생목록') + '</span>' : this.fmtDur(x.dur) ? '<span class="tag">' + this.fmtDur(x.dur) + '</span>' : '') +
-        '</div><div class="meta">' + av + '<div><h5>' + esc(x.title) + '<img class="tstk" src="' + this.objFor(x.id) + '" alt=""></h5><p>' + sub + '</p>' + (x.live ? '<b class="lv">실시간</b>' : '') + '</div>' +
-        '<button class="keep" data-a="menu" data-i="' + i + '" aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></article>'; });
+        '</div><div class="meta">' + av + '<div><h5>' + esc(x.title) + '</h5><p>' + sub + '</p>' + (x.live ? '<b class="lv">실시간</b>' : '') + '</div>' +
+        '<button class="keep" data-a="menu" data-i="' + i + '" aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>' + this.kstk(x.id) + '</div></article>'; });
     const out = []; let n = 0; const blk = sIdx.length ? this.shortsHTML(sIdx.map(i=>this.found[i]), k=>'data-s="found" data-i="' + sIdx[k] + '"', 'play') : '';
     html.forEach(h=>{ if(!h) return; out.push(h); if(++n === 3 && blk) out.push(blk); }); if(n < 3 && blk) out.push(blk);
     box.innerHTML = out.join('') +
@@ -1933,7 +1947,7 @@ const Music = {
     const seed = hq || (chs[0] && chs[0].name) || '음악';
     jobs.push(this.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=12&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(seed + ' #shorts') + K)
       .then(j=>({kind:'shorts', title:'Shorts', items:(j.items || []).map(vmap).filter(x=>typeof x.id === 'string')})));
-    jobs.push(this.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=10&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(seed) + K)
+    if(false) jobs.push(this.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=10&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(seed) + K)
       .then(async j=>{ const items = (j.items || []).map(x=>({type:'channel', id:x.id.channelId, title:txt(x.snippet.title), img:(x.snippet.thumbnails.medium || x.snippet.thumbnails.default || {}).url})).filter(x=>x.id && !chs.some(c=>c.id === x.id));
         items.forEach(x=>{ if(x.img) this.avs[x.id] = x.img; }); return {kind:'chans', ic:'ch', title:'추천 채널', items}; }));
     const sh = [], hist = pl.filter(x=>typeof x.id === 'string' && (x.type === 'video' || x.type === 'playlist'));
@@ -1948,9 +1962,11 @@ const Music = {
     const tag = x.live ? '<span class="tag live">● 실시간</span>' : x.type === 'playlist' ? '<span class="tag">' + SPI.list + (x.count || '') + '</span>' : this.fmtDur(x.dur) ? '<span class="tag">' + this.fmtDur(x.dur) + '</span>' : '';
     const img = x.img || (x.type === 'video' ? 'https://i.ytimg.com/vi/' + x.id + '/mqdefault.jpg' : '');
     const sub = x.type === 'playlist' ? '재생목록' : [x.views != null ? this.fmtViews(x.views) : '', x.at ? this.fmtAgo(x.at) : ''].filter(Boolean).join(' · ');
-    return '<article class="cv" data-a="splay" ' + at + '><div class="th"><img loading="lazy" src="' + img + '" alt="">' + tag + '</div><div class="cvm"><h5>' + esc(x.title) + '<img class="tstk" src="' + this.objFor(x.id) + '" alt=""></h5><p>' + [esc(x.by || ''), sub].filter(Boolean).join('<br>') + '</p></div>' +
-      '<button class="keep" data-a="menu" ' + at + ' aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></article>';
+    return '<article class="cv" data-a="splay" ' + at + '><div class="th"><img loading="lazy" src="' + img + '" alt="">' + tag + '</div><div class="cvm"><h5>' + esc(x.title) + '</h5><p>' + [esc(x.by || ''), sub].filter(Boolean).join('<br>') + '</p></div>' +
+      '<button class="keep" data-a="menu" ' + at + ' aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>' + this.kstk(x.id) + '</article>';
   },
+  kstk(id){ let h = 7; for(const c of String(id)) h = (h*33 + c.charCodeAt(0)) >>> 0;
+    return '<img class="kstk" src="' + this.objFor(id) + '" alt="" style="transform:rotate(' + ((h % 13) - 6) + 'deg)">'; },
   isShort(x){ return x && x.type === 'video' && !x.live && x.dur && this.secs(x.dur) > 0 && this.secs(x.dur) <= 60; },
   shortsHTML(items, at, act){                              // 쇼츠: 세로 카드 2열
     const ic = '<svg viewBox="0 0 24 24"><path d="M15.5 2.6c1.9-1 4.2-.3 5.2 1.6s.3 4.2-1.6 5.2l-1.3.7c1.6.4 2.8 1.9 2.8 3.6 0 1.4-.8 2.7-2 3.3l-8.1 4.4c-1.9 1-4.2.3-5.2-1.6s-.3-4.2 1.6-5.2l1.3-.7C6.6 13.5 5.4 12 5.4 10.3c0-1.4.8-2.7 2-3.3zM10 8.6v6.8l5.8-3.4z"/></svg>';
