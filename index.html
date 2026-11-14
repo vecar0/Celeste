@@ -728,7 +728,7 @@
   #spSheet .chc b{display:-webkit-box!important;margin:8px 0 0!important;font:500 11px/1.35 var(--sans)!important;color:var(--ink)!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
   .chc img{display:block;margin:0 auto}
 
-  #spSheet:not(.wide) #ytNow .vidspot{background:#000!important}
+  #spSheet:not(.wide) #ytNow .vidspot{background:none!important}
   #spSheet:not(.wide) #ytNow .li::before{content:counter(n,upper-roman)!important;width:30px;font:italic 400 14px var(--serif)}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
@@ -1564,10 +1564,19 @@ const Music = {
     }
     this.render(); this.refreshNow();
   },
+  upHTML(){                                                // 다음 곡 목록(재생목록·자동 재생)
+    const pl = this._pl, list = this.ready && pl.getPlaylist ? pl.getPlaylist() : null, idx = this.ready && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    const row = (v, a, i)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="' + a + '" data-v="' + v + '" data-i="' + i + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; };
+    if(list && list.length > 1){ const ids = list.slice(idx + 1, idx + 16); this.upIds = ids; return '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + ids.map((v, k)=>row(v, 'pi', idx + 1 + k)).join(''); }
+    if(this.upList()){ this.upIds = this.upNext; return '<h4>다음 추천 곡</h4>' + this.upNext.map((v, k)=>row(v, 'mixat', k + 1)).join(''); }
+    this.upIds = []; return '';
+  },
+  refreshUp(){ const b = $('upBox'); if(!b) return; b.innerHTML = this.upHTML(); if(this.upIds.length) this.upTitles(this.upIds); },
   refreshNow(){                                            // '지금' 화면: 곡이 바뀌면 다시 그리고, 아니면 버튼·제목만
     if($('spSheet').hidden || this.tab !== 'now') return;
-    const key = this.vid + '|' + this.radio + '|' + !!this.blocked + '|' + (this.upList() ? this.upNext.length : 0);
-    if(key !== this.nowKey){ this.nowKey = key; this.renderSheet(); return; }
+    const key = this.vid + '|' + this.radio + '|' + !!this.blocked, uk = this.upList() ? this.upNext.join() : '';
+    if(key !== this.nowKey){ this.nowKey = key; this.upKey = uk; this.renderSheet(); return; }
+    if(uk !== this.upKey){ this.upKey = uk; this.refreshUp(); }                                 // 다음 곡만 바뀌면 그 칸만
     const b = document.querySelector('#ytNow .pp'); if(b) b.innerHTML = this.playing ? SPI.pause : SPI.play;
     const t = document.querySelector('#ytNow .ti'); if(t && this.title) t.textContent = this.title;
   },
@@ -1994,7 +2003,6 @@ const Music = {
   renderNow(box){
     const it = this.cur, pl = this._pl;
     if(!it){ box.innerHTML = '<p class="none">재생 중인 음악이 없어요. 저장한 음악이나 검색에서 골라요</p>'; this.place(); return; }
-    const list = this.ready && pl.getPlaylist ? pl.getPlaylist() : null, idx = this.ready && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
@@ -2006,11 +2014,12 @@ const Music = {
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
       '<p class="motto">— stay until midnight —</p>' +
-      (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : this.upList() ? '<h4>다음 추천 곡</h4>' + this.upNext.map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="mixat" data-v="' + v + '" data-i="' + (k + 1) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
+      '<div id="upBox">' + this.upHTML() + '</div></div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     box.onscroll = ()=>this.place(true);
     this.nowTick(); this.place(); if(!av) this.chAvatar();
-    if(list && list.length > 1) this.upTitles(list.slice(idx + 1, idx + 16)); else if(this.upList()) this.upTitles(this.upNext);
+    if(this.upIds.length) this.upTitles(this.upIds);
+    this.nowKey = this.vid + '|' + this.radio + '|' + !!this.blocked; this.upKey = this.upList() ? this.upNext.join() : '';   // 지금 그린 상태 기억
   },
   renderSheet(tab){
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now'); if(this.tab !== 'now') this.place();
@@ -2049,10 +2058,10 @@ const Music = {
     const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open('lib'); if(a === 'now') return this.open('now');
     if(a === 'unchan'){ this.chan = null; $('spBody').onscroll = null; this.renderSheet(); return; }
-    if(a === 'loop'){ this.loop = !this.loop; this.save(); this.renderSheet(); return; }
+    if(a === 'loop'){ this.loop = !this.loop; this.save(); b.classList.toggle('on', this.loop); this.upKey = null; this.refreshUp(); return; }
     if(a === 'autoplay'){ this.autoplay = this.autoplay === false; this.save();
       if(this.autoplay && this.cur && this.cur.type === 'video' && !(this.upNext && this.upSeed === this.cur.id)) this.mount().then(()=>this.peekMix(this.cur.id));
-      toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); this.renderSheet(); return; }
+      toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); b.classList.toggle('on', this.autoplay); this.upKey = null; this.refreshUp(); return; }
     if(a === 'chan'){ const id = this.chId || (this.cur && this.cur.ch); if(id && this.key){ this.openChannel(id, this.by || this.cur.by); } else if(!this.key) toast('채널 보기는 검색 키가 있어야 해요', 2000); return; }
     if(a === 'cplay'){ this.playItem(this.chList[i]); return; }
     if(a === 'ch'){ const x = this.found[i]; if(x && x.type === 'channel') this.openChannel(x.id, x.title); else if(x && x.ch) this.openChannel(x.ch, x.by); return; }
