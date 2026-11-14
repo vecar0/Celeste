@@ -582,6 +582,16 @@
   /* 지금: 장식은 테이프 한 조각 · 초승달 · 장미 한 송이만 */
   .ndeco{height:96px!important;margin:16px 0 0!important}
   .ndeco .rs{left:50%;bottom:20px;width:70px!important;transform:translateX(-50%) rotate(-6deg)!important;opacity:.85}
+
+  /* 지금: 빈자리에만 같은 크기로 정돈해서 */
+  #hdeco{display:none;position:absolute;right:26px;top:26px;width:62px;mix-blend-mode:multiply;transform:scaleX(-1) rotate(-8deg);pointer-events:none}
+  #spSheet.tnow:not(.wide) #hdeco{display:block}
+  .ndeco{height:auto!important;margin:22px 0 4px!important;display:block!important}
+  .ndeco .nrow{display:flex;justify-content:space-evenly;align-items:flex-end;height:58px;padding-bottom:8px;border-bottom:1px dashed #12121230}
+  .ndeco .nrow img{position:static!important;height:52px!important;width:auto!important;mix-blend-mode:multiply;opacity:.88;transform:none!important}
+  .ndeco .nrow img:nth-child(2){height:58px!important}
+  .ndeco span{position:static!important;display:block;margin-top:8px}
+  @media (orientation:landscape) and (max-height:600px){ #hdeco{display:none!important} }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1806,14 +1816,15 @@ const Music = {
       '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      '<div class="ndeco"><img class="rs" src="' + PARTS + 'obj_roses.webp" alt=""><span>— stay until midnight —</span></div>' +
+      '<div class="ndeco"><div class="nrow"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""><img src="' + PARTS + 'obj_candelabra.webp" alt=""></div><span>— stay until midnight —</span></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
     if(list && list.length > 1) this.upTitles(list.slice(idx + 1, idx + 16));
   },
   renderSheet(tab){
-    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); if(this.tab !== 'now') this.place();
+    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now');
+    if(!$('hdeco')) $('spSheet').querySelector('.pc').insertAdjacentHTML('afterbegin', '<img id="hdeco" src="' + PARTS + 'obj_dove.webp" alt="">');   // 제목 오른쪽 빈자리 장식 if(this.tab !== 'now') this.place();
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
     if(this.tab === 'now'){ document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === 'now')); this.renderNow($('spBody')); return; }
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
