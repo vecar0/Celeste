@@ -2104,7 +2104,7 @@ const Music = {
 Music.init();
 
 /* ═══ 오프라인: 한 번 열면 그림·코드가 기기에 저장된다 ═══ */
-if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).catch(()=>{});
 
 /* ═══ 시작 ═══ */
 let rig = null, shown = 0;
