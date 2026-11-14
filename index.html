@@ -699,6 +699,22 @@
       repeating-linear-gradient(0deg,#0000 0 23px,#12121212 23px 24px),var(--paper)}
     #safeL span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap;font:italic 13px var(--serif);letter-spacing:.3em;color:var(--bleu);opacity:.75}
   }
+
+  #ytWin.scr{opacity:0!important;transition:none}
+  #warm{font:500 15px var(--sans)!important;letter-spacing:.04em}
+  /* 검색: 위 고정 줄과 첫 카드가 겹쳐 잘리던 것 */
+  #spSheet.wide .ytop{padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid #12121222}
+  #spSheet.wide #ytRes{padding-top:6px}
+  /* 검색 카드: 채널 아이콘 = 파란 링 + 별 배지, 제목 위 작은 라벨, 썸네일 모서리 테이프 */
+  #spSheet.wide .yv .av{position:relative;overflow:visible!important;outline:2px solid var(--bleu)!important;outline-offset:2px;background:var(--ink)}
+  #spSheet.wide .yv .av img:not(.avst){border-radius:50%}
+  #spSheet.wide .yv .av .avst{position:absolute;right:-7px;bottom:-6px;width:16px!important;height:16px!important;border-radius:0;z-index:1}
+  #spSheet.wide .yv .th{position:relative}
+  #spSheet.wide .yv .th::before{content:"";position:absolute;left:-10px;top:-8px;width:54px;height:16px;background:#1e22d6d0;transform:rotate(-8deg);z-index:2}
+  #spSheet.wide .yv:nth-child(even) .th::before{left:auto;right:-10px;transform:rotate(7deg);background:#d8d4c6e8}
+  #spSheet.wide .yv .meta>div{border-left:2px solid var(--bleu);padding-left:10px}
+  #spSheet.wide .yv h5{font:600 15px/1.4 var(--serif)!important}
+  #spSheet.wide .yc{position:relative} #spSheet.wide .yc::after{content:"CHANNEL";position:absolute;right:10px;top:8px;font:600 8px var(--sans);letter-spacing:.3em;color:var(--bleu)}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1677,13 +1693,15 @@ const Music = {
   },
   async search(q, more){
     if(!this.key){ this.renderSheet(); return; }
-    if(!more){ if(q != null) this.q = q; this.found = []; this.next = ''; this.renderSheet(); }
-    if(this.busy) return; this.busy = true;
+    if(more && this.busy) return;
+    const tok = this.sTok = (this.sTok || 0) + 1;
+    if(!more){ if(q != null) this.q = q; this.found = []; this.next = ''; }
+    this.busy = true; if(!more){ const b = $('spBody'); if(b) b.scrollTop = 0; this.renderResults(); }
     const K = '&key=' + encodeURIComponent(this.key);
     try{
       const k = this.kind || 'all', ty = {all:'video,channel,playlist', video:'video', channel:'channel', playlist:'playlist', recent:'video&order=date', live:'video&eventType=live'}[k] || 'video';
       const r = await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&type=' + ty + '&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(this.q) + (this.next ? '&pageToken=' + this.next : '') + K);
-      const j = await r.json();
+      const j = await r.json(); if(tok !== this.sTok) return;
       if(!r.ok){ toast('검색 실패 · ' + String((j.error && j.error.message) || r.status).slice(0, 80), 5000); this.busy = false; return; }
       this.next = j.nextPageToken || '';
       const txt = h => new DOMParser().parseFromString(h, 'text/html').body.textContent;
@@ -1701,9 +1719,10 @@ const Music = {
       if(chs.length){ try{ const d = await (await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=' + chs.slice(0, 50).join(',') + K)).json();
         (d.items || []).forEach(c=>{ const t = c.snippet.thumbnails || {}; this.avs[c.id] = (t.medium || t.default || {}).url;
           this.cst[c.id] = {handle:c.snippet.customUrl || '', subs:c.statistics.hiddenSubscriberCount ? null : +c.statistics.subscriberCount, count:+c.statistics.videoCount}; }); }catch(e){} }
+      if(tok !== this.sTok) return;
       this.found = this.found.concat(items);
     }catch(e){ toast('검색 실패 · 인터넷을 확인해 주세요', 3000); }
-    this.busy = false; this.renderResults();
+    if(tok !== this.sTok) return; this.busy = false; this.renderResults();
   },
   async openChannel(id, name){
     this.chan = {id, name}; this.chTab = 'home'; this.chShelves = []; this.chList = []; this.chNext = ''; this.chInfo = null;
@@ -1796,7 +1815,7 @@ const Music = {
       if(x.type === 'channel'){ const c = (this.cst || {})[x.id] || {};
         return '<article class="yc" data-a="ch" data-i="' + i + '"><img src="' + (this.avs[x.id] || x.img) + '" alt=""><div><h5>' + esc(x.title) + '</h5><p>' + esc(c.handle || '') +
           (c.subs != null ? '<br>구독자 ' + this.fmtCount(c.subs) + '명' : '') + (c.count ? ' · 동영상 ' + this.fmtCount(c.count) + '개' : '') + '</p></div></article>'; }
-      const av = '<i class="av" data-a="ch" data-i="' + i + '">' + (this.avs[x.ch] ? '<img src="' + this.avs[x.ch] + '" alt="">' : esc((x.by || '?').slice(0, 1))) + '</i>';
+      const av = '<i class="av" data-a="ch" data-i="' + i + '"><img class="avst" src="' + PARTS + 'halo_star_blue.webp" alt="">' + (this.avs[x.ch] ? '<img src="' + this.avs[x.ch] + '" alt="">' : esc((x.by || '?').slice(0, 1))) + '</i>';
       const sub = x.type === 'playlist' ? '<span class="chlink" data-a="ch" data-i="' + i + '">' + esc(x.by || '') + '</span> · 재생목록<br><span class="all">전체 재생목록 보기</span>'
         : '<span class="chlink" data-a="ch" data-i="' + i + '">' + esc(x.by || '') + '</span>' + (x.live ? '' : (x.views != null ? ' · ' + this.fmtViews(x.views) : '') + (x.at ? ' · ' + this.fmtAgo(x.at) : ''));
       return '<article class="yv' + (x.type === 'playlist' ? ' pl' : '') + '" data-a="play" data-s="found" data-i="' + i + '"><div class="th"><img loading="lazy" src="' + x.img + '" alt="">' +
@@ -1928,7 +1947,7 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
+    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot" style="background:#000 url(https://i.ytimg.com/vi/' + (this.vid || it.id) + '/hqdefault.jpg) center/cover"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
       '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><img class="chrose" src="' + PARTS + 'obj_roses.webp" alt=""><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
@@ -1938,6 +1957,7 @@ const Music = {
       '<p class="motto">— stay until midnight —</p>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : this.upList() ? '<h4>다음 추천 곡</h4>' + this.upNext.map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="mixat" data-v="' + v + '" data-i="' + (k + 1) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
+    box.onscroll = ()=>{ const w = $('ytWin'); w.classList.add('scr'); clearTimeout(this.scT); this.scT = setTimeout(()=>{ this.pk = ''; this.place(); requestAnimationFrame(()=>w.classList.remove('scr')); }, 140); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
     if(list && list.length > 1) this.upTitles(list.slice(idx + 1, idx + 16)); else if(this.upList()) this.upTitles(this.upNext);
   },
@@ -1970,7 +1990,8 @@ const Music = {
         if(d){ this.delHist(d.dataset.del); this.suggest(qin.value.trim()); return; }
         if(f){ qin.value = f.dataset.fill + ' '; yx.hidden = false; this.suggest(qin.value.trim()); return; }
         if(r) go(r.dataset.q); };
-      box.querySelector('.chips').onclick = e=>{ const c = e.target.closest('[data-k]'); if(!c) return; this.kind = c.dataset.k; this.renderSheet(); if(this.q) this.search(this.q); };
+      box.querySelector('.chips').onclick = e=>{ const c = e.target.closest('[data-k]'); if(!c) return; e.stopPropagation(); this.kind = c.dataset.k;
+        box.querySelectorAll('.chips [data-k]').forEach(x=>x.classList.toggle('on', x === c)); if(this.q) this.search(this.q); else toast('검색어를 먼저 입력해요', 1400); };
       box.onscroll = ()=>{ if(this.next && !this.busy && box.scrollTop + box.clientHeight > box.scrollHeight - 400) this.search(this.q, true); };
       this.renderResults(); if(!this.q) this.loadHome(); return;
     }
