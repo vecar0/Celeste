@@ -727,6 +727,9 @@
   .chrow{align-items:flex-start}
   #spSheet .chc b{display:-webkit-box!important;margin:8px 0 0!important;font:500 11px/1.35 var(--sans)!important;color:var(--ink)!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
   .chc img{display:block;margin:0 auto}
+
+  #spSheet:not(.wide) #ytNow .vidspot{background:#000!important}
+  #spSheet:not(.wide) #ytNow .li::before{content:counter(n,upper-roman)!important;width:30px;font:italic 400 14px var(--serif)}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1995,7 +1998,7 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot" style="background:#000 url(https://i.ytimg.com/vi/' + (this.vid || it.id) + '/hqdefault.jpg) center/cover"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
+    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
       '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><img class="chrose" src="' + PARTS + 'obj_roses.webp" alt=""><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
@@ -2047,7 +2050,9 @@ const Music = {
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open('lib'); if(a === 'now') return this.open('now');
     if(a === 'unchan'){ this.chan = null; $('spBody').onscroll = null; this.renderSheet(); return; }
     if(a === 'loop'){ this.loop = !this.loop; this.save(); this.renderSheet(); return; }
-    if(a === 'autoplay'){ this.autoplay = this.autoplay === false; this.save(); toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); this.renderSheet(); return; }
+    if(a === 'autoplay'){ this.autoplay = this.autoplay === false; this.save();
+      if(this.autoplay && this.cur && this.cur.type === 'video' && !(this.upNext && this.upSeed === this.cur.id)) this.mount().then(()=>this.peekMix(this.cur.id));
+      toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); this.renderSheet(); return; }
     if(a === 'chan'){ const id = this.chId || (this.cur && this.cur.ch); if(id && this.key){ this.openChannel(id, this.by || this.cur.by); } else if(!this.key) toast('채널 보기는 검색 키가 있어야 해요', 2000); return; }
     if(a === 'cplay'){ this.playItem(this.chList[i]); return; }
     if(a === 'ch'){ const x = this.found[i]; if(x && x.type === 'channel') this.openChannel(x.id, x.title); else if(x && x.ch) this.openChannel(x.ch, x.by); return; }
