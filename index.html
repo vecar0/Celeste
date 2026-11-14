@@ -1571,12 +1571,12 @@ const Music = {
     if(this.upList()){ this.upIds = this.upNext; return '<h4>다음 추천 곡</h4>' + this.upNext.map((v, k)=>row(v, 'mixat', k + 1)).join(''); }
     this.upIds = []; return '';
   },
-  refreshUp(){ const b = $('upBox'); if(!b) return; b.innerHTML = this.upHTML(); if(this.upIds.length) this.upTitles(this.upIds); },
+  refreshUp(){ const b = $('upBox'); if(!b) return; const h = this.upHTML(), k = this.upIds.join(); if(k === this.upKey && b.innerHTML) return; this.upKey = k; b.innerHTML = h; if(this.upIds.length) this.upTitles(this.upIds); },
   refreshNow(){                                            // '지금' 화면: 곡이 바뀌면 다시 그리고, 아니면 버튼·제목만
     if($('spSheet').hidden || this.tab !== 'now') return;
-    const key = this.vid + '|' + this.radio + '|' + !!this.blocked, uk = this.upList() ? this.upNext.join() : '';
+    const key = this.vid + '|' + !!this.blocked;
     if(key !== this.nowKey){ this.nowKey = key; this.upKey = uk; this.renderSheet(); return; }
-    if(uk !== this.upKey){ this.upKey = uk; this.refreshUp(); }                                 // 다음 곡만 바뀌면 그 칸만
+    this.refreshUp();                                                                            // 다음 곡 칸은 바뀐 경우에만 그 칸만
     const b = document.querySelector('#ytNow .pp'); if(b) b.innerHTML = this.playing ? SPI.pause : SPI.play;
     const t = document.querySelector('#ytNow .ti'); if(t && this.title) t.textContent = this.title;
   },
@@ -2019,7 +2019,7 @@ const Music = {
     box.onscroll = ()=>this.place(true);
     this.nowTick(); this.place(); if(!av) this.chAvatar();
     if(this.upIds.length) this.upTitles(this.upIds);
-    this.nowKey = this.vid + '|' + this.radio + '|' + !!this.blocked; this.upKey = this.upList() ? this.upNext.join() : '';   // 지금 그린 상태 기억
+    this.nowKey = this.vid + '|' + !!this.blocked; this.upKey = this.upIds.join();   // 지금 그린 상태 기억
   },
   renderSheet(tab){
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now'); if(this.tab !== 'now') this.place();
@@ -2058,10 +2058,13 @@ const Music = {
     const a = b.dataset.a, i = +b.dataset.i, src = b.dataset.s;
     if(a === 'toggle') return this.toggle(); if(a === 'prev') return this.skip(-1); if(a === 'next') return this.skip(1); if(a === 'sheet') return this.open('lib'); if(a === 'now') return this.open('now');
     if(a === 'unchan'){ this.chan = null; $('spBody').onscroll = null; this.renderSheet(); return; }
-    if(a === 'loop'){ this.loop = !this.loop; this.save(); b.classList.toggle('on', this.loop); this.upKey = null; this.refreshUp(); return; }
+    if(a === 'loop'){ this.loop = !this.loop; this.save(); b.classList.toggle('on', this.loop); this.refreshUp(); return; }
     if(a === 'autoplay'){ this.autoplay = this.autoplay === false; this.save();
-      if(this.autoplay && this.cur && this.cur.type === 'video' && !(this.upNext && this.upSeed === this.cur.id)) this.mount().then(()=>this.peekMix(this.cur.id));
-      toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); b.classList.toggle('on', this.autoplay); this.upKey = null; this.refreshUp(); return; }
+      if(this.autoplay && this.ready && !this.loop && !this.radio && !this.isList() && this.vid){ const t = this._pl.getCurrentTime() || 0, was = this.playing;
+        this.radio = true; this.want = was; was ? this._pl.loadPlaylist({list:'RD' + this.vid, listType:'playlist', index:0, startSeconds:t}) : this._pl.cuePlaylist({list:'RD' + this.vid, listType:'playlist', index:0, startSeconds:t}); }
+      else if(!this.autoplay && this.ready && this.radio && !this.isList() && this.vid){ const t = this._pl.getCurrentTime() || 0, was = this.playing, o = {videoId:this.vid, startSeconds:t};   // 끄면 지금 곡 하나로 되돌림
+        this.radio = false; this.want = was; was ? this._pl.loadVideoById(o) : this._pl.cueVideoById(o); }
+      toast(this.autoplay ? '다음 곡 자동 재생 켬' : '자동 재생 끔', 1400); b.classList.toggle('on', this.autoplay); this.refreshUp(); return; }
     if(a === 'chan'){ const id = this.chId || (this.cur && this.cur.ch); if(id && this.key){ this.openChannel(id, this.by || this.cur.by); } else if(!this.key) toast('채널 보기는 검색 키가 있어야 해요', 2000); return; }
     if(a === 'cplay'){ this.playItem(this.chList[i]); return; }
     if(a === 'ch'){ const x = this.found[i]; if(x && x.type === 'channel') this.openChannel(x.id, x.title); else if(x && x.ch) this.openChannel(x.ch, x.by); return; }
