@@ -541,6 +541,20 @@
   .plb2{display:flex;justify-content:flex-end;gap:14px;margin:0 3px 14px} .plb2 button{font:11px var(--sans);color:#888;text-decoration:underline}
   #ytMenu .mth{width:44px;height:33px;object-fit:cover;flex:none} #ytMenu button.dim{color:#8b8ff5}
   #ytMenu .mm{max-height:75vh;overflow-y:auto}
+
+  /* 겹침 정리 · 옆으로 밀리지 않게 */
+  #spSheet:not(.wide) #spBody{overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none}
+  #spSheet:not(.wide) .pls{touch-action:pan-x pan-y}
+  #spSheet:not(.wide) #spBody h4.sth{min-height:30px;padding-right:62px;margin:22px 0 12px}
+  #spSheet:not(.wide) #spBody h4.sth::after{margin-right:4px}
+  .stk{top:-10px;right:4px;width:46px;transform:rotate(6deg)} .stk.r{top:-14px;right:6px;width:50px;transform:rotate(-8deg)}
+  .pcov .stk{top:-16px;left:-14px;right:auto;bottom:auto;width:34px;transform:rotate(-14deg)} .plc{width:120px;padding:10px 0 0 10px}
+  .plh .pcov .stk{width:40px;top:-18px;left:-16px}
+  /* 지금: 오브젝트 조금 */
+  .tiw{position:relative;padding-right:46px} .nstk{position:absolute;right:-2px;top:-30px;width:44px;mix-blend-mode:multiply;transform:rotate(12deg);pointer-events:none}
+  .ndeco{display:flex;justify-content:space-between;align-items:flex-end;margin:14px 6px 0;height:74px;pointer-events:none}
+  .ndeco img{height:100%;width:auto;mix-blend-mode:multiply;opacity:.9} .ndeco img:nth-child(1){height:62px;transform:rotate(-8deg)} .ndeco img:nth-child(3){height:56px;transform:scaleX(-1) rotate(-6deg)}
+  @media (orientation:landscape) and (max-height:600px){ .ndeco{display:none} }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1759,12 +1773,13 @@ const Music = {
     const by = this.by || it.by || '';
     box.innerHTML = '<div id="ytNow">' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
-      '<h3 class="ti">' + esc(this.title || it.title || '') + '</h3>' +
+      '<div class="tiw"><h3 class="ti">' + esc(this.title || it.title || '') + '</h3><img class="nstk" src="' + PARTS + 'obj_crescent.webp" alt=""></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
       '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
+      '<div class="ndeco"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""><img src="' + PARTS + 'obj_dove.webp" alt=""></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
