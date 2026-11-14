@@ -266,21 +266,7 @@
   #spBody .li em{font:10px var(--mono);color:#777;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #spBody .tr{display:flex;gap:4px;align-items:stretch} #spBody .tr .li{flex:1;min-width:0}
   #spBody .add{width:44px;background:var(--ink);margin-bottom:4px;display:grid;place-items:center} #spBody .add svg{width:18px;fill:#fff}
-  #spBody .big{display:block;width:100%;height:44px;background:var(--bleu);color:#fff;letter-spacing:.1em}
-  #spBody .re{font-size:12px;background:#fff;outline:1px dashed var(--bleu);padding:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-  #spBody .re button{background:var(--bleu);color:#fff;padding:5px 10px;flex:none}
-  .now{text-align:center}
-  .now .cover{width:62%;aspect-ratio:1;object-fit:cover;outline:3px solid #fff;box-shadow:6px 6px 0 var(--bleu);transform:rotate(-2deg);margin:6px 0 14px}
-  .now>b{display:block;font:italic 400 20px var(--serif)} .now>em{display:block;font:11px var(--mono);color:#666;font-style:normal;margin:2px 0 10px}
-  .now input[type=range]{width:100%;accent-color:var(--bleu)}
-  .now .tm{display:flex;justify-content:space-between;font:10px monospace;color:#777;margin-top:-2px}
-  .now .ctl{display:flex;justify-content:space-between;align-items:center;margin:8px 4px}
-  .now .ctl button{width:44px;height:44px;display:grid;place-items:center;color:var(--ink)} .now .ctl svg{width:22px;fill:currentColor}
-  .now .ctl .on{color:var(--bleu)} .now .ctl .pp{width:58px;height:58px;background:var(--bleu);color:#fff;box-shadow:4px 4px 0 var(--ink)}
-  .now .ctl2{display:flex;gap:8px;margin:6px 0} .now .ctl2 button{flex:1;display:flex;gap:6px;align-items:center;justify-content:center;height:38px;background:#fff;outline:1px solid #0002;font-size:12px;min-width:0}
-  .now .ctl2 button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .now .ctl2 svg{width:16px;flex:none;fill:var(--ink)} .now .ctl2 .on svg{fill:var(--bleu)}
-  .now .vol{display:flex;gap:8px;align-items:center;margin-top:6px} .now .vol svg{width:18px;fill:var(--ink)}
-  .now .note{font:10px monospace;color:#888;margin:8px 0 0}
+
   #spDev{text-align:left;margin-top:8px}
   #spSheet details{margin-top:8px;font-size:12px;color:#555} #spSheet summary{cursor:pointer}
   #spSheet .pb{display:flex;gap:8px;margin-top:12px} #spSheet .pb button{flex:1;height:42px;border:1px solid var(--ink);background:#fff}
@@ -304,9 +290,7 @@
   #ytNow .ctl .pp{width:60px;height:60px;background:var(--bleu);box-shadow:4px 4px 0 #fff}
   #ytNow .ctl .on{color:#8b8ff5} #ytNow .ctl .lbl{display:flex;flex-direction:column;align-items:center;gap:2px;width:52px} #ytNow .ctl .lbl small{font:9px var(--sans);letter-spacing:.06em;color:inherit}
   #ytNow h4{margin:18px 0 6px}
-  /* 채널 */
-  .chhead{display:flex;align-items:center;gap:10px;margin:0 14px 12px} .chhead button{color:#fff;font-size:20px;width:30px}
-  .chhead b{font:600 16px var(--sans)!important;margin:0!important;color:#fff} .chhead i{width:36px;height:36px;border-radius:50%;background:var(--bleu);display:grid;place-items:center;font:600 15px var(--sans);font-style:normal;color:#fff}
+
   .yv .meta .chlink{color:#aaa;text-decoration:none}
   /* 검색: 유튜브처럼 큰 미리보기 + 길이 + 채널·조회수·올린 날 */
   #spSheet.wide{padding:0} #spSheet.wide .pc{width:100%;height:100%;max-height:none;box-shadow:none;padding:calc(10px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom))}
@@ -330,7 +314,7 @@
   #spSheet.wide .pc{background:#0f0f0f} #spSheet.wide .pc>b{font-size:20px}
   .yv .keep{width:32px;height:32px;flex:none;display:grid;place-items:center} .yv .keep svg{width:20px;fill:#aaa}
   #spBody .more{margin:4px 0 20px}
-  #ytNow .cover{width:100%;aspect-ratio:16/9;object-fit:cover;transform:rotate(-1.5deg)}
+
   #ytNow .ctl .on{color:#8b8ff5}
   .yv .av{overflow:hidden} .yv .av img{width:100%;height:100%;object-fit:cover}
   .cptop{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#0f0f0f}
@@ -363,17 +347,10 @@
   #spBody .li b{color:#fff} #spBody .li em{color:#999}
   #spBody .li[disabled]{opacity:1}
   #spBody .add{background:none;border-bottom:1px solid #ffffff18;margin:0;width:40px} #spBody .add svg{fill:#8b8ff5}
-  #spBody .re{background:#1e22d633;outline:0;color:#ddd}
+
   #spBody .row input{background:none;border:0;border-bottom:1px solid #fff;color:#fff;font:15px var(--sans)} #spBody .row input::placeholder{color:#777}
   #spBody .row button{background:var(--bleu)}
-  .now .cover{outline:3px solid #fff;box-shadow:7px 7px 0 var(--bleu)}
-  .now>b{color:#fff;font-style:italic} .now>em{color:#999}
-  .now .tm{color:#888}
-  .now .ctl button{color:#fff} .now .ctl .on{color:#8b8ff5} .now .ctl .pp{box-shadow:4px 4px 0 #fff}
-  .now .ctl2 button{background:none;outline:1px solid #ffffff40;color:#fff} .now .ctl2 svg{fill:#fff} .now .ctl2 .on svg{fill:#8b8ff5}
-  .now .vol svg{fill:#fff} .now .note{color:#777}
-  #spBody .diag{font:10px monospace;color:#777;margin:10px 0 0;text-align:center;word-break:break-all}
-  #spBody .big{margin-top:10px}
+
   #spSheet .opt{color:#ccc;border-bottom-color:#ffffff22}
   #spSheet details{color:#999} #spSheet p{color:#aaa}
   #spSheet .row input{background:#ffffff10;color:#fff;border-color:#ffffff40}
@@ -555,8 +532,6 @@
   .nst{flex:none;width:26px;height:26px;object-fit:contain;mix-blend-mode:multiply;transform:rotate(-8deg)} .plh .nst{width:40px;height:40px}
   .plc{width:112px!important;padding:0!important}
 
-
-
   #spSheet:not(.wide) #ytNow .ti::before{content:none}
   #spSheet:not(.wide) #ytNow .np{display:flex;align-items:center;gap:6px;font:600 9px var(--sans);letter-spacing:.32em;color:var(--bleu);margin-bottom:4px}
   #ytNow .np img{width:14px;height:14px}
@@ -570,7 +545,7 @@
   #ytNow .tape{position:absolute;left:-6px;bottom:-12px;width:58px;height:18px;background:#1e22d6d9;transform:rotate(-12deg);z-index:1}
   #spSheet:not(.wide) #ytNow .ctl{position:relative}
   #ytNow .ctl button{position:relative;z-index:1}
-  #ytNow .tuck{position:absolute;left:calc(50% - 26px);top:-30px;width:50px;z-index:0;transform:rotate(-10deg);pointer-events:none;mix-blend-mode:multiply}
+
   #spSheet:not(.wide) #ytNow .motto{margin:22px 0 4px;text-align:center;font:italic 11px var(--serif);letter-spacing:.14em;color:var(--bleu);opacity:.7}
   @media (orientation:landscape) and (max-height:600px){ #ytNow .perchrow,#ytNow .motto{display:none} #spSheet:not(.wide) #ytNow .vidspot{margin-top:6px} }
 
@@ -583,7 +558,6 @@
   #spSheet:not(.wide) #ytNow .ch em{margin-left:6px;padding-left:10px;border-left:1px solid #12121230}
   /* 비둘기 원래 색 · 장미는 재생 버튼 왼쪽 아래로 (진행 막대에 안 닿게) */
   #ytNow .perch{filter:none!important}
-  #ytNow .tuck{left:calc(50% - 52px)!important;top:24px!important;width:40px!important;transform:rotate(-24deg)!important}
 
   /* 장미: 채널 이름과 '채널 보기' 사이에 끼워, 아래 진행 막대 위에 올라앉게 */
   #spSheet:not(.wide) #ytNow .ch{position:relative;overflow:visible}
@@ -700,15 +674,13 @@
     #safeL span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap;font:italic 13px var(--serif);letter-spacing:.3em;color:var(--bleu);opacity:.75}
   }
 
-  #ytWin.scr{opacity:0!important;transition:none}
   #warm{font:500 15px var(--sans)!important;letter-spacing:.04em}
   /* 검색: 위 고정 줄과 첫 카드가 겹쳐 잘리던 것 */
   #spSheet.wide .ytop{padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid #12121222}
   #spSheet.wide #ytRes{padding-top:6px}
   /* 검색 카드: 채널 아이콘 = 파란 링 + 별 배지, 제목 위 작은 라벨, 썸네일 모서리 테이프 */
-  #spSheet.wide .yv .av{position:relative;overflow:visible!important;outline:2px solid var(--bleu)!important;outline-offset:2px;background:var(--ink)}
-  #spSheet.wide .yv .av img:not(.avst){border-radius:50%}
-  #spSheet.wide .yv .av .avst{position:absolute;right:-7px;bottom:-6px;width:16px!important;height:16px!important;border-radius:0;z-index:1}
+  #spSheet.wide .yv .av{position:relative;overflow:hidden!important;outline:2px solid var(--bleu)!important;outline-offset:2px;background:var(--ink)}
+
   #spSheet.wide .yv .th{position:relative}
   #spSheet.wide .yv .th::before{content:"";position:absolute;left:-10px;top:-8px;width:54px;height:16px;background:#1e22d6d0;transform:rotate(-8deg);z-index:2}
   #spSheet.wide .yv:nth-child(even) .th::before{left:auto;right:-10px;transform:rotate(7deg);background:#d8d4c6e8}
@@ -718,8 +690,7 @@
 
   #ytWin{will-change:transform}
   #warm{display:flex!important;align-items:baseline;justify-content:center;gap:2px;background:var(--paper2)!important;border:1px solid var(--ink)!important;box-shadow:5px 5px 0 var(--ink);font:500 12px var(--sans)!important;letter-spacing:.12em!important;color:var(--ink)}
-  /* 제목 옆 오브젝트(영상마다 다르게) */
-  .tstk{display:inline-block;height:22px;width:auto;max-width:30px;object-fit:contain;vertical-align:-5px;margin-left:6px;mix-blend-mode:multiply;transform:rotate(-6deg)}
+
   #spSheet.wide .yv .av{outline:1px solid var(--ink)!important;outline-offset:2px}
   /* 쇼츠 2열 */
   .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 14px 6px}
@@ -1946,9 +1917,6 @@ const Music = {
     const seed = hq || (chs[0] && chs[0].name) || '음악';
     jobs.push(this.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=12&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(seed + ' #shorts') + K)
       .then(j=>({kind:'shorts', title:'Shorts', items:(j.items || []).map(vmap).filter(x=>typeof x.id === 'string')})));
-    if(false) jobs.push(this.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=10&regionCode=KR&relevanceLanguage=ko&q=' + encodeURIComponent(seed) + K)
-      .then(async j=>{ const items = (j.items || []).map(x=>({type:'channel', id:x.id.channelId, title:txt(x.snippet.title), img:(x.snippet.thumbnails.medium || x.snippet.thumbnails.default || {}).url})).filter(x=>x.id && !chs.some(c=>c.id === x.id));
-        items.forEach(x=>{ if(x.img) this.avs[x.id] = x.img; }); return {kind:'chans', ic:'ch', title:'추천 채널', items}; }));
     const sh = [], hist = pl.filter(x=>typeof x.id === 'string' && (x.type === 'video' || x.type === 'playlist'));
     if(hist.length) sh.push({ic:'hist', title:'다시 듣기', items:hist.slice(0, 12).map(x=>Object.assign({}, x))});
     const got = (await Promise.allSettled(jobs)).filter(r=>r.status === 'fulfilled' && r.value.items.length).map(r=>r.value);
@@ -2045,9 +2013,7 @@ const Music = {
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now'); if(this.tab !== 'now') this.place();
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
     if(this.tab === 'now'){ document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === 'now')); this.renderNow($('spBody')); return; }
-    const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
-      (this.thumb(it) ? '<img src="' + this.thumb(it) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(it.title || '') + '</b><em>' + (it.type === 'playlist' ? '재생목록 · ' : '') + esc(it.by || '') + '</em></span></button>' +
-      (src === 'lib' ? '<button class="add" data-a="del" data-i="' + i + '" aria-label="지우기">×</button>' : '<button class="add" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button>') + '</div>';
+    const box = $('spBody');
     if(this.tab === 'lib'){ this.renderLib(box); return; }
     if(this.tab === 'search'){
       if(!this.key){ box.innerHTML = '<p class="none">검색하려면 유튜브 API 키가 한 번 필요해요</p><form id="ytKey" class="row" autocomplete="off"><input id="ytKeyIn" placeholder="API 키 붙여 넣기"><button type="submit">저장</button></form>' +
@@ -2071,7 +2037,7 @@ const Music = {
         if(f){ qin.value = f.dataset.fill + ' '; yx.hidden = false; this.suggest(qin.value.trim()); return; }
         if(r) go(r.dataset.q); };
       box.querySelector('.chips').onclick = e=>{ const c = e.target.closest('[data-k]'); if(!c) return; e.stopPropagation(); this.kind = c.dataset.k;
-        box.querySelectorAll('.chips [data-k]').forEach(x=>x.classList.toggle('on', x === c)); if(this.q) this.search(this.q); else toast('검색어를 먼저 입력해요', 1400); };
+        box.querySelectorAll('.chips [data-k]').forEach(x=>x.classList.toggle('on', x === c)); const q = this.q || this.hist()[0]; if(!q){ toast('검색어를 먼저 입력해요', 1400); return; } $('ytQin').value = q; box.querySelector('.yx').hidden = false; this.search(q); };
       box.onscroll = ()=>{ if(this.next && !this.busy && box.scrollTop + box.clientHeight > box.scrollHeight - 400) this.search(this.q, true); };
       this.renderResults(); if(!this.q) this.loadHome(); return;
     }
