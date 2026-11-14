@@ -162,6 +162,7 @@
     #recent{margin-top:8px}
   }
   /* ── 달력 ── */
+  #clock{margin-right:auto;margin-left:8px;font:400 11px var(--sans);color:#8a8a85;letter-spacing:.08em;font-variant-numeric:tabular-nums}
   #date{font:italic 12px var(--serif);color:#bdbdb8;letter-spacing:.06em;display:flex;align-items:center;gap:6px}
   #date::after{content:"";width:11px;height:10px;border:1px solid #bdbdb8;border-top-width:3px}
   #cal{position:fixed;inset:0;z-index:30;background:var(--paper2);overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -452,7 +453,7 @@
 <div id="app">
   <svg id="bg1" class="layer"></svg><div id="bgo" class="layer"></div><svg id="bg2" class="layer"></svg>
   <header id="top">
-    <div id="brand"><button id="date" type="button"></button><b>BLEU <i>MINUIT</i></b></div>
+    <div id="brand"><button id="date" type="button"></button><span id="clock"></span><b>BLEU <i>MINUIT</i></b></div>
     <div id="time">25<span>:</span>00</div>
     <div id="moonBox"><canvas id="moon"></canvas><div id="moonTxt"></div></div>
     <div id="tbar"></div>
@@ -1133,9 +1134,14 @@ document.addEventListener('visibilitychange', ()=>{
 });
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && mode === 'run'){ tickOnce(); if(mode === 'run') keepAwake(true); } });   // 화면 꺼짐 방지는 앱을 다시 열면 새로 걸어야 한다
 
-{ const d = new Date(), age = moonAge(d);
-  $('date').textContent = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
-  $('moonTxt').textContent = '오늘 달 · ' + moonName(age) + ' ' + Math.round(age) + '일'; }
+function clockTick(){                                     // 날짜 옆 현재 시각(분 단위). 자정 넘으면 날짜·달도 새로
+  const d = new Date(), age = moonAge(d), dt = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+  if($('date').textContent !== dt){ $('date').textContent = dt; $('moonTxt').textContent = '오늘 달 · ' + moonName(age) + ' ' + Math.round(age) + '일'; }
+  $('clock').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  clearTimeout(clockTick.t); clockTick.t = setTimeout(clockTick, 60000 - d.getSeconds()*1000 - d.getMilliseconds() + 50);
+}
+clockTick();
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) clockTick(); });
 
 /* ═══ 무대 맞추기 ═══ */
 // 아이폰 홈 화면 앱은 innerHeight를 짧게 주는 경우가 있어 화면 높이를 쓴다
