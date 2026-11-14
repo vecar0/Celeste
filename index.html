@@ -1228,7 +1228,7 @@ const Music = {
   // 소리를 끄고 영상 위를 덮는다 → 본편 시간이 다시 흐르면 소리 켜고 걷어 낸다.
   adWatch(){
     clearInterval(this.aw);
-    let last = -1, still = 0;
+    let last = -1, last2 = -1, still = 0, off = 0;
     this.aw = setInterval(()=>{ const p = this._pl; if(!p || !p.getPlayerState) return;
       const st = p.getPlayerState(), t = p.getCurrentTime() || 0, moving = st === 1 && t > last + .15;
       still = st === 1 && !moving ? still + 1 : 0; last = t;
@@ -1236,9 +1236,11 @@ const Music = {
       const d = p.getVideoData ? p.getVideoData() : null, vid = d && d.video_id, D = p.getDuration() || 0, exp = vid && this.durs[vid];
       if(vid && exp == null) this.needDur(vid);
       const wrongLen = st === 1 && D > 0 && exp > 0 && Math.abs(D - exp) > 3;
-      const ad = this.want && (wrongLen || still >= 2);
-      if(ad && !this.muted) this.adCover(true);
-      else if(!ad && moving && this.muted) this.adCover(false);
+      // 아이폰에선 광고 동안 플레이어가 '재생 중'이라고 하지 않는다(대기·버퍼링 상태로 보고) → 재생을 원하는데 본편이 안 흐르면 광고로 본다
+      const tick = t > last2 + .15; last2 = t;                                  // 본편이 아닌데 시간이 흐른다 = 광고 시간
+      off = this.want && st !== 1 && st !== 0 && (st !== 2 || tick) ? off + 1 : 0;
+      if(this.want && (wrongLen || still >= 2 || off >= 1)){ this.adCover(true, wrongLen || still >= 2 || off >= 3); }   // 소리는 바로 끄고, 1초 넘게 이어지면 화면도 덮기
+      else if(moving && this.muted) this.adCover(false);
     }, 400);
   },
   async needDur(vid){                                      // 본편 길이(초) 알아 두기 — 광고 구별용
@@ -1247,18 +1249,18 @@ const Music = {
       const v = (j.items || [])[0]; this.durs[vid] = v ? this.secs(v.contentDetails.duration) : 0; }catch(e){ delete this.durs[vid]; }
   },
   secs(iso){ const m = String(iso || '').match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || []; return (+m[1] || 0)*86400 + (+m[2] || 0)*3600 + (+m[3] || 0)*60 + (+m[4] || 0); },
-  adCover(on){
-    const p = this._pl, el = $('ytAd'); this.muted = on;
-    if(on){ p.mute(); el.querySelector('img').src = this.vid ? 'https://i.ytimg.com/vi/' + this.vid + '/hqdefault.jpg' : ''; }
-    else { p.unMute(); this.unmAt = Date.now(); }
-    el.hidden = !on; this.render();
+  adCover(on, cover){                                      // on: 소리 끔 · cover: 화면도 덮음
+    const p = this._pl, el = $('ytAd');
+    if(on){ if(!this.muted){ p.mute(); this.muted = true; this.render(); }
+      if(cover && el.hidden){ el.querySelector('img').src = this.vid ? 'https://i.ytimg.com/vi/' + this.vid + '/hqdefault.jpg' : ''; el.hidden = false; } return; }
+    if(this.muted){ p.unMute(); this.unmAt = Date.now(); } this.muted = false; el.hidden = true; this.render();
   },
   onState(e){
     const S = YT.PlayerState, pl = this._pl, d = pl && pl.getVideoData ? pl.getVideoData() : null;
     this.playing = e.data === S.PLAYING;
     if(this.playing){ this.want = true; this.blocked = false; clearTimeout(this.ws); }
     if(e.data === S.PAUSED && this.want && this.unmAt && Date.now() - this.unmAt < 1500){ this.unmAt = 0; pl.playVideo(); return; }   // 소리 켤 때 아이폰이 멈추면 다시 재생
-    if(e.data === S.PAUSED || e.data === S.ENDED){ this.want = false; if(this.muted) this.adCover(false); }
+    if(e.data === S.ENDED){ this.want = false; if(this.muted) this.adCover(false); }   // 멈춤은 우리 버튼에서만 want=false (광고가 '멈춤'으로 보고될 수 있어서)
     if(d && d.video_id){
       if(this.playing && this.radio && d.video_id !== this.vid && d.title) this.addPlayed({type:'video', id:d.video_id, title:d.title, by:d.author});   // 자동 재생으로 들은 곡도 기록
       if(d.video_id !== this.vid){ this.vid = d.video_id; if(this.radio || (this.cur && this.cur.type === 'playlist')) this.chId = ''; }
