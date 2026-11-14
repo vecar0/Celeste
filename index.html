@@ -388,7 +388,7 @@
     #spSheet .pc{width:min(860px,100%);height:100%;padding:10px 16px}
     #spSheet .pc>small,#spSheet .pc>b{display:none}
     #ytNow{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:18px;align-content:start}
-    #ytNow>*{grid-column:2} #ytNow .vidspot{grid-column:1;grid-row:1/span 7;margin:0;align-self:start}
+    #ytNow>*{grid-column:2} #ytNow .vwrap{grid-column:1;grid-row:1/span 9;align-self:start} #ytNow .vidspot{margin:0}
     #ytNow .ti{margin-top:0}
   }
   @media (orientation:landscape) and (max-height:600px){
@@ -590,6 +590,30 @@
   #spSheet:not(.wide) #ytNow .ch{position:relative;overflow:visible}
   #ytNow .chrose{flex:none;height:52px;width:auto;margin:-14px 2px -38px;align-self:flex-start;transform:translateY(20px) rotate(-4deg);mix-blend-mode:multiply;pointer-events:none;position:relative;z-index:2}
   #spSheet:not(.wide) #ytNow .ch em{border-left:0!important;padding-left:0!important;margin-left:0!important}
+
+  /* 영상 고정 */
+  #spSheet:not(.wide) #ytNow .vwrap{position:sticky;top:0;z-index:3;background:var(--paper2);padding-bottom:10px;margin-bottom:6px;box-shadow:0 8px 8px -8px #12121222}
+  #spSheet:not(.wide) #ytNow .vidspot{margin-bottom:6px}
+  @media (orientation:landscape) and (max-height:600px){ #spSheet:not(.wide) #ytNow .vwrap{box-shadow:none;padding:0} }
+  /* 새 플레이리스트 + 가운데 */
+  .plc.new .pcov{grid-template-columns:1fr!important;place-items:center}
+  /* 글자 잘림 정리 */
+  #spSheet:not(.wide) #ytNow .ch em{white-space:nowrap;flex:none}
+  #spSheet:not(.wide) #ytNow .ch span{flex:0 1 auto;min-width:0}
+  #ytNow .blk{line-height:1.5}
+  #music .mt small{display:flex;align-items:center;gap:5px;white-space:nowrap} #top>#music .mt .npst,#music .mt .npst{width:11px!important;height:11px!important;outline:0!important;transform:none!important;background:none!important;flex:none}
+  /* 가로: 음악 줄도 세로처럼(라벨·제목·채널) — 패널 폭 안에서 */
+  @media (orientation:landscape) and (max-height:600px){
+    #top>#music{height:auto!important;padding:5px 8px!important;gap:6px!important;min-width:0;max-width:100%;box-sizing:border-box}
+    #top>#music img,#top>#music .art{width:38px!important;height:38px!important;margin-right:0!important}
+    #top>#music .mt{flex:1;min-width:0}
+    #top>#music .mt small{display:flex!important;font-size:7.5px;letter-spacing:.24em}
+    #top>#music .mt b{display:block!important;font-size:13.5px!important} #top>#music .mt b.st{display:none!important}
+    #top>#music .mt span{display:block!important;font-size:9px}
+    #top>#music button{width:28px} #top>#music .pp{width:32px!important;height:32px!important}
+    #pomo span{letter-spacing:0!important}
+  }
+  @media (orientation:landscape) and (max-height:400px){ #top>#music .mt span{display:none!important} }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1780,7 +1804,7 @@ const Music = {
     const el = $('music'); if(!el) return; el.classList.toggle('ad', !!this.muted);
     const it = this.cur, img = it ? this.thumb(it) : '';
     el.innerHTML = (img ? '<img data-a="now" src="' + img + '" alt="">' : '<i class="art" data-a="now">♪</i>') +
-      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><b class="st">' + esc(this.short(this.title || (it ? it.title : '음악 고르기'))) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING<img class="npst" src="' + PARTS + 'halo_star_blue.webp" alt="">' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><b class="st">' + esc(this.short(this.title || (it ? it.title : '음악 고르기'))) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
@@ -1789,9 +1813,10 @@ const Music = {
     const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
     w.classList.toggle('show', !!on);
     if(on){ const r = spot.getBoundingClientRect(), k = [r.left, r.top, r.width, r.height].map(Math.round).join();
-      if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px'}); }
+      const bb = $('spBody').getBoundingClientRect(), ct = Math.max(0, bb.top - r.top + 12), cb = Math.max(0, r.bottom - bb.bottom + 12), kk = k + ct + '|' + cb;
+      if(kk !== this.pk){ this.pk = kk; Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px', clipPath:ct || cb ? 'inset(' + ct + 'px -20px ' + cb + 'px -20px)' : ''}); }
       if(!this.praf) this.praf = requestAnimationFrame(()=>{ this.praf = 0; this.place(); }); }
-    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', width:'200px', height:'200px'}); }
+    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', width:'200px', height:'200px', clipPath:''}); }
   },
   nowTick(){                                               // 지금 화면: 진행 막대·시간
     clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
@@ -1806,7 +1831,7 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + '</div>' +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
       '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><img class="chrose" src="' + PARTS + 'obj_roses.webp" alt=""><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
