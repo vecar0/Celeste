@@ -448,7 +448,7 @@
   #ytAd span{position:relative;color:#fff;font:600 14px var(--sans);text-align:center;letter-spacing:.04em}
   #ytAd small{display:block;margin-top:4px;font:400 11px var(--sans);color:#bbb}
 </style></head><body>
-<div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
+<div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
   <svg id="bg1" class="layer"></svg><div id="bgo" class="layer"></div><svg id="bg2" class="layer"></svg>
   <header id="top">
@@ -1178,7 +1178,7 @@ const YT_PRESET = [
   {type:'video', id:'7NOSDKb0HlU', title:'lofi hip hop radio - beats to study/relax to (라이브)', by:'Chillhop Music'},
 ];
 const Music = {
-  avs:{}, vch:{}, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
+  avs:{}, vch:{}, durs:{}, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
     try{ this.avs = JSON.parse(localStorage.getItem('bleu.ytAv') || '{}') || {}; }catch(e){}
     this.key = o.key || ''; this.auto = o.auto !== false; this.loop = !!o.loop; this.autoplay = o.autoplay !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
@@ -1208,6 +1208,7 @@ const Music = {
     this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.chId = item.ch || ''; this.radio = false;
     this.vid = item.type === 'video' ? item.id : ''; this.nowKey = ''; this.want = true; this.blocked = false;
     this.save(); this.addPlayed(item); this.render();
+    if(item.type === 'video' && item.dur) this.durs[item.id] = this.secs(item.dur); else if(item.type === 'video') this.needDur(item.id);
     if(this.ready) this.load1(item, true); else this.mount().then(()=>this.load1(item, true));
     this.watchStart(); this.adWatch();
     return Promise.resolve();
@@ -1231,10 +1232,21 @@ const Music = {
     this.aw = setInterval(()=>{ const p = this._pl; if(!p || !p.getPlayerState) return;
       const st = p.getPlayerState(), t = p.getCurrentTime() || 0, moving = st === 1 && t > last + .15;
       still = st === 1 && !moving ? still + 1 : 0; last = t;
-      if(this.want && still >= 2 && !this.muted) this.adCover(true);
-      else if(moving && this.muted) this.adCover(false);
+      // 광고 동안 플레이어는 '광고의 길이·시간'을 알려 준다 → 유튜브에 등록된 본편 길이와 3초 넘게 다르면 광고
+      const d = p.getVideoData ? p.getVideoData() : null, vid = d && d.video_id, D = p.getDuration() || 0, exp = vid && this.durs[vid];
+      if(vid && exp == null) this.needDur(vid);
+      const wrongLen = st === 1 && D > 0 && exp > 0 && Math.abs(D - exp) > 3;
+      const ad = this.want && (wrongLen || still >= 2);
+      if(ad && !this.muted) this.adCover(true);
+      else if(!ad && moving && this.muted) this.adCover(false);
     }, 400);
   },
+  async needDur(vid){                                      // 본편 길이(초) 알아 두기 — 광고 구별용
+    if(!this.key || this.durs[vid] !== undefined) return; this.durs[vid] = null;
+    try{ const j = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=' + vid + '&key=' + encodeURIComponent(this.key))).json();
+      const v = (j.items || [])[0]; this.durs[vid] = v ? this.secs(v.contentDetails.duration) : 0; }catch(e){ delete this.durs[vid]; }
+  },
+  secs(iso){ const m = String(iso || '').match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || []; return (+m[1] || 0)*86400 + (+m[2] || 0)*3600 + (+m[3] || 0)*60 + (+m[4] || 0); },
   adCover(on){
     const p = this._pl, el = $('ytAd'); this.muted = on;
     if(on){ p.mute(); el.querySelector('img').src = this.vid ? 'https://i.ytimg.com/vi/' + this.vid + '/hqdefault.jpg' : ''; }
