@@ -438,8 +438,11 @@
   .cv .tag.live{background:#c00}
   .smore{display:grid;place-items:center;width:100%;height:36px} .smore svg{width:26px;fill:#f1f1f1;transition:transform .2s} .smore.up svg{transform:rotate(180deg)}
   .ysk.r i{aspect-ratio:auto;height:84px;margin:0 14px 10px;border-radius:8px}
+
+  #ytNow .ch i img{width:100%;height:100%;object-fit:cover;border-radius:50%} #ytNow .ch i{overflow:hidden}
+  #ytNow .blk{margin:-8px 0 10px;font:12px/1.4 var(--sans);color:#8b8ff5}
 </style></head><body>
-<div id="ytWin" hidden><div id="ytBox"><div id="ytFrame"></div></div></div>
+<div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div></div>
 <div id="app">
   <svg id="bg1" class="layer"></svg><div id="bgo" class="layer"></div><svg id="bg2" class="layer"></svg>
   <header id="top">
@@ -1169,75 +1172,119 @@ const YT_PRESET = [
   {type:'video', id:'7NOSDKb0HlU', title:'lofi hip hop radio - beats to study/relax to (라이브)', by:'Chillhop Music'},
 ];
 const Music = {
-  avs:{}, p:null, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
+  avs:{}, vch:{}, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
+    try{ this.avs = JSON.parse(localStorage.getItem('bleu.ytAv') || '{}') || {}; }catch(e){}
     this.key = o.key || ''; this.auto = o.auto !== false; this.loop = !!o.loop; this.autoplay = o.autoplay !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
   save(){ try{ localStorage.setItem('bleu.yt', JSON.stringify(this.lib)); localStorage.setItem('bleu.ytOpt', JSON.stringify({key:this.key, auto:this.auto, cur:this.cur, loop:this.loop, autoplay:this.autoplay})); }catch(e){} },
   api(){                                                   // 유튜브 플레이어 스크립트는 처음 재생할 때 불러온다
     if(this.apiP) return this.apiP;
     return this.apiP = new Promise(res=>{ window.onYouTubeIframeAPIReady = res; const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); });
   },
-  async mount(){
-    if(this.p) return this.p; await this.api();
-    return this.p = new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%', playerVars:{playsinline:1, rel:0, modestbranding:1, origin:location.origin},
-      events:{onReady:()=>{ this.ready = true; res(pl); }, onStateChange:e=>this.onState(e),
-        onError:e=>this.onErr(e)}}); });
+  // ── 플레이어 ─────────────────────────────────────────────
+  // 원칙: ① 앱을 열면 바로 플레이어를 만들고 마지막 곡을 '대기(cue)'시켜 둔다
+  //       ② 재생 버튼을 누른 그 순간에 곧바로(기다림 없이) 재생 명령 → 아이폰 자동재생 제한을 덜 받음
+  //       ③ 그래도 아이폰이 막으면 '지금' 화면의 진짜 유튜브 화면을 띄워 한 번 눌러 달라고 안내
+  mount(){
+    if(this.p) return this.p;
+    return this.p = this.api().then(()=>new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%',
+      playerVars:{playsinline:1, rel:0, modestbranding:1, origin:location.origin},
+      events:{onReady:()=>{ this._pl = pl; this.ready = true; res(pl); }, onStateChange:e=>this.onState(e), onError:e=>this.onErr(e)}}); }));
   },
-  // 광고 소리 끄기(추정): 유튜브는 앱에 광고 중인지 알려 주지 않으므로,
-  // 재생을 기다리는데 본편 시간이 흐르지 않으면 광고로 보고 음소거 → 본편 시간이 다시 흐르면 소리 켬
+  load1(item, play){                                       // 플레이어에 곡 넣기(play=false면 대기만)
+    const pl = this._pl; if(!pl || !item) return;
+    if(item.type === 'playlist') play ? pl.loadPlaylist({list:item.id, listType:'playlist'}) : pl.cuePlaylist({list:item.id, listType:'playlist'});
+    else play ? pl.loadVideoById(item.id) : pl.cueVideoById(item.id);
+    this.loaded = item.id;
+  },
+  start(item){                                             // 저장한 것·검색 결과 재생
+    if(!item) return Promise.resolve();
+    this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.chId = item.ch || ''; this.radio = false;
+    this.vid = item.type === 'video' ? item.id : ''; this.nowKey = ''; this.want = true; this.blocked = false;
+    this.save(); this.addPlayed(item); this.render();
+    if(this.ready) this.load1(item, true); else this.mount().then(()=>this.load1(item, true));
+    this.watchStart(); this.adWatch();
+    return Promise.resolve();
+  },
+  toggle(){
+    if(!this.cur){ const it = this.lib[0]; if(it) this.start(it); return; }
+    if(!this.ready || this.loaded !== this.cur.id){ this.start(this.cur); return; }
+    if(this.playing){ this.want = false; this._pl.pauseVideo(); }
+    else { this.want = true; this._pl.playVideo(); this.watchStart(); this.adWatch(); }
+  },
+  watchStart(){                                            // 2.5초 지나도 안 움직이면 아이폰이 막은 것 → 진짜 유튜브 화면을 보여 주고 눌러 달라고
+    clearTimeout(this.ws);
+    this.ws = setTimeout(()=>{ const st = this._pl && this._pl.getPlayerState ? this._pl.getPlayerState() : -1;
+      if(this.want && !this.playing && (st === -1 || st === 5 || st === 2)){ this.blocked = true; this.open('now'); toast('아이폰이 자동 재생을 막았어요 · 영상을 한 번 눌러 주세요', 3600); } }, 2500);
+  },
+  // 광고 소리 끄기(추정): 유튜브는 광고 중인지 알려 주지 않는다. '재생 중'인데 본편 시간이 3번 연속 멈춰 있으면 광고로 보고 음소거.
+  // 아이폰은 음소거를 풀 때 영상을 멈춰 버리는 일이 있어서, 그런 일이 한 번이라도 생기면 이 기능을 스스로 끈다.
   adWatch(){
     clearInterval(this.aw); if(this.adMute === false) return;
     let last = -1, still = 0;
     this.aw = setInterval(()=>{ const p = this._pl; if(!p || !p.getPlayerState) return;
-      const st = p.getPlayerState(), t = p.getCurrentTime ? p.getCurrentTime() : 0;
-      const want = this.want;                                       // 사용자가 재생을 원하는 중
-      const moving = t > last + .2 && st === 1; still = moving ? 0 : still + 1; last = t;
-      const ad = want && (st === -1 || st === 3 || (st === 1 && still >= 3));
-      if(ad && !p.isMuted()){ p.mute(); this.muted = true; this.render(); }
-      else if(!ad && moving && this.muted){ p.unMute(); this.muted = false; this.render(); }
+      const st = p.getPlayerState(), t = p.getCurrentTime() || 0, moving = st === 1 && t > last + .2;
+      still = st === 1 && !moving ? still + 1 : 0; last = t;
+      if(this.want && still >= 3 && !this.muted){ p.mute(); this.muted = true; this.render(); }
+      else if(moving && this.muted){ p.unMute(); this.muted = false; this.render(); this.unmAt = Date.now(); }
     }, 600);
   },
   onState(e){
-    this.playing = e.data === YT.PlayerState.PLAYING; if(e.data === 2 || e.data === 0) this.want = false;
-    if(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED){ const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d){ this.title = d.title || this.title; this.by = d.author || this.by; } }
-    if(e.data === YT.PlayerState.ENDED && this.loop){ this._pl.seekTo(0, true); this._pl.playVideo(); this.want = true; }   // 한 곡 반복
-    else if(e.data === YT.PlayerState.ENDED && this.mixNext()) return;   // 끝나면 유튜브가 고른 다음 곡으로
-    { const d = this._pl && this._pl.getVideoData && this._pl.getVideoData(); if(d && d.video_id){
-      if(e.data === 1 && this.radio && d.video_id !== this.vid && d.title) this.addPlayed({type:'video', id:d.video_id, title:d.title, by:d.author});   // 자동 재생으로 들은 곡도 기록
-      this.vid = d.video_id; } }
-    this.render();
-    if(!$('spSheet').hidden && this.tab === 'now'){
-      const d = this._pl && this._pl.getVideoData ? this._pl.getVideoData() : null, key = (d && d.video_id) + '|' + this.radio;
-      if(key !== this.nowKey){ this.nowKey = key; this.renderSheet(); }
-      else { const b = document.querySelector('#ytNow .pp'); if(b) b.innerHTML = this.playing ? SPI.pause : SPI.play; const t = document.querySelector('#ytNow .ti'); if(t && this.title) t.textContent = this.title; }
+    const S = YT.PlayerState, pl = this._pl, d = pl && pl.getVideoData ? pl.getVideoData() : null;
+    this.playing = e.data === S.PLAYING;
+    if(this.playing){ this.want = true; this.blocked = false; clearTimeout(this.ws); }
+    if(e.data === S.PAUSED && this.want && this.unmAt && Date.now() - this.unmAt < 1500){   // 음소거 해제가 멈춤을 부름(아이폰) → 기능 끄고 다시 재생
+      this.adMute = false; clearInterval(this.aw); pl.playVideo(); toast('이 기기에선 광고 음소거를 껐어요', 2000); return; }
+    if(e.data === S.PAUSED || e.data === S.ENDED) this.want = false;
+    if(d && d.video_id){
+      if(this.playing && this.radio && d.video_id !== this.vid && d.title) this.addPlayed({type:'video', id:d.video_id, title:d.title, by:d.author});   // 자동 재생으로 들은 곡도 기록
+      if(d.video_id !== this.vid){ this.vid = d.video_id; if(this.radio || (this.cur && this.cur.type === 'playlist')) this.chId = ''; }
+      if(d.title){ this.title = d.title; this.by = d.author || this.by; }
     }
+    if(e.data === S.ENDED){
+      if(this.loop){ pl.seekTo(0, true); pl.playVideo(); this.want = true; return; }   // 한 곡 반복
+      if(this.mixNext()) return;                                                        // 끝나면 유튜브가 고른 다음 곡으로
+    }
+    this.render(); this.refreshNow();
+  },
+  refreshNow(){                                            // '지금' 화면: 곡이 바뀌면 다시 그리고, 아니면 버튼·제목만
+    if($('spSheet').hidden || this.tab !== 'now') return;
+    const key = this.vid + '|' + this.radio + '|' + !!this.blocked;
+    if(key !== this.nowKey){ this.nowKey = key; this.renderSheet(); return; }
+    const b = document.querySelector('#ytNow .pp'); if(b) b.innerHTML = this.playing ? SPI.pause : SPI.play;
+    const t = document.querySelector('#ytNow .ti'); if(t && this.title) t.textContent = this.title;
   },
   onErr(e){                                                // 101·150 = 올린 사람이 다른 앱 재생을 막음, 100 = 없는 영상
     const c = e && e.data, msg = c === 101 || c === 150 ? '이 영상은 유튜브 밖 재생이 막혀 있어요' : c === 100 ? '없어진 영상이에요' : '재생할 수 없는 영상이에요';
-    const inList = this.radio || (this.cur && this.cur.type === 'playlist');
-    if(inList){ toast(msg + ' · 다음 곡으로', 2200); clearTimeout(this.et); this.et = setTimeout(()=>this._pl.nextVideo(), 400); return; }
+    clearTimeout(this.ws);
+    if(!this.want){ this.loaded = 'err:' + this.loaded; return; }                // 대기만 해 둔 곡이면 조용히(누를 때 다시 시도)
+    if(this.radio || (this.cur && this.cur.type === 'playlist')){ toast(msg + ' · 다음 곡으로', 2200); clearTimeout(this.et); this.et = setTimeout(()=>this._pl.nextVideo(), 400); return; }
     this.want = false; toast(msg + (this.autoplay !== false ? ' · 비슷한 곡으로 넘어가요' : ''), 2600);
     if(this.autoplay !== false) setTimeout(()=>this.mixNext(), 500);
   },
-  get pl(){ return this._pl; },
-  async start(item){                                       // 저장한 것·검색 결과 재생
-    const pl = this._pl = await this.mount();
-    $('ytWin').hidden = false;
-    this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.save(); this.nowKey = ''; this.addPlayed(item); this.vid = item.type === 'video' ? item.id : '';
-    this.radio = false; this.chId = item.ch || '';
-    if(item.type === 'playlist') pl.loadPlaylist({list:item.id, listType:'playlist'});
-    else pl.loadVideoById(item.id);                        // 바로 바꾼다(믹스 목록을 먼저 받으면 몇 초 늦음)
-    pl.playVideo(); this.want = true; this.adWatch(); this.render();
-  },
-  async toggle(){
-    if(!this._pl || $('ytWin').hidden){ const it = this.cur || this.lib[0]; if(it) this.start(it); return; }
-    if(this.playing){ this.want = false; this._pl.pauseVideo(); } else { this.want = true; this._pl.playVideo(); this.adWatch(); }
-  },
   mixNext(){                                               // 한 영상 재생 중 → 그 영상의 유튜브 믹스 2번째 곡부터 이어 재생
-    const c = this.cur; if(!c || c.type === 'playlist' || this.radio || this.loop || this.autoplay === false) return false;
-    this.radio = true; this._pl.loadPlaylist({list:'RD' + c.id, listType:'playlist', index:1}); this.want = true; return true; },
-  skip(d){ if(!this._pl) return; if(d > 0 && this.mixNext()) return; if(this.cur && (this.cur.type === 'playlist' || this.radio)){ d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); }
-    else { const i = this.lib.findIndex(x=>x.id === (this.cur && this.cur.id)); const n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n); } },
+    const c = this.cur; if(!this.ready || !c || c.type === 'playlist' || this.radio || this.loop || this.autoplay === false) return false;
+    this.radio = true; this.want = true; this._pl.loadPlaylist({list:'RD' + c.id, listType:'playlist', index:1}); this.watchStart(); return true; },
+  skip(d){
+    if(!this.ready || !this.cur){ this.toggle(); return; }
+    if(d > 0 && this.mixNext()) return;
+    if(this.cur.type === 'playlist' || this.radio){ this.want = true; d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); this.watchStart(); return; }
+    const i = this.lib.findIndex(x=>x.id === this.cur.id), n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n);
+  },
+  async chAvatar(){                                        // 지금 나오는 영상의 채널 프로필 사진(영상 → 채널 → 사진, 기기에 기억)
+    const vid = this.vid || (this.cur && this.cur.type === 'video' && this.cur.id); if(!this.key || !vid) return;
+    const K = '&key=' + encodeURIComponent(this.key);
+    try{
+      let cid = this.chId || this.vch[vid];
+      if(!cid){ const j = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=' + vid + K)).json(); const v = (j.items || [])[0]; if(!v) return; cid = v.snippet.channelId; this.vch[vid] = cid; }
+      if(vid === (this.vid || this.cur.id)) this.chId = cid;
+      if(!this.avs[cid]){ const j = await (await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&id=' + cid + K)).json(); const c = (j.items || [])[0];
+        if(c){ const t = c.snippet.thumbnails || {}; this.avs[cid] = (t.medium || t.default || {}).url; this.saveAv(); } }
+      const i = document.querySelector('#ytNow .ch i'); if(i && this.avs[cid] && this.chId === cid) i.innerHTML = '<img src="' + this.avs[cid] + '" alt="">';
+      const em = document.querySelector('#ytNow .ch em'); if(em) em.textContent = '채널 보기 ›';
+    }catch(e){}
+  },
+  saveAv(){ try{ const k = Object.keys(this.avs); if(k.length > 300) k.slice(0, k.length - 300).forEach(x=>delete this.avs[x]); localStorage.setItem('bleu.ytAv', JSON.stringify(this.avs)); }catch(e){} },
   onFocus(){}, onBreak(){},
   parse(url){                                              // 유튜브 링크 → 영상/재생목록
     try{ const u = new URL(url.trim()); const list = u.searchParams.get('list'); let v = u.searchParams.get('v');
@@ -1411,7 +1458,7 @@ const Music = {
     m.onclick = e=>{ const b = e.target.closest('[data-m]'); if(!b && e.target !== m) return; m.hidden = true; const k = b && b.dataset.m;
       if(k === 'play') this.playItem(x); else if(k === 'keep') this.keepItem(x); else if(k === 'ch') this.openChannel(x.ch, x.by); };
   },
-  playItem(x){ if(!x) return; if(x.type === 'channel'){ this.openChannel(x.id, x.title); return; } this.start(x).then(()=>this.renderSheet('now')); this.renderSheet('now'); },
+  playItem(x){ if(!x) return; if(x.type === 'channel'){ this.openChannel(x.id, x.title); return; } this.start(x); this.renderSheet('now'); },
   keepItem(x){ const it = Object.assign({}, x); this.lib = [it].concat(this.lib.filter(y=>y.id !== it.id)); this.save(); toast('저장했어요', 1200); },
   getItem(d){ const i = +d.i, s = +d.s;                   // data-g: home(추천) · chs(채널 홈) · cp(채널 목록) · 없으면 검색 결과
     return d.g === 'home' ? (this.home[s] || {items:[]}).items[i] : d.g === 'chs' ? (this.chShelves[s] || {items:[]}).items[i] : d.g === 'cp' ? this.chList[i] : (this.found || [])[i]; },
@@ -1479,7 +1526,7 @@ const Music = {
   open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
     const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot');
-    const on = spot && !$('spSheet').hidden && this.tab === 'now' && this._pl;
+    const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
     w.classList.toggle('show', !!on);
     if(on){ const r = spot.getBoundingClientRect(), k = [r.left, r.top, r.width, r.height].map(Math.round).join();
       if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px'}); }
@@ -1488,25 +1535,28 @@ const Music = {
   },
   nowTick(){                                               // 지금 화면: 진행 막대·시간
     clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
-    const d = pl.getDuration ? pl.getDuration() : 0, t = pl.getCurrentTime ? pl.getCurrentTime() : 0, mm = x=>{ x = Math.max(0, Math.floor(x)); const h = Math.floor(x/3600), m = Math.floor(x/60)%60, s = x%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
+    const fin = x => isFinite(x) && x > 0 ? x : 0, d = fin(pl.getDuration && pl.getDuration()), t = fin(pl.getCurrentTime && pl.getCurrentTime()), mm = x=>{ x = Math.max(0, Math.floor(x)); const h = Math.floor(x/3600), m = Math.floor(x/60)%60, s = x%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
     if(!this.seeking){ sk.max = d || 1; sk.value = t; } const tm = document.querySelectorAll('#ytNow .tm span'); if(tm.length){ tm[0].textContent = mm(this.seeking ? +sk.value : t); tm[1].textContent = d && d < 172800 ? mm(d) : 'LIVE'; }
     this.nt = setTimeout(()=>this.nowTick(), 500);
   },
   renderNow(box){
     const it = this.cur, pl = this._pl;
     if(!it){ box.innerHTML = '<p class="none">재생 중인 음악이 없어요. 저장한 음악이나 검색에서 골라요</p>'; this.place(); return; }
-    const list = pl && pl.getPlaylist ? pl.getPlaylist() : null, idx = pl && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    const list = this.ready && pl.getPlaylist ? pl.getPlaylist() : null, idx = this.ready && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
+    const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow">' + (pl ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+    box.innerHTML = '<div id="ytNow">' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+      (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
       '<h3 class="ti">' + esc(this.title || it.title || '') + '</h3>' +
-      '<button class="ch" data-a="chan"><i>' + esc(by.slice(0, 1) || '♪') + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
+      '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
       '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>'<button class="li" data-a="pi" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + (k + 1) + '</b><em>눌러서 바로 듣기</em></span></button>').join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
-    this.nowTick(); this.place();
+    this.nowTick(); this.place(); if(!av) this.chAvatar();
   },
   renderSheet(tab){
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); if(this.tab !== 'now') this.place();
@@ -1531,8 +1581,6 @@ const Music = {
         '<nav class="chips">' + chip('all', '전체') + chip('video', '동영상') + chip('channel', '채널') + chip('playlist', '재생목록') + chip('recent', '최근 업로드') + chip('live', '실시간') + '<button data-a="forget" class="ghost">키 지우기</button></nav>' +
         '<div id="ytSug" hidden></div></div><div id="ytRes"></div>';
       if(this.chan){ this.renderChannel(box); return; }
-      if(false){ box.insertAdjacentHTML('afterbegin', '<div class="chhead"><button type="button" data-a="unchan" aria-label="뒤로">‹</button><i>' + esc(this.chan.name.slice(0, 1)) + '</i><b>' + esc(this.chan.name) + '</b></div>');
-        box.querySelector('#ytQ').style.display = 'none'; box.querySelector('.chips').style.display = 'none'; }
       const qin = $('ytQin'), sug = $('ytSug'), yx = box.querySelector('.yx'), go = v=>{ clearTimeout(this.sgT); v = v.trim(); qin.value = v; qin.blur(); sug.hidden = true; if(v){ this.addHist(v); this.chan = null; box.scrollTop = 0; this.search(v); } };
       $('ytQ').onsubmit = e=>{ e.preventDefault(); go(qin.value); };
       qin.onfocus = ()=>this.suggest(qin.value.trim());
@@ -1561,8 +1609,8 @@ const Music = {
     if(a === 'menu'){ this.menuFor(this.getItem(b.dataset)); return; }
     if(a === 'splay'){ this.playItem(this.getItem(b.dataset)); return; }
     if(a === 'smore'){ const g = b.dataset.g, sh = (g === 'home' ? this.home : this.chShelves)[+b.dataset.s]; if(sh){ sh.open = !sh.open; g === 'home' ? this.renderResults() : this.renderChannelList(); } return; }
-    if(a === 'pi'){ this._pl && this._pl.playVideoAt(i); return; }
-    if(a === 'play'){ const it = (src === 'lib' ? this.lib : this.found)[i]; if(it){ this.start(it).then(()=>this.renderSheet('now')); this.renderSheet('now'); } return; }
+    if(a === 'pi'){ if(this.ready){ this.want = true; this._pl.playVideoAt(i); this.watchStart(); } return; }
+    if(a === 'play'){ this.playItem((src === 'lib' ? this.lib : this.found)[i]); return; }
     if(a === 'keep'){ const it = Object.assign({}, this.found[i]); if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
     if(a === 'del'){ this.lib.splice(i, 1); this.save(); this.renderSheet(); return; }
     if(a === 'forget'){ this.key = ''; this.found = null; this.save(); this.renderSheet(); }
@@ -1573,7 +1621,7 @@ const Music = {
     $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b){ e.stopPropagation(); this.act(b); } };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
     $('spClose').onclick = ()=>{ $('spSheet').hidden = true; this.place(); };
-    document.addEventListener('pointerdown', ()=>{ this.mount().then(p=>{ this._pl = this._pl || p; }); }, {once:true});   // 첫 터치에 미리 준비 → 아이폰에서도 바로 재생
+    this.mount().then(()=>{ if(this.cur && !this.loaded) this.load1(this.cur, false); this.refreshNow(); });   // 앱을 열자마자 준비 → 누르면 바로 재생
     this.render();
   }
 };
