@@ -1,5 +1,5 @@
 // 오프라인 캐시. 배포할 때마다 버전이 오른다(tools/celeste_deploy.py)
-const CACHE = 'bleu-minuit-v141';
+const CACHE = 'bleu-minuit-v143';
 const FILES = [
  "rig/under.webp",
  "rig/back_hair.webp",
@@ -84,7 +84,7 @@ self.addEventListener('install', e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.a
 self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k !== CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
 self.addEventListener('fetch', e=>{
   const r = e.request; if(r.method !== 'GET') return;
-  // 페이지는 인터넷이 되면 새로 받고(바로 반영), 안 되면 저장본. 그림·코드는 저장본 먼저
+  // 페이지는 인터넷이 되면 새로 받고(바로 반영), 안 되면 저장본. 그림·코드·글꼴은 저장본 먼저
   if(r.mode === 'navigate'){ e.respondWith(fetch(r).then(res=>{ const c = res.clone(); caches.open(CACHE).then(k=>k.put('index.html', c)); return res; }).catch(()=>caches.match('index.html'))); return; }
-  e.respondWith(caches.match(r, {ignoreSearch:true}).then(hit=>hit || fetch(r).then(res=>{ if(res.ok && new URL(r.url).origin === location.origin){ const c = res.clone(); caches.open(CACHE).then(k=>k.put(r, c)); } return res; })));
+  e.respondWith(caches.match(r, {ignoreSearch:true}).then(hit=>hit || fetch(r).then(res=>{ if((res.ok || res.type === 'opaque') && (new URL(r.url).origin === location.origin || /fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net/.test(r.url))){ const c = res.clone(); caches.open(CACHE).then(k=>k.put(r, c)); } return res; })));
 });
