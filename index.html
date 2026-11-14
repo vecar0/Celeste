@@ -145,7 +145,7 @@
     #tbar{height:9px;margin-top:8px} #pomo{margin-top:6px!important} #row{margin-top:6px!important}
     #lrow{grid-column:1/3;display:flex;align-items:center;gap:10px;margin-top:6px;min-width:0}
     #lrow>#recent{margin:0!important;flex:0 1 auto;min-width:0;max-width:38%}
-    #lrow>#music{flex:1 1 0;min-width:0;margin:0;padding:3px 6px;min-height:0;gap:6px;box-shadow:3px 3px 0 var(--bleu)} #lrow #music [data-a=prev]{display:none} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
+    #lrow>#music{flex:1 1 0;min-width:0;margin:0;padding:4px 6px;min-height:0;gap:2px;justify-content:space-between;box-shadow:3px 3px 0 var(--bleu)} #lrow #music .mt{display:none} #lrow #music img,#lrow #music .art{width:36px!important;height:36px!important;margin-right:auto;cursor:pointer} #music img,#music .art{width:28px;height:28px} #music .mt small{display:none}
     #music .mt b{font-size:13px} #music button{height:28px} #music .pp{width:30px;height:30px}
     #recent{margin-top:5px!important}
     #go,#quit,#warm{height:36px!important} #sline{margin-bottom:5px!important} #bottom{padding-top:24px!important}
@@ -1184,7 +1184,7 @@ const YT_PRESET = [
   {type:'video', id:'7NOSDKb0HlU', title:'lofi hip hop radio - beats to study/relax to (라이브)', by:'Chillhop Music'},
 ];
 const Music = {
-  avs:{}, vch:{}, durs:{}, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
+  avs:{}, vch:{}, durs:{}, back:[], ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
     try{ this.avs = JSON.parse(localStorage.getItem('bleu.ytAv') || '{}') || {}; }catch(e){}
     this.key = o.key || ''; this.auto = o.auto !== false; this.loop = !!o.loop; this.autoplay = o.autoplay !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
@@ -1209,8 +1209,9 @@ const Music = {
     else play ? pl.loadVideoById(item.id) : pl.cueVideoById(item.id);
     this.loaded = item.id;
   },
-  start(item){                                             // 저장한 것·검색 결과 재생
+  start(item, isBack){                                     // 저장한 것·검색 결과 재생
     if(!item) return Promise.resolve();
+    if(!isBack && this.cur && this.cur.id !== item.id){ this.back.push(this.cur); if(this.back.length > 30) this.back.shift(); }   // ⏮ 로 돌아갈 곡
     this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.chId = item.ch || ''; this.radio = false;
     this.vid = item.type === 'video' ? item.id : ''; this.nowKey = ''; this.want = true; this.blocked = false;
     this.save(); this.addPlayed(item); this.render();
@@ -1296,11 +1297,22 @@ const Music = {
   mixNext(){                                               // 한 영상 재생 중 → 그 영상의 유튜브 믹스 2번째 곡부터 이어 재생
     const c = this.cur; if(!this.ready || !c || c.type === 'playlist' || this.radio || this.loop || this.autoplay === false) return false;
     this.radio = true; this.want = true; this._pl.loadPlaylist({list:'RD' + c.id, listType:'playlist', index:1}); this.watchStart(); return true; },
+  // ⏭ 다음: 재생목록·자동재생 목록 안에서 다음 곡 → 없으면 유튜브 믹스(추천)로 → 자동재생을 꺼 두면 저장한 음악 다음 곡
+  // ⏮ 이전: 3초 넘게 들었으면 처음부터 → 아니면 목록 안 이전 곡 → 목록 맨 앞이면 직전에 고른 곡(뒤로 가기 기록)
   skip(d){
     if(!this.ready || !this.cur){ this.toggle(); return; }
-    if(d > 0 && this.mixNext()) return;
-    if(this.cur.type === 'playlist' || this.radio){ this.want = true; d > 0 ? this._pl.nextVideo() : this._pl.previousVideo(); this.watchStart(); return; }
-    const i = this.lib.findIndex(x=>x.id === this.cur.id), n = this.lib[(i + d + this.lib.length) % this.lib.length]; if(n) this.start(n);
+    const pl = this._pl, inList = this.cur.type === 'playlist' || this.radio, idx = inList && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    if(d < 0){
+      if((pl.getCurrentTime() || 0) > 3){ pl.seekTo(0, true); if(!this.playing){ this.want = true; pl.playVideo(); } return; }
+      if(inList && idx > 0){ this.want = true; pl.previousVideo(); this.watchStart(); return; }
+      const b = this.back.pop(); if(b){ this.start(b, true); return; }
+      pl.seekTo(0, true); return;
+    }
+    if(inList){ const n = pl.getPlaylist ? (pl.getPlaylist() || []).length : 0;
+      if(idx < n - 1){ this.want = true; pl.nextVideo(); this.watchStart(); return; } }
+    if(this.mixNext()) return;
+    if(this.radio && this.vid){ this.start({type:'video', id:this.vid, title:this.title, by:this.by}); this.mixNext(); return; }   // 추천 목록 끝 → 지금 곡 기준 새 추천
+    const i = this.lib.findIndex(x=>x.id === this.cur.id), n = this.lib[(i + 1) % this.lib.length]; if(n) this.start(n);
   },
   async chAvatar(){                                        // 지금 나오는 영상의 채널 프로필 사진(영상 → 채널 → 사진, 기기에 기억)
     const vid = this.vid || (this.cur && this.cur.type === 'video' && this.cur.id); if(!this.key || !vid) return;
@@ -1550,7 +1562,7 @@ const Music = {
   render(){
     const el = $('music'); if(!el) return;
     const it = this.cur, img = it ? this.thumb(it) : '';
-    el.innerHTML = (img ? '<img src="' + img + '" alt="">' : '<i class="art">♪</i>') +
+    el.innerHTML = (img ? '<img data-a="now" src="' + img + '" alt="">' : '<i class="art" data-a="now">♪</i>') +
       '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
