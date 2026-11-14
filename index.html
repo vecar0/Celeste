@@ -578,6 +578,10 @@
   .ndeco .hg{left:60%;bottom:10px;width:48px!important;transform:rotate(8deg)} .ndeco .dv{right:0;top:0;width:70px!important;transform:scaleX(-1) rotate(-10deg)}
   .ndeco .st{left:24%;top:4px;width:18px!important} .ndeco .st2{right:30%;top:30px;width:12px!important}
   .ndeco span{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font:italic 11px var(--serif);color:#8a8a86;letter-spacing:.12em}
+
+  /* 지금: 장식은 테이프 한 조각 · 초승달 · 장미 한 송이만 */
+  .ndeco{height:96px!important;margin:16px 0 0!important}
+  .ndeco .rs{left:50%;bottom:20px;width:70px!important;transform:translateX(-50%) rotate(-6deg)!important;opacity:.85}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1794,15 +1798,15 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><i class="tape t1"></i><i class="tape t2"></i><img class="arm" src="' + PARTS + 'obj_armillary.webp" alt="">' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+    box.innerHTML = '<div id="ytNow"><i class="tape t2"></i>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
       '<div class="tiw"><h3 class="ti">' + esc(this.title || it.title || '') + '</h3><img class="nstk" src="' + PARTS + 'obj_crescent.webp" alt=""></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
-      '<div class="ctl"><img class="wg l" src="' + PARTS + 'obj_wing.webp" alt=""><img class="wg r" src="' + PARTS + 'obj_wing.webp" alt=""><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
+      '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      '<div class="ndeco"><i class="pp1"></i><i class="pp2"></i><img class="cd" src="' + PARTS + 'obj_candelabra.webp" alt=""><img class="rs" src="' + PARTS + 'obj_roses.webp" alt=""><img class="hg" src="' + PARTS + 'obj_hourglass.webp" alt=""><img class="dv" src="' + PARTS + 'obj_dove.webp" alt=""><img class="st" src="' + PARTS + 'halo_star_blue.webp" alt=""><img class="st2" src="' + PARTS + 'halo_star_blue.webp" alt=""><span>— stay until midnight —</span></div>' +
+      '<div class="ndeco"><img class="rs" src="' + PARTS + 'obj_roses.webp" alt=""><span>— stay until midnight —</span></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
