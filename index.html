@@ -550,57 +550,30 @@
   .stk{top:-10px;right:4px;width:46px;transform:rotate(6deg)} .stk.r{top:-14px;right:6px;width:50px;transform:rotate(-8deg)}
   .pcov .stk{top:-16px;left:-14px;right:auto;bottom:auto;width:34px;transform:rotate(-14deg)} .plc{width:120px;padding:10px 0 0 10px}
   .plh .pcov .stk{width:40px;top:-18px;left:-16px}
-  /* 지금: 오브젝트 조금 */
-  .tiw{position:relative;padding-right:46px} .nstk{position:absolute;right:-2px;top:-30px;width:44px;mix-blend-mode:multiply;transform:rotate(12deg);pointer-events:none}
-  .ndeco{display:flex;justify-content:space-between;align-items:flex-end;margin:14px 6px 0;height:74px;pointer-events:none}
-  .ndeco img{height:100%;width:auto;mix-blend-mode:multiply;opacity:.9} .ndeco img:nth-child(1){height:62px;transform:rotate(-8deg)} .ndeco img:nth-child(3){height:56px;transform:scaleX(-1) rotate(-6deg)}
-  @media (orientation:landscape) and (max-height:600px){ .ndeco,#ytNow .arm{display:none!important} }
 
   /* 플레이리스트: 오브젝트는 이름 옆에만 */
   .pn{display:flex!important;align-items:center;gap:4px;min-width:0} .pn span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nst{flex:none;width:26px;height:26px;object-fit:contain;mix-blend-mode:multiply;transform:rotate(-8deg)} .plh .nst{width:40px;height:40px}
   .plc{width:112px!important;padding:0!important}
-  /* 지금: 콜라주 장식 */
-  #spSheet:not(.wide) #ytNow{position:relative}
-  #spSheet:not(.wide) #ytNow .vidspot{margin-top:24px}
-  #ytNow .tape{position:absolute;top:-6px;width:64px;height:20px;background:#d8d4c6e6;box-shadow:0 1px 0 #0001;z-index:1}
-  #ytNow .tape.t1{left:-6px;transform:rotate(-10deg)} #ytNow .tape.t2{right:-4px;transform:rotate(8deg);background:#1e22d6cc}
-  #ytNow .arm{position:absolute;right:-26px;width:120px;top:250px;opacity:.16;mix-blend-mode:multiply;pointer-events:none;transform:rotate(14deg)}
-  #spSheet:not(.wide) #ytNow .ctl{position:relative}
-  #ytNow .wg{position:absolute;top:50%;width:70px;opacity:.32;mix-blend-mode:multiply;pointer-events:none;z-index:0}
-  #ytNow .wg.l{left:calc(50% - 92px);transform:translateY(-50%) scaleX(-1) rotate(-6deg)} #ytNow .wg.r{left:calc(50% + 20px);transform:translateY(-50%) rotate(-6deg)}
-  #ytNow .ctl button{position:relative;z-index:1}
-  .ndeco{position:relative;display:block!important;height:120px!important;margin:18px 0 0!important}
-  .ndeco img{position:absolute;height:auto!important;mix-blend-mode:multiply;opacity:1;transform:none}
-  .ndeco .pp1{position:absolute;left:22%;bottom:14px;width:46%;height:30px;background:var(--bleu);transform:rotate(-2deg)}
-  .ndeco .pp2{position:absolute;left:30%;bottom:36px;width:30%;height:44px;background:#fff;outline:1px solid var(--ink);transform:rotate(3deg)}
-  .ndeco .cd{left:2%;bottom:6px;width:64px!important} .ndeco .rs{left:34%;bottom:20px;width:96px!important;transform:rotate(-6deg)}
-  .ndeco .hg{left:60%;bottom:10px;width:48px!important;transform:rotate(8deg)} .ndeco .dv{right:0;top:0;width:70px!important;transform:scaleX(-1) rotate(-10deg)}
-  .ndeco .st{left:24%;top:4px;width:18px!important} .ndeco .st2{right:30%;top:30px;width:12px!important}
-  .ndeco span{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font:italic 11px var(--serif);color:#8a8a86;letter-spacing:.12em}
 
-  /* 지금: 장식은 테이프 한 조각 · 초승달 · 장미 한 송이만 */
-  .ndeco{height:96px!important;margin:16px 0 0!important}
-  .ndeco .rs{left:50%;bottom:20px;width:70px!important;transform:translateX(-50%) rotate(-6deg)!important;opacity:.85}
 
-  /* 지금: 빈자리에만 같은 크기로 정돈해서 */
-  #hdeco{display:none;position:absolute;right:26px;top:26px;width:62px;mix-blend-mode:multiply;transform:scaleX(-1) rotate(-8deg);pointer-events:none}
-  #spSheet.tnow:not(.wide) #hdeco{display:block}
-  .ndeco{height:auto!important;margin:22px 0 4px!important;display:block!important}
-  .ndeco .nrow{display:flex;justify-content:space-evenly;align-items:flex-end;height:58px;padding-bottom:8px;border-bottom:1px dashed #12121230}
-  .ndeco .nrow img{position:static!important;height:52px!important;width:auto!important;mix-blend-mode:multiply;opacity:.88;transform:none!important}
-  .ndeco .nrow img:nth-child(2){height:58px!important}
-  .ndeco span{position:static!important;display:block;margin-top:8px}
-  @media (orientation:landscape) and (max-height:600px){ #hdeco{display:none!important} }
 
-  /* 오브젝트는 앱 콜라주처럼: 클라인 블루 톤 + 흰 오려낸 테두리 */
   #spSheet:not(.wide) #ytNow .ti::before{content:none}
-  .tiw{padding-right:0!important}
   #spSheet:not(.wide) #ytNow .np{display:flex;align-items:center;gap:6px;font:600 9px var(--sans);letter-spacing:.32em;color:var(--bleu);margin-bottom:4px}
   #ytNow .np img{width:14px;height:14px}
-  #hdeco,.ndeco .nrow img{filter:grayscale(1) sepia(1) hue-rotate(195deg) saturate(6) brightness(.82) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff);mix-blend-mode:normal!important;opacity:1!important}
-  .ndeco .nrow{border-bottom:0;height:64px} .ndeco .nrow img{height:50px!important} .ndeco .nrow img:nth-child(2){height:60px!important;transform:scaleX(-1) rotate(-6deg)!important}
-  .ndeco span{color:var(--bleu);opacity:.7}
+
+  /* 지금: 오브젝트를 UI에 얹듯이 — 액자 위에 앉은 비둘기 · 액자 모서리 테이프 · 재생 버튼 뒤로 꽂힌 장미 */
+  #spSheet:not(.wide) #ytNow{position:relative}
+  #spSheet:not(.wide) #ytNow .vidspot{margin-top:14px}
+  #ytNow .perchrow{position:relative;height:44px;margin-bottom:-4px}
+  #ytNow .perch{position:absolute;right:30px;bottom:-2px;height:46px;width:auto;transform:scaleX(-1);pointer-events:none;
+    filter:grayscale(1) sepia(1) hue-rotate(195deg) saturate(6) brightness(.82) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
+  #ytNow .tape{position:absolute;left:-6px;bottom:-12px;width:58px;height:18px;background:#1e22d6d9;transform:rotate(-12deg);z-index:1}
+  #spSheet:not(.wide) #ytNow .ctl{position:relative}
+  #ytNow .ctl button{position:relative;z-index:1}
+  #ytNow .tuck{position:absolute;left:calc(50% - 26px);top:-30px;width:50px;z-index:0;transform:rotate(-10deg);pointer-events:none;mix-blend-mode:multiply}
+  #spSheet:not(.wide) #ytNow .motto{margin:22px 0 4px;text-align:center;font:italic 11px var(--serif);letter-spacing:.14em;color:var(--bleu);opacity:.7}
+  @media (orientation:landscape) and (max-height:600px){ #ytNow .perchrow,#ytNow .motto{display:none} #spSheet:not(.wide) #ytNow .vidspot{margin-top:6px} }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1817,23 +1790,22 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><i class="tape t2"></i>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
+    box.innerHTML = '<div id="ytNow"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
       '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
-      '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
+      '<div class="ctl"><img class="tuck" src="' + PARTS + 'obj_roses.webp" alt=""><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      '<div class="ndeco"><div class="nrow"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_dove.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""></div><span>— stay until midnight —</span></div>' +
+      '<p class="motto">— stay until midnight —</p>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
     if(list && list.length > 1) this.upTitles(list.slice(idx + 1, idx + 16));
   },
   renderSheet(tab){
-    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now');
-    if(!$('hdeco')) $('spSheet').querySelector('.pc').insertAdjacentHTML('afterbegin', '<img id="hdeco" src="' + PARTS + 'obj_dove.webp" alt="">');   // 제목 오른쪽 빈자리 장식 if(this.tab !== 'now') this.place();
+    if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); $('spSheet').classList.toggle('tnow', this.tab === 'now'); if(this.tab !== 'now') this.place();
     document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === this.tab));
     if(this.tab === 'now'){ document.querySelectorAll('#spTabs button').forEach(b=>b.classList.toggle('on', b.dataset.t === 'now')); this.renderNow($('spBody')); return; }
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
