@@ -592,6 +592,15 @@
   .ndeco .nrow img:nth-child(2){height:58px!important}
   .ndeco span{position:static!important;display:block;margin-top:8px}
   @media (orientation:landscape) and (max-height:600px){ #hdeco{display:none!important} }
+
+  /* 오브젝트는 앱 콜라주처럼: 클라인 블루 톤 + 흰 오려낸 테두리 */
+  #spSheet:not(.wide) #ytNow .ti::before{content:none}
+  .tiw{padding-right:0!important}
+  #spSheet:not(.wide) #ytNow .np{display:flex;align-items:center;gap:6px;font:600 9px var(--sans);letter-spacing:.32em;color:var(--bleu);margin-bottom:4px}
+  #ytNow .np img{width:14px;height:14px}
+  #hdeco,.ndeco .nrow img{filter:grayscale(1) sepia(1) hue-rotate(195deg) saturate(6) brightness(.82) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff);mix-blend-mode:normal!important;opacity:1!important}
+  .ndeco .nrow{border-bottom:0;height:64px} .ndeco .nrow img{height:50px!important} .ndeco .nrow img:nth-child(2){height:60px!important;transform:scaleX(-1) rotate(-6deg)!important}
+  .ndeco span{color:var(--bleu);opacity:.7}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1810,13 +1819,13 @@ const Music = {
     const by = this.by || it.by || '';
     box.innerHTML = '<div id="ytNow"><i class="tape t2"></i>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') +
       (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') +
-      '<div class="tiw"><h3 class="ti">' + esc(this.title || it.title || '') + '</h3><img class="nstk" src="' + PARTS + 'obj_crescent.webp" alt=""></div>' +
+      '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
       '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      '<div class="ndeco"><div class="nrow"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""><img src="' + PARTS + 'obj_candelabra.webp" alt=""></div><span>— stay until midnight —</span></div>' +
+      '<div class="ndeco"><div class="nrow"><img src="' + PARTS + 'obj_hourglass.webp" alt=""><img src="' + PARTS + 'obj_dove.webp" alt=""><img src="' + PARTS + 'obj_roses.webp" alt=""></div><span>— stay until midnight —</span></div>' +
       (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
