@@ -408,8 +408,8 @@
   }
   @media (prefers-reduced-motion:reduce){ .layer .o canvas,.tw,.orb{animation:none} }
   #loading{position:absolute;inset:0;display:grid;place-items:center;font:italic 13px var(--serif);color:var(--grey);z-index:1}
-  #spSheet,#spSheet *{font-family:var(--sans)!important;font-style:normal!important}   /* 음악 화면은 한 글꼴로 */
-  #spSheet *{letter-spacing:0!important} #spSheet .pc>small{letter-spacing:.3em!important}   /* 한글 자간 벌어짐 없앰 */
+  #spSheet.wide,#spSheet.wide *{font-family:var(--sans)!important;font-style:normal!important}   /* 검색(유튜브 화면)은 한 글꼴로 */
+  #spSheet.wide *{letter-spacing:0!important}
 
   /* 유튜브 검색 화면 */
   #spSheet.wide .pc>small,#spSheet.wide .pc>b{display:none}
@@ -461,6 +461,55 @@
   #ytAd small{display:block;margin-top:4px;font:400 11px var(--sans);color:#bbb}
 
   #music .mt b.st{display:none} #top>#music .mt b{display:none} #top>#music .mt b.st{display:block}
+
+  /* ── 음악: '지금'·'저장한 음악'은 앱과 같은 종이 콜라주 결로 (검색은 유튜브 화면 그대로) ── */
+  #spSheet:not(.wide) .pc{background:var(--paper2) repeating-linear-gradient(0deg,#0000 0 23px,#12121210 23px 24px);color:var(--ink);outline:1px solid var(--ink);box-shadow:8px 8px 0 var(--bleu);position:relative}
+  #spSheet:not(.wide) .pc::before{content:"";position:absolute;right:18px;top:-9px;width:74px;height:18px;background:#d9d6cc;opacity:.9;transform:rotate(4deg);box-shadow:0 1px 0 #0001}
+  #spSheet:not(.wide) .pc>small{color:var(--bleu);font:600 9px var(--sans);letter-spacing:.34em}
+  #spSheet:not(.wide) .pc>b{display:inline-block;align-self:flex-start;background:var(--ink);color:var(--paper2);font:italic 400 24px var(--serif);padding:2px 14px 4px;margin:6px 0 10px;transform:rotate(-1.5deg);box-shadow:4px 4px 0 var(--bleu)}
+  #spSheet:not(.wide) #spTabs{border-bottom:1px solid var(--ink);margin:2px 0 12px}
+  #spSheet:not(.wide) #spTabs button{color:#8a8a86;font:500 12px var(--sans);letter-spacing:.06em;border-bottom-width:4px}
+  #spSheet:not(.wide) #spTabs button.on{color:var(--ink);border-bottom-color:var(--bleu)}
+  #spSheet:not(.wide) #spBody{counter-reset:n}
+  #spSheet:not(.wide) #spBody h4{display:flex;align-items:center;gap:8px;color:var(--bleu);font:600 9px var(--sans);letter-spacing:.32em;margin:16px 0 6px}
+  #spSheet:not(.wide) #spBody h4::after{content:"";flex:1;border-top:1px dashed var(--ink);opacity:.35}
+  #spSheet:not(.wide) #spBody .none{color:#777;font:11px/1.6 var(--mono)}
+  /* 목록: 번호 · 사진처럼 붙인 썸네일 · 명조 제목 */
+  #spSheet:not(.wide) #spBody .tr{gap:0;border-bottom:1px dashed #12121240}
+  #spSheet:not(.wide) #spBody .li{background:none;outline:0;border:0;color:var(--ink);padding:9px 2px;gap:11px}
+  #spSheet:not(.wide) #spBody .li::before{counter-increment:n;content:counter(n,decimal-leading-zero);font:italic 400 15px var(--serif);color:var(--bleu);width:20px;flex:none}
+  #spSheet:not(.wide) #spBody .li.on{background:linear-gradient(90deg,#1e22d614,#0000)}
+  #spSheet:not(.wide) #spBody .li.on::before{content:"▶";font:10px var(--sans);text-align:center}
+  #spSheet:not(.wide) #spBody .li img,#spSheet:not(.wide) #spBody .li .art{width:46px;height:34px;border:3px solid #fff;outline:1px solid var(--ink);outline-offset:0;transform:rotate(-2deg);box-shadow:2px 2px 0 #12121226}
+  #spSheet:not(.wide) #spBody .tr:nth-child(even) .li img{transform:rotate(1.5deg)}
+  #spSheet:not(.wide) #spBody .li b{color:var(--ink);font:600 14px/1.35 var(--serif)}
+  #spSheet:not(.wide) #spBody .li em{color:#777;font:10px var(--mono);letter-spacing:.04em;margin-top:2px}
+  #spSheet:not(.wide) #spBody .add{background:none;border:0;width:38px;margin:0} #spSheet:not(.wide) #spBody .add svg{fill:var(--ink)}
+  #spSheet:not(.wide) #spBody .tr .add[data-a=del]{color:#8a8a86;font:18px var(--sans)}
+  #spSheet:not(.wide) #spBody .row input{background:#fff;border:1px solid var(--ink);color:var(--ink);font:14px var(--sans);padding:8px} #spSheet:not(.wide) #spBody .row input::placeholder{color:#999}
+  #spSheet:not(.wide) #spBody .row button{background:var(--ink);color:#fff;box-shadow:3px 3px 0 var(--bleu)}
+  /* 지금: 사진처럼 붙인 영상 · 명조 제목 · 종이 위 잉크 버튼 */
+  #ytWin.show{outline:5px solid #fff;box-shadow:0 0 0 6px var(--ink),9px 9px 0 6px var(--bleu)}
+  #spSheet:not(.wide) #ytNow .vidspot{margin:8px 6px 20px;width:calc(100% - 12px)}
+  #spSheet:not(.wide) #ytNow .ti{color:var(--ink);font:600 18px/1.4 var(--serif);-webkit-line-clamp:3}
+  #spSheet:not(.wide) #ytNow .ti::before{content:"NOW PLAYING";display:block;font:600 9px var(--sans);letter-spacing:.32em;color:var(--bleu);margin-bottom:4px}
+  #spSheet:not(.wide) #ytNow .ch{margin:10px 0 12px;padding:8px 0;border-top:1px dashed #12121240;border-bottom:1px dashed #12121240}
+  #spSheet:not(.wide) #ytNow .ch i{outline:1px solid var(--ink);outline-offset:2px}
+  #spSheet:not(.wide) #ytNow .ch span{color:#333;font:13px var(--sans)}
+  #spSheet:not(.wide) #ytNow .ch em{color:var(--bleu);font:10px var(--mono)}
+  #spSheet:not(.wide) #ytNow input[type=range]{-webkit-appearance:none;appearance:none;height:8px;margin:6px 0 4px;background:linear-gradient(var(--bleu),var(--bleu)) 0 0/var(--p,0%) 100% no-repeat,#fff;outline:1px solid var(--ink)}
+  #spSheet:not(.wide) #ytNow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:18px;background:var(--ink);border:0;border-radius:0}
+  #spSheet:not(.wide) #ytNow .tm{color:#666;font:10px var(--mono)}
+  #spSheet:not(.wide) #ytNow .ctl button{color:var(--ink)}
+  #spSheet:not(.wide) #ytNow .ctl .pp{color:#fff;background:var(--bleu);box-shadow:4px 4px 0 var(--ink)}
+  #spSheet:not(.wide) #ytNow .ctl .on{color:var(--bleu)} #spSheet:not(.wide) #ytNow .ctl .lbl small{font:10px var(--sans);letter-spacing:0}
+  #spSheet:not(.wide) #ytNow .blk{color:var(--bleu)}
+  @media (orientation:landscape) and (max-height:600px){
+    #spSheet:not(.wide) .pc>small,#spSheet:not(.wide) .pc>b{display:none}
+    #spSheet:not(.wide) #ytNow .vidspot{margin:6px;width:calc(100% - 12px);max-height:calc(100vh - 150px)}
+    #spSheet:not(.wide) #ytNow .ti{font-size:16px}
+  }
+  #spSheet:not(.wide) .pb button#spClose{background:var(--ink);border-color:var(--ink);color:#fff;box-shadow:4px 4px 0 var(--bleu);font:13px var(--sans);letter-spacing:.2em}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1197,7 +1246,7 @@ const YT_PRESET = [
   {type:'video', id:'7NOSDKb0HlU', title:'lofi hip hop radio - beats to study/relax to (라이브)', by:'Chillhop Music'},
 ];
 const Music = {
-  avs:{}, vch:{}, durs:{}, back:[], ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
+  avs:{}, vch:{}, durs:{}, back:[], vt:{}, ready:false, cur:null, lib:[], key:'', auto:true, tab:'lib', found:null, q:'', playing:false, title:'', by:'',
   load(){ try{ this.lib = JSON.parse(localStorage.getItem('bleu.yt') || 'null') || YT_PRESET.slice(); const o = JSON.parse(localStorage.getItem('bleu.ytOpt') || '{}');
     try{ this.avs = JSON.parse(localStorage.getItem('bleu.ytAv') || '{}') || {}; }catch(e){}
     this.key = o.key || ''; this.auto = o.auto !== false; this.loop = !!o.loop; this.autoplay = o.autoplay !== false; this.cur = o.cur || null; }catch(e){ this.lib = YT_PRESET.slice(); } },
@@ -1339,6 +1388,12 @@ const Music = {
       const i = document.querySelector('#ytNow .ch i'); if(i && this.avs[cid] && this.chId === cid) i.innerHTML = '<img src="' + this.avs[cid] + '" alt="">';
       const em = document.querySelector('#ytNow .ch em'); if(em) em.textContent = '채널 보기 ›';
     }catch(e){}
+  },
+  async upTitles(ids){                                     // '다음 곡' 목록 제목·채널(유튜브는 영상 번호만 줘서 따로 받음)
+    const need = ids.filter(v=>!this.vt[v]); if(this.key && need.length){
+      try{ const j = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=' + need.join(',') + '&key=' + encodeURIComponent(this.key))).json();
+        (j.items || []).forEach(x=>{ this.vt[x.id] = {t:new DOMParser().parseFromString(x.snippet.title, 'text/html').body.textContent, by:x.snippet.channelTitle}; }); }catch(e){} }
+    document.querySelectorAll('#ytNow .li[data-v]').forEach(b=>{ const t = this.vt[b.dataset.v]; b.querySelector('b').textContent = t ? t.t : '다음 곡'; b.querySelector('em').textContent = t ? t.by : ''; });
   },
   saveAv(){ try{ const k = Object.keys(this.avs); if(k.length > 300) k.slice(0, k.length - 300).forEach(x=>delete this.avs[x]); localStorage.setItem('bleu.ytAv', JSON.stringify(this.avs)); }catch(e){} },
   onFocus(){}, onBreak(){},
@@ -1599,7 +1654,7 @@ const Music = {
   nowTick(){                                               // 지금 화면: 진행 막대·시간
     clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
     const fin = x => isFinite(x) && x > 0 ? x : 0, d = fin(pl.getDuration && pl.getDuration()), t = fin(pl.getCurrentTime && pl.getCurrentTime()), mm = x=>{ x = Math.max(0, Math.floor(x)); const h = Math.floor(x/3600), m = Math.floor(x/60)%60, s = x%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
-    if(!this.seeking){ sk.max = d || 1; sk.value = t; } const tm = document.querySelectorAll('#ytNow .tm span'); if(tm.length){ tm[0].textContent = mm(this.seeking ? +sk.value : t); tm[1].textContent = d && d < 172800 ? mm(d) : 'LIVE'; }
+    if(!this.seeking){ sk.max = d || 1; sk.value = t; } sk.style.setProperty('--p', (d ? Math.min(100, (this.seeking ? +sk.value : t)/d*100) : 0) + '%'); const tm = document.querySelectorAll('#ytNow .tm span'); if(tm.length){ tm[0].textContent = mm(this.seeking ? +sk.value : t); tm[1].textContent = d && d < 172800 ? mm(d) : 'LIVE'; }
     this.nt = setTimeout(()=>this.nowTick(), 500);
   },
   renderNow(box){
@@ -1617,9 +1672,10 @@ const Music = {
       '<div class="ctl"><button data-a="loop" class="lbl' + (this.loop ? ' on' : '') + '">' + SPI.repeat1 + '<small>한 곡 반복</small></button><button data-a="prev">' + SPI.prev + '</button>' +
       '<button class="pp" data-a="toggle">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next">' + SPI.next + '</button>' +
       '<button data-a="autoplay" class="lbl' + (this.autoplay !== false ? ' on' : '') + '">' + SPI.shuffle + '<small>자동 재생</small></button></div>' +
-      (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>'<button class="li" data-a="pi" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + (k + 1) + '</b><em>눌러서 바로 듣기</em></span></button>').join('') : '') + '</div>';
+      (list && list.length > 1 ? '<h4>' + (this.radio ? '다음 추천 곡' : '다음 곡') + '</h4>' + list.slice(idx + 1, idx + 16).map((v, k)=>{ const t = this.vt[v]; return '<div class="tr"><button class="li" data-a="pi" data-v="' + v + '" data-i="' + (idx + 1 + k) + '"><img src="https://i.ytimg.com/vi/' + v + '/default.jpg" alt=""><span><b>' + esc(t ? t.t : '불러오는 중…') + '</b><em>' + esc(t ? t.by : '') + '</em></span></button></div>'; }).join('') : '') + '</div>';
     const sk = $('ytSeek'); sk.oninput = ()=>{ this.seeking = true; }; sk.onchange = ()=>{ this.seeking = false; pl && pl.seekTo(+sk.value, true); };
     this.nowTick(); this.place(); if(!av) this.chAvatar();
+    if(list && list.length > 1) this.upTitles(list.slice(idx + 1, idx + 16));
   },
   renderSheet(tab){
     if(tab) this.tab = tab; $('spSheet').classList.toggle('wide', this.tab === 'search'); if(this.tab !== 'now') this.place();
