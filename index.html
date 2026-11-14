@@ -574,6 +574,17 @@
   #ytNow .tuck{position:absolute;left:calc(50% - 26px);top:-30px;width:50px;z-index:0;transform:rotate(-10deg);pointer-events:none;mix-blend-mode:multiply}
   #spSheet:not(.wide) #ytNow .motto{margin:22px 0 4px;text-align:center;font:italic 11px var(--serif);letter-spacing:.14em;color:var(--bleu);opacity:.7}
   @media (orientation:landscape) and (max-height:600px){ #ytNow .perchrow,#ytNow .motto{display:none} #spSheet:not(.wide) #ytNow .vidspot{margin-top:6px} }
+
+  /* 제목: 검은 상자 대신 Bodoni 기울임 + 파란 밑줄(앱 상단 'BLEU MINUIT'·타이머와 같은 결) */
+  #spSheet:not(.wide) .pc>b{background:none!important;color:var(--ink)!important;font:italic 400 34px/1 var(--serif)!important;padding:0 2px 6px!important;margin:4px 0 12px!important;transform:none!important;box-shadow:inset 0 -9px 0 #1e22d633!important;letter-spacing:-.01em}
+  #spSheet:not(.wide) .pc>small{letter-spacing:.3em}
+  /* 채널 이름 · 채널 보기 가운데 */
+  #spSheet:not(.wide) #ytNow .ch{justify-content:center;gap:10px}
+  #spSheet:not(.wide) #ytNow .ch span{flex:0 1 auto;max-width:55%}
+  #spSheet:not(.wide) #ytNow .ch em{margin-left:6px;padding-left:10px;border-left:1px solid #12121230}
+  /* 비둘기 원래 색 · 장미는 재생 버튼 왼쪽 아래로 (진행 막대에 안 닿게) */
+  #ytNow .perch{filter:none!important}
+  #ytNow .tuck{left:calc(50% - 52px)!important;top:24px!important;width:40px!important;transform:rotate(-24deg)!important}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -623,8 +634,8 @@
 </section>
 <section id="spSheet" hidden>
   <div class="pc">
-    <small>MUSIQUE · YOUTUBE</small>
-    <b>음악</b>
+    <small>YOUTUBE · 음악</small>
+    <b>Musique</b>
     <nav id="spTabs"><button data-t="now" type="button">지금</button><button data-t="lib" type="button">저장한 음악</button><button data-t="search" type="button">검색</button></nav>
     <div id="spBody"></div>
     <div class="pb"><button id="spClose" type="button">닫기</button></div>
