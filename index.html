@@ -510,6 +510,37 @@
     #spSheet:not(.wide) #ytNow .ti{font-size:16px}
   }
   #spSheet:not(.wide) .pb button#spClose{background:var(--ink);border-color:var(--ink);color:#fff;box-shadow:4px 4px 0 var(--bleu);font:13px var(--sans);letter-spacing:.2em}
+
+  /* ── 저장한 음악: 카드로 구분 · 플레이리스트 · 콜라주 오브젝트 ── */
+  #spSheet:not(.wide) #spBody .lc{position:relative;background:#fff;border:0;outline:1px solid var(--ink);box-shadow:3px 3px 0 #12121224;margin:0 3px 10px;padding-right:2px}
+  #spSheet:not(.wide) #spBody .lc:nth-child(4n+2){background:#eceefe;transform:rotate(.35deg)}
+  #spSheet:not(.wide) #spBody .lc:nth-child(4n){background:#f7f5ee;transform:rotate(-.35deg)}
+  #spSheet:not(.wide) #spBody .lc .li{padding:9px 6px}
+  #spSheet:not(.wide) #spBody .lc .li.on{background:none} #spSheet:not(.wide) #spBody .lc:has(.li.on){outline:2px solid var(--bleu);box-shadow:4px 4px 0 var(--bleu)}
+  #spSheet:not(.wide) #spBody .lc .add{border-left:1px dashed #12121230}
+  #spSheet:not(.wide) #spBody h4.sth{position:relative;font:600 10px var(--sans);letter-spacing:.3em;color:var(--ink);margin:18px 0 10px}
+  #spSheet:not(.wide) #spBody h4.sth::before{content:"";width:8px;height:8px;background:var(--bleu);transform:rotate(45deg);flex:none}
+  .stk{position:absolute;right:0;top:-26px;width:58px;height:auto;pointer-events:none;mix-blend-mode:multiply;transform:rotate(8deg);filter:grayscale(.2)}
+  .stk.r{width:66px;top:-34px;right:8px;transform:rotate(-10deg)}
+  .libend{display:block;width:84px;margin:6px auto 4px;mix-blend-mode:multiply;opacity:.9;transform:rotate(-6deg)}
+  .pls{display:flex;gap:12px;overflow-x:auto;padding:4px 3px 12px;scrollbar-width:none} .pls::-webkit-scrollbar{display:none}
+  .plc{flex:none;width:112px;text-align:left;color:var(--ink)} .plc b{display:block;font:600 13px/1.3 var(--serif)!important;margin:8px 0 0!important;color:var(--ink)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .plc em{font:10px var(--mono);color:#777;font-style:normal}
+  .pcov{position:relative;width:104px;height:104px;display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#fff;border:4px solid #fff;outline:1px solid var(--ink);box-shadow:4px 4px 0 var(--bleu);transform:rotate(-2deg)}
+  .plc:nth-child(odd) .pcov{transform:rotate(1.5deg)}
+  .pcov i{background:#ddd center/cover} .pcov.one{grid-template-columns:1fr} .pcov.one i:not(:first-child){display:none}
+  .pcov .stk{top:auto;bottom:-14px;right:-16px;width:52px;transform:rotate(-8deg)}
+  .plc.new .pcov{display:grid;place-items:center;background:repeating-linear-gradient(45deg,#fff 0 6px,#eceefe 6px 12px);outline-style:dashed;box-shadow:none}
+  .plc.new .pcov span{font:300 40px var(--serif);color:var(--bleu)}
+  .pld .back{font:12px var(--sans);color:var(--bleu);padding:4px 0 10px}
+  .plh .pcov .stk{width:42px;right:-8px;bottom:-12px} .plh{display:flex;gap:28px;align-items:center;margin:4px 4px 16px} .plh .pcov{width:112px;height:112px;flex:none}
+  .plh small{font:600 9px var(--sans)!important;letter-spacing:.3em;color:var(--bleu)} .plh h3{margin:4px 0;font:600 22px/1.25 var(--serif);color:var(--ink)}
+  #spSheet:not(.wide) .plh p{margin:0;font:11px var(--mono);color:#666}
+  .plb{display:flex;gap:8px;margin:0 3px 8px} .plb button{flex:1;display:flex;gap:6px;align-items:center;justify-content:center;height:40px;background:#fff;outline:1px solid var(--ink);color:var(--ink);font:13px var(--sans)}
+  .plb svg{width:16px;fill:currentColor} .plb .pri{background:var(--bleu);color:#fff;outline-color:var(--bleu);box-shadow:3px 3px 0 var(--ink)}
+  .plb2{display:flex;justify-content:flex-end;gap:14px;margin:0 3px 14px} .plb2 button{font:11px var(--sans);color:#888;text-decoration:underline}
+  #ytMenu .mth{width:44px;height:33px;object-fit:cover;flex:none} #ytMenu button.dim{color:#8b8ff5}
+  #ytMenu .mm{max-height:75vh;overflow-y:auto}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1267,7 +1298,8 @@ const Music = {
   },
   load1(item, play){                                       // 플레이어에 곡 넣기(play=false면 대기만)
     const pl = this._pl; if(!pl || !item) return;
-    if(item.type === 'playlist') play ? pl.loadPlaylist({list:item.id, listType:'playlist'}) : pl.cuePlaylist({list:item.id, listType:'playlist'});
+    if(item.type === 'mylist') play ? pl.loadPlaylist(item.ids, item.at || 0) : pl.cuePlaylist(item.ids, item.at || 0);
+    else if(item.type === 'playlist') play ? pl.loadPlaylist({list:item.id, listType:'playlist'}) : pl.cuePlaylist({list:item.id, listType:'playlist'});
     else play ? pl.loadVideoById(item.id) : pl.cueVideoById(item.id);
     this.loaded = item.id;
   },
@@ -1275,7 +1307,7 @@ const Music = {
     if(!item) return Promise.resolve();
     if(!isBack && this.cur && this.cur.id !== item.id){ this.back.push(this.cur); if(this.back.length > 30) this.back.shift(); }   // ⏮ 로 돌아갈 곡
     this.cur = item; this.title = item.title || ''; this.by = item.by || ''; this.chId = item.ch || ''; this.radio = false;
-    this.vid = item.type === 'video' ? item.id : ''; this.nowKey = ''; this.want = true; this.blocked = false;
+    this.vid = item.type === 'video' ? item.id : item.type === 'mylist' ? item.ids[item.at || 0] : ''; this.nowKey = ''; this.want = true; this.blocked = false;
     this.save(); this.addPlayed(item); this.render();
     if(item.type === 'video' && item.dur) this.durs[item.id] = this.secs(item.dur); else if(item.type === 'video') this.needDur(item.id);
     if(this.ready) this.load1(item, true); else this.mount().then(()=>this.load1(item, true));
@@ -1332,7 +1364,7 @@ const Music = {
     if(e.data === S.ENDED){ this.want = false; if(this.muted) this.adCover(false); }   // 멈춤은 우리 버튼에서만 want=false (광고가 '멈춤'으로 보고될 수 있어서)
     if(d && d.video_id){
       if(this.playing && this.radio && d.video_id !== this.vid && d.title) this.addPlayed({type:'video', id:d.video_id, title:d.title, by:d.author});   // 자동 재생으로 들은 곡도 기록
-      if(d.video_id !== this.vid){ this.vid = d.video_id; if(this.radio || (this.cur && this.cur.type === 'playlist')) this.chId = ''; }
+      if(d.video_id !== this.vid){ this.vid = d.video_id; if(this.radio || this.isList()) this.chId = ''; }
       if(d.title){ this.title = d.title; this.by = d.author || this.by; }
     }
     if(e.data === S.ENDED){
@@ -1352,18 +1384,18 @@ const Music = {
     const c = e && e.data, msg = c === 101 || c === 150 ? '이 영상은 유튜브 밖 재생이 막혀 있어요' : c === 100 ? '없어진 영상이에요' : '재생할 수 없는 영상이에요';
     clearTimeout(this.ws);
     if(!this.want){ this.loaded = 'err:' + this.loaded; return; }                // 대기만 해 둔 곡이면 조용히(누를 때 다시 시도)
-    if(this.radio || (this.cur && this.cur.type === 'playlist')){ toast(msg + ' · 다음 곡으로', 2200); clearTimeout(this.et); this.et = setTimeout(()=>this._pl.nextVideo(), 400); return; }
+    if(this.radio || this.isList()){ toast(msg + ' · 다음 곡으로', 2200); clearTimeout(this.et); this.et = setTimeout(()=>this._pl.nextVideo(), 400); return; }
     this.want = false; toast(msg + (this.autoplay !== false ? ' · 비슷한 곡으로 넘어가요' : ''), 2600);
     if(this.autoplay !== false) setTimeout(()=>this.mixNext(), 500);
   },
   mixNext(){                                               // 한 영상 재생 중 → 그 영상의 유튜브 믹스 2번째 곡부터 이어 재생
-    const c = this.cur; if(!this.ready || !c || c.type === 'playlist' || this.radio || this.loop || this.autoplay === false) return false;
+    const c = this.cur; if(!this.ready || !c || this.isList() || this.radio || this.loop || this.autoplay === false) return false;
     this.radio = true; this.want = true; this._pl.loadPlaylist({list:'RD' + c.id, listType:'playlist', index:1}); this.watchStart(); return true; },
   // ⏭ 다음: 재생목록·자동재생 목록 안에서 다음 곡 → 없으면 유튜브 믹스(추천)로 → 자동재생을 꺼 두면 저장한 음악 다음 곡
   // ⏮ 이전: 3초 넘게 들었으면 처음부터 → 아니면 목록 안 이전 곡 → 목록 맨 앞이면 직전에 고른 곡(뒤로 가기 기록)
   skip(d){
     if(!this.ready || !this.cur){ this.toggle(); return; }
-    const pl = this._pl, inList = this.cur.type === 'playlist' || this.radio, idx = inList && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
+    const pl = this._pl, inList = this.isList() || this.radio, idx = inList && pl.getPlaylistIndex ? pl.getPlaylistIndex() : -1;
     if(d < 0){
       if((pl.getCurrentTime() || 0) > 3){ pl.seekTo(0, true); if(!this.playing){ this.want = true; pl.playVideo(); } return; }
       if(inList && idx > 0){ this.want = true; pl.previousVideo(); this.watchStart(); return; }
@@ -1394,6 +1426,66 @@ const Music = {
       try{ const j = await (await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=' + need.join(',') + '&key=' + encodeURIComponent(this.key))).json();
         (j.items || []).forEach(x=>{ this.vt[x.id] = {t:new DOMParser().parseFromString(x.snippet.title, 'text/html').body.textContent, by:x.snippet.channelTitle}; }); }catch(e){} }
     document.querySelectorAll('#ytNow .li[data-v]').forEach(b=>{ const t = this.vt[b.dataset.v]; b.querySelector('b').textContent = t ? t.t : '다음 곡'; b.querySelector('em').textContent = t ? t.by : ''; });
+  },
+  // ── 내 플레이리스트(이 기기에 저장) ──
+  lists(){ try{ return JSON.parse(localStorage.getItem('bleu.ytLists') || '[]'); }catch(e){ return []; } },
+  saveLists(l){ try{ localStorage.setItem('bleu.ytLists', JSON.stringify(l)); }catch(e){} },
+  newList(name, first){ name = (name || '').trim(); if(!name) return null; const l = this.lists(), it = {id:Date.now().toString(36), name, items:first ? [this.clean(first)] : []};
+    l.unshift(it); this.saveLists(l); return it; },
+  clean(x){ return {type:'video', id:x.id, title:x.title || '', by:x.by || '', ch:x.ch || '', dur:x.dur || ''}; },
+  addTo(lid, x){ if(!x || x.type !== 'video'){ toast('영상만 담을 수 있어요', 1600); return; } const l = this.lists(), t = l.find(y=>y.id === lid); if(!t) return;
+    if(t.items.some(y=>y.id === x.id)){ toast('이미 들어 있어요', 1400); return; } t.items.push(this.clean(x)); this.saveLists(l); toast('‘' + t.name + '’에 담았어요', 1600); },
+  objFor(id){ const O = ['dove','roses','lily','crescent','candelabra','hourglass','wing','crown','iris','perfume','watch','mirror','saturn','book','keyhand','moon','cherub','birdcage'];
+    let h = 0; for(const c of String(id)) h = (h*31 + c.charCodeAt(0)) >>> 0; return PARTS + 'obj_' + O[h % O.length] + '.webp'; },
+  coverHTML(t){ const th = t.items.slice(0, 4).map(x=>'<i style="background-image:url(https://i.ytimg.com/vi/' + x.id + '/mqdefault.jpg)"></i>').join('');
+    return '<div class="pcov' + (t.items.length < 4 ? ' one' : '') + '">' + (th || '<i></i>') + '<img class="stk" src="' + this.objFor(t.id) + '" alt=""></div>'; },
+  trackHTML(x, i, src, on){
+    return '<div class="tr lc"><button class="li' + (on ? ' on' : '') + '" data-a="' + (src === 'pl' ? 'plplay' : 'play') + '" data-s="' + src + '" data-i="' + i + '">' +
+      (this.thumb(x) ? '<img src="' + this.thumb(x) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(x.title || '') + '</b><em>' + (x.type === 'playlist' ? '유튜브 재생목록 · ' : '') + esc(x.by || '') + (x.dur && this.fmtDur(x.dur) ? ' · ' + this.fmtDur(x.dur) : '') + '</em></span></button>' +
+      '<button class="add" data-a="lmenu" data-s="' + src + '" data-i="' + i + '" aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>';
+  },
+  renderLib(box){
+    const L = this.lists(), op = this.openList && L.find(t=>t.id === this.openList);
+    if(op){                                                // 플레이리스트 안
+      const playing = this.cur && this.cur.type === 'mylist' && this.cur.id === 'L' + op.id;
+      box.innerHTML = '<div class="pld"><button class="back" data-a="closelist" aria-label="뒤로">‹ 저장한 음악</button>' +
+        '<div class="plh">' + this.coverHTML(op) + '<div><small>PLAYLIST · N°' + String(L.indexOf(op) + 1).padStart(2, '0') + '</small><h3>' + esc(op.name) + '</h3><p>' + op.items.length + '곡</p></div></div>' +
+        '<div class="plb"><button class="pri" data-a="plplay" data-i="0">' + SPI.play + '전체 재생</button><button data-a="plshuf">' + SPI.shuffle + '섞어서</button><button data-a="pladd">' + SPI.plus + '곡 담기</button></div>' +
+        '<div class="plb2"><button data-a="plren">이름 바꾸기</button><button data-a="pldel">플레이리스트 지우기</button></div>' +
+        (op.items.length ? op.items.map((x, i)=>this.trackHTML(x, i, 'pl', playing && this.vid === x.id)).join('') : '<p class="none">아직 비어 있어요 · ‘곡 담기’로 채워요</p>') + '</div>';
+      return;
+    }
+    box.innerHTML = '<form id="ytAdd" class="row" autocomplete="off"><input id="ytUrl" placeholder="유튜브 링크 붙여 넣기 (영상·재생목록)" enterkeyhint="done"><button type="submit">저장</button></form>' +
+      '<h4 class="sth">내 플레이리스트<img class="stk" src="' + PARTS + 'obj_dove.webp" alt=""></h4>' +
+      '<div class="pls"><button class="plc new" data-a="newlist"><div class="pcov"><span>+</span></div><b>새 플레이리스트</b><em>만들기</em></button>' +
+      L.map(t=>'<button class="plc" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b>' + esc(t.name) + '</b><em>' + t.items.length + '곡</em></button>').join('') + '</div>' +
+      '<h4 class="sth">저장한 곡<img class="stk r" src="' + PARTS + 'obj_roses.webp" alt=""></h4>' +
+      (this.lib.length ? this.lib.map((x, i)=>this.trackHTML(x, i, 'lib', this.cur && this.cur.id === x.id)).join('') : '<p class="none">아직 없어요</p>') +
+      '<img class="libend" src="' + PARTS + 'obj_lily.webp" alt="">';
+    $('ytAdd').onsubmit = e=>{ e.preventDefault(); const v = $('ytUrl').value; $('ytUrl').blur(); if(v.trim()) this.addLink(v); };
+  },
+  playList(t, at, shuffle){
+    if(!t || !t.items.length){ toast('비어 있는 플레이리스트예요', 1600); return; }
+    let ids = t.items.map(x=>x.id); if(shuffle){ ids = ids.slice(); for(let i = ids.length - 1; i > 0; i--){ const j = Math.random()*(i + 1) | 0; [ids[i], ids[j]] = [ids[j], ids[i]]; } at = 0; }
+    t.items.forEach(x=>{ if(x.dur) this.durs[x.id] = this.secs(x.dur); });
+    this.start({type:'mylist', id:'L' + t.id, title:t.name, by:'내 플레이리스트', ids, at:at || 0}); this.renderSheet('now');
+  },
+  sheetMenu(title, opts){                                  // 아래에서 올라오는 작은 메뉴(⋮)
+    const m = $('ytMenu') || document.body.appendChild(Object.assign(document.createElement('div'), {id:'ytMenu'}));
+    m.innerHTML = '<div class="mm"><p>' + esc(title) + '</p>' + opts.map((o, k)=>'<button data-k="' + k + '"' + (o.dim ? ' class="dim"' : '') + '>' + (o.ic || '') + esc(o.t) + '</button>').join('') + '<button data-k="x" class="cx">취소</button></div>';
+    m.hidden = false; m.onclick = e=>{ const b = e.target.closest('[data-k]'); if(!b && e.target !== m) return; m.hidden = true; const o = b && opts[+b.dataset.k]; if(o && o.f) o.f(); };
+  },
+  chooseList(x){                                           // 어느 플레이리스트에 담을지
+    const L = this.lists();
+    this.sheetMenu('플레이리스트에 담기 · ' + (x.title || ''), [{t:'새 플레이리스트 만들기', ic:SPI.plus, f:()=>{ const t = this.newList(prompt('새 플레이리스트 이름', '') || '', x); if(t){ toast('‘' + t.name + '’를 만들고 담았어요', 1800); this.refreshLib(); } }}]
+      .concat(L.map(t=>({t:t.name + '  (' + t.items.length + '곡)', ic:SPI.list, f:()=>{ this.addTo(t.id, x); this.refreshLib(); }}))));
+  },
+  refreshLib(){ if(!$('spSheet').hidden && this.tab === 'lib') this.renderSheet(); },
+  pickSongs(t){                                            // 플레이리스트에 곡 담기: 저장한 곡 + 최근 들은 곡에서 고르기
+    const pool = []; this.lib.concat(this.played()).forEach(x=>{ if(x.type === 'video' && !pool.some(y=>y.id === x.id)) pool.push(x); });
+    if(!pool.length){ toast('저장한 곡이나 들은 곡이 없어요 · 검색에서 ⋮ → 플레이리스트에 담기', 2600); return; }
+    this.sheetMenu('‘' + t.name + '’에 담을 곡', pool.slice(0, 30).map(x=>({t:(t.items.some(y=>y.id === x.id) ? '✓ ' : '') + x.title, dim:t.items.some(y=>y.id === x.id), ic:'<img class="mth" src="https://i.ytimg.com/vi/' + x.id + '/default.jpg" alt="">',
+      f:()=>{ this.addTo(t.id, x); this.refreshLib(); setTimeout(()=>this.pickSongs(this.lists().find(y=>y.id === t.id)), 50); }})));
   },
   saveAv(){ try{ const k = Object.keys(this.avs); if(k.length > 300) k.slice(0, k.length - 300).forEach(x=>delete this.avs[x]); localStorage.setItem('bleu.ytAv', JSON.stringify(this.avs)); }catch(e){} },
   onFocus(){}, onBreak(){},
@@ -1564,10 +1656,10 @@ const Music = {
   },
   menuFor(x){                                              // 영상 ⋮ 메뉴
     if(!x) return; const m = $('ytMenu') || document.body.appendChild(Object.assign(document.createElement('div'), {id:'ytMenu'}));
-    m.innerHTML = '<div class="mm"><p>' + esc(x.title) + '</p><button data-m="play">' + SPI.play + '바로 재생</button><button data-m="keep">' + SPI.plus + '저장한 음악에 추가</button>' + (x.ch ? '<button data-m="ch">' + SPI.list + '채널로 이동</button>' : '') + '<button data-m="x" class="cx">취소</button></div>';
+    m.innerHTML = '<div class="mm"><p>' + esc(x.title) + '</p><button data-m="play">' + SPI.play + '바로 재생</button><button data-m="keep">' + SPI.plus + '저장한 음악에 추가</button>' + (x.type === 'video' ? '<button data-m="list">' + SPI.list + '플레이리스트에 담기</button>' : '') + (x.ch ? '<button data-m="ch">' + SPI.list + '채널로 이동</button>' : '') + '<button data-m="x" class="cx">취소</button></div>';
     m.hidden = false;
     m.onclick = e=>{ const b = e.target.closest('[data-m]'); if(!b && e.target !== m) return; m.hidden = true; const k = b && b.dataset.m;
-      if(k === 'play') this.playItem(x); else if(k === 'keep') this.keepItem(x); else if(k === 'ch') this.openChannel(x.ch, x.by); };
+      if(k === 'play') this.playItem(x); else if(k === 'keep') this.keepItem(x); else if(k === 'list') this.chooseList(x); else if(k === 'ch') this.openChannel(x.ch, x.by); };
   },
   playItem(x){ if(!x) return; if(x.type === 'channel'){ this.openChannel(x.id, x.title); return; } this.start(x); this.renderSheet('now'); },
   keepItem(x){ const it = Object.assign({}, x); this.lib = [it].concat(this.lib.filter(y=>y.id !== it.id)); this.save(); toast('저장했어요', 1200); },
@@ -1575,7 +1667,8 @@ const Music = {
     return d.g === 'home' ? (this.home[s] || {items:[]}).items[i] : d.g === 'chs' ? (this.chShelves[s] || {items:[]}).items[i] : d.g === 'cp' ? this.chList[i] : (this.found || [])[i]; },
   // 들은 기록(추천의 재료). 이 기기에만 저장
   played(){ try{ return JSON.parse(localStorage.getItem('bleu.ytPlayed') || '[]'); }catch(e){ return []; } },
-  addPlayed(x){ if(!x || !x.id || x.type === 'channel') return; const it = {type:x.type, id:x.id, title:x.title || '', by:x.by || '', ch:x.ch || '', img:x.type === 'playlist' ? x.img : ''};
+  isList(){ return !!this.cur && (this.cur.type === 'playlist' || this.cur.type === 'mylist'); },
+  addPlayed(x){ if(!x || !x.id || x.type === 'channel' || x.type === 'mylist') return; const it = {type:x.type, id:x.id, title:x.title || '', by:x.by || '', ch:x.ch || '', img:x.type === 'playlist' ? x.img : ''};
     const l = [it].concat(this.played().filter(y=>y.id !== it.id)).slice(0, 40); try{ localStorage.setItem('bleu.ytPlayed', JSON.stringify(l)); }catch(e){} },
   async enrich(items){                                     // 길이·조회수 붙이기(50개씩)
     const K = '&key=' + encodeURIComponent(this.key), ids = [...new Set(items.filter(x=>x.type === 'video' && x.views == null).map(x=>x.id))];
@@ -1684,12 +1777,7 @@ const Music = {
     const box = $('spBody'), li = (it, i, src) => '<div class="tr"><button class="li' + (this.cur && this.cur.id === it.id ? ' on' : '') + '" data-a="play" data-s="' + src + '" data-i="' + i + '">' +
       (this.thumb(it) ? '<img src="' + this.thumb(it) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(it.title || '') + '</b><em>' + (it.type === 'playlist' ? '재생목록 · ' : '') + esc(it.by || '') + '</em></span></button>' +
       (src === 'lib' ? '<button class="add" data-a="del" data-i="' + i + '" aria-label="지우기">×</button>' : '<button class="add" data-a="keep" data-i="' + i + '" aria-label="저장">' + SPI.plus + '</button>') + '</div>';
-    if(this.tab === 'lib'){
-      box.innerHTML = '<form id="ytAdd" class="row" autocomplete="off"><input id="ytUrl" placeholder="유튜브 링크 붙여 넣기 (영상·재생목록)" enterkeyhint="done"><button type="submit">저장</button></form>' +
-        '<h4>저장한 음악</h4>' + (this.lib.length ? this.lib.map((x, i)=>li(x, i, 'lib')).join('') : '<p class="none">아직 없어요</p>');
-      $('ytAdd').onsubmit = e=>{ e.preventDefault(); const v = $('ytUrl').value; $('ytUrl').blur(); if(v.trim()) this.addLink(v); };
-      return;
-    }
+    if(this.tab === 'lib'){ this.renderLib(box); return; }
     if(this.tab === 'search'){
       if(!this.key){ box.innerHTML = '<p class="none">검색하려면 유튜브 API 키가 한 번 필요해요</p><form id="ytKey" class="row" autocomplete="off"><input id="ytKeyIn" placeholder="API 키 붙여 넣기"><button type="submit">저장</button></form>' +
         '<p class="hint">키는 이 기기에만 저장돼요.</p>';
@@ -1732,6 +1820,22 @@ const Music = {
     if(a === 'play'){ this.playItem((src === 'lib' ? this.lib : this.found)[i]); return; }
     if(a === 'keep'){ const it = Object.assign({}, this.found[i]); if(it){ this.lib = [it].concat(this.lib.filter(x=>x.id !== it.id)); this.save(); toast('저장했어요', 1200); } return; }
     if(a === 'del'){ this.lib.splice(i, 1); this.save(); this.renderSheet(); return; }
+    if(a === 'newlist'){ const t = this.newList(prompt('새 플레이리스트 이름', '') || ''); if(t){ this.openList = t.id; this.renderSheet(); } return; }
+    if(a === 'openlist'){ this.openList = b.dataset.l; $('spBody').scrollTop = 0; this.renderSheet(); return; }
+    if(a === 'closelist'){ this.openList = null; this.renderSheet(); return; }
+    { const L = this.lists(), t = L.find(y=>y.id === this.openList);
+      if(a === 'plplay'){ this.playList(t, i); return; }
+      if(a === 'plshuf'){ this.playList(t, 0, true); return; }
+      if(a === 'pladd'){ if(t) this.pickSongs(t); return; }
+      if(a === 'plren' && t){ const n = (prompt('플레이리스트 이름', t.name) || '').trim(); if(n){ t.name = n; this.saveLists(L); this.renderSheet(); } return; }
+      if(a === 'pldel' && t){ if(confirm('‘' + t.name + '’ 플레이리스트를 지울까요? (곡 자체는 남아요)')){ this.saveLists(L.filter(y=>y !== t)); this.openList = null; this.renderSheet(); } return; }
+      if(a === 'lmenu'){ const src = b.dataset.s, x = src === 'pl' ? t && t.items[i] : this.lib[i]; if(!x) return;
+        const opts = [{t:'재생', ic:SPI.play, f:()=>src === 'pl' ? this.playList(t, i) : this.playItem(x)}];
+        if(x.type === 'video') opts.push({t:'플레이리스트에 담기', ic:SPI.plus, f:()=>this.chooseList(x)});
+        if(src === 'pl'){ if(i > 0) opts.push({t:'위로 올리기', ic:'↑ ', f:()=>{ [t.items[i - 1], t.items[i]] = [t.items[i], t.items[i - 1]]; this.saveLists(L); this.renderSheet(); }});
+          opts.push({t:'이 플레이리스트에서 빼기', ic:'× ', f:()=>{ t.items.splice(i, 1); this.saveLists(L); this.renderSheet(); }}); }
+        else opts.push({t:'저장한 곡에서 지우기', ic:'× ', f:()=>{ this.lib.splice(i, 1); this.save(); this.renderSheet(); }});
+        this.sheetMenu(x.title || '', opts); return; } }
     if(a === 'forget'){ this.key = ''; this.found = null; this.save(); this.renderSheet(); }
   },
   init(){
