@@ -744,9 +744,12 @@
   #music .mt{min-width:96px}
 
 
-  /* 프레임 속 프레임(뒤·중간·앞 세 겹) */
-  .fr{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;will-change:transform}
-  #frFront{z-index:4}
+
+  /* 뒷배경 깊이: 먼 층은 흐리고 옅게, 가까운 층일수록 또렷하고 그림자가 짙게(종이를 겹쳐 붙인 높이차) */
+  #bg1{filter:blur(.9px);opacity:.82}
+  #bgo{filter:drop-shadow(3px 4px 0 #12121226)}
+  #bg2{filter:drop-shadow(5px 7px 0 #1212121f)}
+  #fgo{filter:drop-shadow(8px 10px 2px #12121233)}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -766,13 +769,11 @@
 
   <main id="stage">
     <div id="loading">석고상을 깨우는 중…</div>
-        <svg id="frBack" class="fr" aria-hidden="true"></svg><svg id="frMid" class="fr" aria-hidden="true"></svg>
         <div id="figure">
       <svg id="haloB"></svg>
       <canvas id="c"></canvas>
       <svg id="haloF"></svg>
     </div>
-    <svg id="frFront" class="fr" aria-hidden="true"></svg>
     <div id="stageLbl"><b>CÉLESTE</b><span id="stageName">plâtre</span></div>
     <div id="doves"></div>
   </main>
@@ -1090,7 +1091,13 @@ async function buildCollage(){
   for(const id of ['bg1','bg2','fg1']) $(id).setAttribute('viewBox', `0 0 ${AW} ${H}`);
   const g = t => `<g transform="translate(${OX} 0)">${t}</g>`;
   for(const id of ['bg1','bgo','bg2','fgo','fg1']) $(id).style.clipPath = OX ? `inset(0 0 0 ${OX}px)` : '';   // 가로: 왼쪽 글자 칸으로 넘치지 않게
-  $('bg1').innerHTML = defs + g(b1); $('bg2').innerHTML = g(b2); $('fg1').innerHTML = g(f1);
+  { const vx = chest.x, vy = chest.y - H*.04, gy = H*1.02; let gp = '';                      // 원근 격자: 멀수록 촘촘
+    for(let i = -9; i <= 9; i++) gp += `M${vx},${vy} L${vx + i*W*.16},${gy}`;
+    for(let k = 1; k <= 9; k++){ const y = vy + (gy - vy)*Math.pow(k/9, 2.2); gp += `M0,${y.toFixed(1)} H${W}`; }
+    b1 = `<path d="${gp}" stroke="${B}" stroke-width=".7" fill="none" opacity=".35"/>` +
+      `<rect x="0" y="0" width="${W}" height="${vy}" fill="url(#fogT)"/>` + b1;
+    b2 = `<ellipse cx="${chest.x}" cy="${H*.97}" rx="${W*.34}" ry="${H*.05}" fill="${K}" opacity=".22" style="filter:blur(10px)"/>` + b2; }
+  $('bg1').innerHTML = defs.replace('</defs>', `<linearGradient id="fogT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f3ef" stop-opacity="0"/><stop offset="1" stop-color="#f4f3ef" stop-opacity=".55"/></linearGradient></defs>`) + g(b1); $('bg2').innerHTML = g(b2); $('fg1').innerHTML = g(f1);
   window.TODAY = objs.map(o=>o.n + '·' + TREAT_KO[o.kind] + (o.glitch ? '·글리치' : ''));
 }
 function drift(el, i, amp){                 // 떠다니는 박자·폭을 오브젝트마다 다르게
@@ -1456,32 +1463,6 @@ function appH(){
   const h = innerHeight, sh = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
   return sa && sh > h && sh - h < 160 ? sh : h;
 }
-function drawFrame(st, land, headY){                     // 프레임 속 프레임 + 입체감: 뒤(작은 망점 판) · 중간(파란 액자) · 앞(크고 두꺼운 검은 액자, 화면 밖으로 잘림) 세 겹, 기울기마다 다르게 움직임
-  const W = st.clientWidth, H = st.clientHeight; if(!W) return;
-  const set = (id, html)=>{ const v = $(id); v.setAttribute('viewBox', `0 0 ${W} ${H}`); v.innerHTML = html; };
-  const cx = W/2, hy = headY;
-  // 뒤: 작은 망점 판 + 원 선 (가장 멀리)
-  const bw = W*(land ? .34 : .58), bh = H*(land ? .62 : .46), bx = cx - bw*.62, by = Math.max(6, hy - H*.06);
-  set('frBack', `<defs><pattern id="hd2" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1.2" fill="#1E22D6"/></pattern></defs>
-    <g transform="rotate(-3 ${bx + bw/2} ${by + bh/2})"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="url(#hd2)" opacity=".5"/><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="#1E22D6"/>
-    <rect x="${bx + bw - 40}" y="${by - 10}" width="${bw*.5}" height="10" fill="#121212"/></g>
-    <circle cx="${cx + bw*.2}" cy="${by + bh*.45}" r="${bh*.62}" fill="none" stroke="#1E22D6" stroke-width="1" opacity=".55"/>`);
-  // 중간: 파란 겹선 액자(셀레스테 뒤, 머리는 위로 넘침)
-  const mw = W*(land ? .52 : .82), mt = hy + H*(land ? .16 : .13), mx = cx - mw/2, mb = H + 30;
-  set('frMid', `<g transform="rotate(2.2 ${cx} ${mt})"><rect x="${mx + 9}" y="${mt + 9}" width="${mw}" height="${mb - mt}" fill="#121212" opacity=".18"/>
-    <rect x="${mx}" y="${mt}" width="${mw}" height="${mb - mt}" fill="#f4f3ef" fill-opacity=".55" stroke="#1E22D6" stroke-width="3"/>
-    <rect x="${mx + 10}" y="${mt + 10}" width="${mw - 20}" height="${mb - mt}" fill="none" stroke="#1E22D6" stroke-width="1"/></g>`);
-  // 앞: 크고 두꺼운 검은 액자 — 기울어져 화면 밖으로 잘리고, 장면 위로 파란 그림자를 떨어뜨림
-  const th = Math.max(20, W*(land ? .04 : .06)), fx = W*(land ? .18 : .07), fy = Math.max(th*1.1, hy - H*(land ? .02 : .05)), fw = W*(land ? .9 : 1.0), fh = H*1.2;
-  const o = `M${fx - th},${fy - th}H${fx + fw + th}V${fy + fh + th}H${fx - th}Z M${fx},${fy}V${fy + fh}H${fx + fw}V${fy}Z`;
-  set('frFront', `<g transform="rotate(${land ? -2.5 : -4} ${fx} ${fy})">
-    <path d="${o}" fill="#1E22D6" transform="translate(10 12)" opacity=".85"/>
-    <path d="${o}" fill="#121212" fill-rule="evenodd"/>
-    <path d="M${fx},${fy}V${fy + fh}H${fx + fw}V${fy}Z" fill="none" stroke="#f4f3ef" stroke-width="2"/>
-    <path d="M${fx - th*.5},${fy - th}V${fy + fh}" stroke="#3a3a3a" stroke-width="${th*.18}"/>
-    <path d="M${fx + fw*.62},${fy - th*.82} h${fw*.3}" stroke="#f4f3ef" stroke-width="2" stroke-dasharray="4 5"/>
-    <text x="${fx + 14}" y="${fy - th*.32}" fill="#f4f3ef" font-family="'Bodoni 72','Didot',serif" font-style="italic" font-size="${Math.round(th*.5)}" letter-spacing="2">fenêtre · bleu minuit</text></g>`);
-}
 function fit(){
   // 아이폰 홈 화면 앱은 웹 화면 높이를 상태 표시줄만큼 짧게 준다 → 문서 전체(html·body·앱)를 화면 높이로 늘린다
   const h = appH() + 'px';
@@ -1497,7 +1478,6 @@ function fit(){
   Object.assign($('figure').style, {width:fw + 'px', height:fh + 'px', top:top + 'px'});
   FIG = {x:st.offsetLeft + (st.clientWidth - fw)/2, y:st.offsetTop + top, sc};
   if(rig){ rig.motion = clamp(.36/sc, 1, 1.6); rig.resize(sc*Math.min(devicePixelRatio || 1, 3)*1.05); }   // 보이는 크기 × 화면 배율만큼만 그린다       // 작게 그려질 땐 좌우 움직임만 조금 키운다(너무 크면 인위적)   // 화면(앱) 좌표의 원화 위치
-  drawFrame(st, land, top + 245*sc);
   clearTimeout(fit.t); fit.t = setTimeout(()=>buildCollage().catch(e=>console.warn('collage', e)), 120);
 }
 addEventListener('resize', fit); addEventListener('orientationchange', ()=>setTimeout(fit, 300)); addEventListener('pageshow', fit);
@@ -2175,7 +2155,7 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 
 /* ═══ 시작 ═══ */
 let rig = null, shown = 0;
-const PAR = [['bg1', -.35], ['bgo', -.6], ['bg2', -.8], ['fgo', 1.5], ['fg1', 1.2], ['frBack', -.9], ['frMid', -.3], ['frFront', 2.2]];
+const PAR = [['bg1', -1.1], ['bgo', -.7], ['bg2', -.4], ['fgo', 1.9], ['fg1', 1.4]];   // 멀수록(bg1) 반대로 크게, 앞(fg)은 같은 쪽으로 크게 → 깊이감
 function parallax(t){                       // 고개·기울기를 따라 뒤는 반대로, 앞은 더 크게 → 깊이감
   const S = rig.S, sc = FIG ? FIG.sc : .25, hx = S.head.x*sc*2 + S.tilt.x*10, hy = S.tilt.y*6 + Math.sin(t*.21)*2;
   for(const [id, k] of PAR){ const el = $(id); if(el) el.style.transform = `translate3d(${(hx*k).toFixed(2)}px,${(hy*k).toFixed(2)}px,0) scale(1.02)`; } }
