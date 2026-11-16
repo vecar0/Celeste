@@ -735,6 +735,21 @@
   #go,#quit{white-space:nowrap;overflow:hidden}
   #quit{flex:none;width:auto!important;min-width:88px;padding:0 14px;font:500 13px var(--sans);letter-spacing:.12em;background:var(--paper2);box-shadow:5px 5px 0 var(--ink)}
   @media (orientation:landscape) and (max-height:600px){ #go{letter-spacing:.12em} #quit{box-shadow:4px 4px 0 var(--ink)} }
+
+  /* ── 프레임 속 프레임 ── */
+  #frameIn{position:absolute;left:7%;right:7%;top:9%;bottom:6%;pointer-events:none;border:1px solid var(--ink);box-shadow:0 0 0 7px #f4f3efb0,0 0 0 8px var(--ink)}
+  #frameIn i{position:absolute;inset:-22px 22px 22px -22px;border:2px solid var(--bleu);transform:rotate(-1.2deg)}
+  #frameIn::after{content:"";position:absolute;right:-14px;top:-12px;width:58px;height:18px;background:#d8d4c6e6;transform:rotate(9deg)}
+  #top::before{content:"";position:absolute;inset:6px 8px -8px 8px;border:1px solid #12121266;pointer-events:none;z-index:-1}
+  #top::after{content:"";position:absolute;inset:14px 0 -16px 16px;border:1px solid #1e22d655;pointer-events:none;z-index:-1}
+  @media (orientation:landscape) and (max-height:600px){
+    #frameIn{left:16%;right:10%;top:7%;bottom:9%}
+    #top::before{inset:2px -4px -6px 6px} #top::after{inset:10px -10px -12px 14px}
+  }
+  /* ── 음악 줄: 곡 이름 우선 ── */
+  #music .mt b.full{display:none!important} #music .mt b.st{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:500 15px var(--serif)}
+  #music button{width:26px} #music .mx{width:24px}
+  #music .mt{min-width:96px}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -754,6 +769,7 @@
 
   <main id="stage">
     <div id="loading">석고상을 깨우는 중…</div>
+    <div id="frameIn" aria-hidden="true"><i></i></div>
         <div id="figure">
       <svg id="haloB"></svg>
       <canvas id="c"></canvas>
@@ -1780,7 +1796,7 @@ const Music = {
   },
   async openChannel(id, name){
     this.chan = {id, name}; this.chTab = 'home'; this.chShelves = []; this.chList = []; this.chNext = ''; this.chInfo = null; this.chDone = false;
-    $('spSheet').hidden = false; this.renderSheet('search');
+    this.hold(); $('spSheet').hidden = false; this.renderSheet('search');
     const K = '&key=' + encodeURIComponent(this.key);
     try{ const d = await Music.gj('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings,contentDetails&id=' + id + K);
       const c = (d.items || [])[0]; if(c) this.chInfo = {title:c.snippet.title, handle:c.snippet.customUrl || '', desc:c.snippet.description || '',
@@ -2002,10 +2018,12 @@ const Music = {
     const el = $('music'); if(!el) return; el.classList.toggle('ad', !!this.muted);
     const it = this.cur, img = it ? this.thumb(it) : '';
     el.innerHTML = (img ? '<img data-a="now" src="' + img + '" alt="">' : '<i class="art" data-a="now">♪</i>') +
-      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING<img class="npst" src="' + PARTS + 'halo_star_blue.webp" alt="">' : 'MUSIQUE') + '</small><b>' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><b class="st">' + esc(this.short(this.title || (it ? it.title : '음악 고르기'))) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
+      '<div class="mt" data-a="now"><small>' + (this.muted ? '광고 · 소리 끔' : this.playing ? 'NOW PLAYING<img class="npst" src="' + PARTS + 'halo_star_blue.webp" alt="">' : 'MUSIQUE') + '</small><b class="full">' + esc(this.title || (it ? it.title : '음악 고르기')) + '</b><b class="st">' + esc(this.short(this.title || (it ? it.title : '음악 고르기'))) + '</b><span>' + esc(this.by || (it ? it.by || '' : '저장한 목록·검색에서 골라요')) + '</span></div>' +
       '<button data-a="prev" aria-label="이전">' + SPI.prev + '</button><button class="pp" data-a="toggle" aria-label="재생/멈춤">' + (this.playing ? SPI.pause : SPI.play) + '</button><button data-a="next" aria-label="다음">' + SPI.next + '</button><button class="mx" data-a="sheet" aria-label="목록">' + SPI.list + '</button>';
   },
-  open(tab){ $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  open(tab){ this.hold(); $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
+  hold(){ if(mode === 'run' && phase === 'focus'){ pause(); this.held = true; setStatus('음악 고르는 동안 멈춤'); } },   // 음악 고르는 동안 집중 시간 안 흐름
+  release(){ if(this.held && mode === 'paused'){ this.held = false; start(false); } this.held = false; },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
     const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot');
     const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
@@ -2120,7 +2138,7 @@ const Music = {
     $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
     $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b){ e.stopPropagation(); this.act(b); } };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
-    $('spClose').onclick = ()=>{ $('spSheet').hidden = true; this.place(); };
+    $('spClose').onclick = ()=>{ $('spSheet').hidden = true; this.place(); this.release(); };
     this.mount().then(()=>{ if(this.cur && !this.loaded) this.load1(this.cur, false); this.refreshNow(); });   // 앱을 열자마자 준비 → 누르면 바로 재생
     this.render();
   }
