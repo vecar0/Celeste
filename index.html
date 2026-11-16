@@ -781,6 +781,13 @@
     #top>#music .mt b.st{font-size:16px} #row #subject{font-size:16px}
     #go,#warm,#quit{font-size:16px!important}
   }
+
+  /* 가로: 음악 줄과 상태 줄 사이 마름모 띠 없앰 → 한 흐름으로 */
+  @media (orientation:landscape) and (max-height:600px){
+    #bottom::before{display:none!important}
+    #bottom{padding-top:12px!important;margin-top:0!important}
+    #top>#music{margin-bottom:4px!important}
+  }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1043,7 +1050,7 @@ async function buildCollage(){
   const UI = ['brand','time','tbar','pomo','recent','row','music','sline','btns'].map(id=>{ const e = $(id); if(!e || !e.offsetParent) return null; const b = e.getBoundingClientRect(); return {x:b.left - ab.left - 12, y:b.top - ab.top - 12, w:b.width + 24, h:b.height + 24}; }).filter(Boolean);
   const hitsUI = (x, y, w, h) => UI.some(u=>x < u.x + u.w && x + w > u.x && y < u.y + u.h && y + h > u.y);
   const sb = st.getBoundingClientRect(), SR = {x:sb.left - ab.left, y:sb.top - ab.top, w:sb.width, h:sb.height};   // 셀레스테 무대
-  let b1 = '', b2 = '', f1 = '';
+  let b1 = '', b2 = '', f1 = '', note = '';
   const defs = `<defs>
     <pattern id="dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.25" fill="${B}"/></pattern>
     <pattern id="sq" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="${B}" opacity=".55"/></pattern>
@@ -1087,13 +1094,13 @@ async function buildCollage(){
     if(hitsMoon(x, y, w, h) || hitsUI(x, y, w, h)) continue;
     const t = i % 3;
     const el = t === 0 ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${B}"/>` : t === 1 ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${B}" stroke-width="1.4"/>` : `<rect x="${x}" y="${y}" width="${w*.7}" height="${h*.7}" fill="${K}"/>`;
-    if(i < 5) b2 += el; else if(!nearFace(x, y, 60)) f1 += el; }
+    b2 += el; }
   // 7) 별: 큰 파랑 1, 중간 검정 1~2, 작은 파랑 몇 개
   { let x, y, t = 0; do { x = sx(W*rr(.55, .85)); y = H*rr(.3, .6); } while((nearFace(x, y, W*.1) || hitsUI(x - W*.08, y - W*.08, W*.16, W*.16)) && ++t < 20);
     b2 += star(x, y, W*rr(.14, .2), B, 'none', rr(-15, 15)); }
   for(let i = 0; i < 2; i++){ const x = W*rr(.08, .92), y = H*rr(.25, .85); if(!nearFace(x, y, 40) && !hitsUI(x - 30, y - 30, 60, 60)) b2 += star(x, y, W*rr(.05, .09), i ? '#fff' : K, i ? K : 'none', rr(-20, 20)); }
   for(let i = 0; i < 4; i++){ const x = W*rr(.05, .95), y = H*rr(.2, .9); if(hitsUI(x - 10, y - 10, 20, 20)) continue; const s = star(x, y, rr(5, 11), B);
-    if(i < 3) b2 += s; else if(!nearFace(x, y, 30)) f1 += s; }
+    b2 += s; }
   // 8) 타자기 글귀 상자 + 곡선 글귀
   Object.assign($('stageLbl').style, side === 'L' ? {left:'auto', right:'12px'} : {left:'12px', right:'auto'});   // 이름표는 글귀 반대쪽
   const topB = land ? 0 : $('top').getBoundingClientRect().bottom - ab.top;      // 위쪽 글자판 아래부터
@@ -1101,10 +1108,10 @@ async function buildCollage(){
     const L = pick(LINES), fs = land ? 8.6 : 7.6, lh = fs*1.32, w = land ? Math.min(132, W*.26) : Math.min(112, W*.28);
     const h = 18 + L.length*lh + 7, x = side === 'L' ? (land ? st.offsetLeft : 0) + 10 : W - w - 10, y = Math.max(H*rr(.31, .34), topB + 14);
     const esc2 = t => t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    f1 += `<rect x="${x+3}" y="${y+3}" width="${w}" height="${h}" fill="${B}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="${K}" stroke-width=".7"/>`;
-    f1 += `<text x="${x+7}" y="${y+10}" font-family="-apple-system,system-ui,sans-serif" font-size="5.6" font-weight="600" letter-spacing="1.6" fill="${B}">NOTE · ${String(1 + Math.floor(R()*28)).padStart(2,'0')}</text>`;
-    f1 += `<line x1="${x+7}" y1="${y+13}" x2="${x+w-7}" y2="${y+13}" stroke="${K}" stroke-width=".4" stroke-dasharray="1.5 1.5"/>`;
-    f1 += `<text x="${x+7}" y="${y+13+lh}" font-family="'Bodoni 72','Didot','Noto Serif KR',serif" font-style="italic" font-size="${fs}" fill="${K}">` +
+    note += `<rect x="${x+3}" y="${y+3}" width="${w}" height="${h}" fill="${B}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="${K}" stroke-width=".7"/>`;
+    note += `<text x="${x+7}" y="${y+10}" font-family="-apple-system,system-ui,sans-serif" font-size="5.6" font-weight="600" letter-spacing="1.6" fill="${B}">NOTE · ${String(1 + Math.floor(R()*28)).padStart(2,'0')}</text>`;
+    note += `<line x1="${x+7}" y1="${y+13}" x2="${x+w-7}" y2="${y+13}" stroke="${K}" stroke-width=".4" stroke-dasharray="1.5 1.5"/>`;
+    note += `<text x="${x+7}" y="${y+13+lh}" font-family="'Bodoni 72','Didot','Noto Serif KR',serif" font-style="italic" font-size="${fs}" fill="${K}">` +
       L.map((l, i)=>`<tspan x="${x+7}" dy="${i ? lh : 0}">${esc2(l)}</tspan>`).join('') + '</text>'; }
   { const big = (x, y, r, f, rot)=>{ if(!hitsUI(x - r*.5, y - r*.5, r, r)) b2 += star(x, y, r, f, 'none', rot); };
     big(SR.x + SR.w*rr(.82, 1.02), SR.y + SR.h*rr(.04, .16), Math.min(SR.w, SR.h)*rr(.22, .3), K, rr(-10, 10));
@@ -1117,6 +1124,7 @@ async function buildCollage(){
     b2 += `<path id="arc" d="M${cx - r} ${cy}A${r} ${r} 0 1 1 ${cx + r} ${cy}A${r} ${r} 0 1 1 ${cx - r} ${cy}" fill="none" stroke="${B}" stroke-width=".6" stroke-dasharray="1 3"/>
       <text font-family="var(--serif),serif" font-style="italic" font-size="11" fill="${B}" letter-spacing="1"><textPath href="#arc">${pick(ARC_TXT).repeat(2)}</textPath></text>`; }
 
+  b2 += note;                                                              // 글귀 카드는 선·글귀 위에
   // 그림 불러오기 (처음 한 번만 실제로 받는다)
   const [doveImg, ...imgs] = await Promise.all([getImg('dove'), ...objs.map(o=>getImg(o.n))]);
   if(my !== collageBusy) return;
@@ -1129,7 +1137,7 @@ async function buildCollage(){
     for(let t = 0; hitsUI(X + w*.15, Y + h*.15, w*.7, h*.7) && t < 14; t++){ X = SR.x + rr(-.1, .85)*SR.w; Y = SR.y + rr(0, .8)*SR.h; }
     if(hitsUI(X + w*.15, Y + h*.15, w*.7, h*.7)) return;
     Object.assign(el.style, {left:(OX + X) + 'px', top:Y + 'px', width:w + 'px', transform:`rotate(${o.rot}deg)`});
-    el.appendChild(cloneCanvas(c)); drift(el, i, 1); (o.front ? fo : bo).appendChild(el); });
+    el.appendChild(cloneCanvas(c)); drift(el, i, 1); bo.appendChild(el); });
   // 비둘기 떼: 대각선으로 흩어진다. 얼굴 둘레 피함
   const n = 7 + Math.floor(R()*4), dir = R() < .5 ? 1 : -1;
   for(let i = 0, t = 0; i < n && t < 60; t++){
@@ -1137,7 +1145,7 @@ async function buildCollage(){
     if(nearFace(x, y, s*.6) || hitsMoon(x - s/2, y - s/2, s, s) || hitsUI(x - s/2, y - s/2, s, s)) continue;
     const kind = pick(['w','w','w','b','b','k']), c = cloneCanvas(dove(doveImg, kind)), el = document.createElement('div'); el.className = 'o';
     Object.assign(el.style, {left:(OX + x - s/2) + 'px', top:(y - s/2) + 'px', width:s + 'px', transform:`scaleX(${dir}) rotate(${rr(-25, 15)}deg)`});
-    el.appendChild(c); drift(el, i + 10, 1.8); (i < n - 2 ? bo : fo).appendChild(el); i++; }
+    el.appendChild(c); drift(el, i + 10, 1.8); bo.appendChild(el); i++; }
   $('bgo').replaceChildren(bo); $('fgo').replaceChildren(fo);
   $('uiWash').innerHTML = UI.map(u=>`<i style="left:${u.x - 6}px;top:${u.y - 4}px;width:${u.w + 12}px;height:${u.h + 8}px"></i>`).join('');
   for(const id of ['bg1','bg2','fg1']) $(id).setAttribute('viewBox', `0 0 ${AW} ${H}`);
