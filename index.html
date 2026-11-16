@@ -766,6 +766,21 @@
     #bottom{margin-left:14px!important;padding-left:0!important;padding-right:0!important}
     #bottom::before{left:-14px;right:-12px}
   }
+
+  /* UI 뒤 정돈: 종이 판(가장자리 흐림) — 선·무늬는 판 밖에서만 보임 */
+  #uiWash{z-index:3}
+  #uiWash i{position:absolute;background:var(--paper2);border-radius:14px;filter:blur(9px);opacity:.94}
+  /* 입체감: 앞 조각일수록 그림자 길고 부드럽게 */
+  #time{box-shadow:6px 7px 0 var(--bleu),14px 18px 22px #12121238!important}
+  #music{box-shadow:5px 6px 0 var(--bleu),14px 20px 24px #12121240!important}
+  #row{box-shadow:4px 5px 0 var(--ink),12px 14px 18px #12121230}
+  #go{box-shadow:5px 5px 0 var(--ink),12px 16px 20px #1e22d640!important}
+  /* 가로: 왼쪽 칸 넓혀 꽉 차게 */
+  @media (orientation:landscape) and (max-height:600px){
+    #app{grid-template-columns:minmax(330px,47%) 1fr!important}
+    #top>#music .mt b.st{font-size:16px} #row #subject{font-size:16px}
+    #go,#warm,#quit{font-size:16px!important}
+  }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -794,7 +809,7 @@
     <div id="doves"></div>
   </main>
 
-  <div id="fgo" class="layer"></div><svg id="fg1" class="layer"></svg>
+  <div id="fgo" class="layer"></div><div id="uiWash" class="layer"></div><svg id="fg1" class="layer"></svg>
   <div id="stageBand"></div>
   <div id="safeL" aria-hidden="true"><span>bleu minuit · stay until midnight</span></div>
 <footer id="bottom">
@@ -1124,6 +1139,7 @@ async function buildCollage(){
     Object.assign(el.style, {left:(OX + x - s/2) + 'px', top:(y - s/2) + 'px', width:s + 'px', transform:`scaleX(${dir}) rotate(${rr(-25, 15)}deg)`});
     el.appendChild(c); drift(el, i + 10, 1.8); (i < n - 2 ? bo : fo).appendChild(el); i++; }
   $('bgo').replaceChildren(bo); $('fgo').replaceChildren(fo);
+  $('uiWash').innerHTML = UI.map(u=>`<i style="left:${u.x - 6}px;top:${u.y - 4}px;width:${u.w + 12}px;height:${u.h + 8}px"></i>`).join('');
   for(const id of ['bg1','bg2','fg1']) $(id).setAttribute('viewBox', `0 0 ${AW} ${H}`);
   const g = t => `<g transform="translate(${OX} 0)">${t}</g>`;
   for(const id of ['bg1','bgo','bg2','fgo','fg1']) $(id).style.clipPath = OX ? `inset(0 0 0 ${OX}px)` : '';   // 가로: 왼쪽 글자 칸으로 넘치지 않게
