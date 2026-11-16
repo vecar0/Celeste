@@ -744,8 +744,8 @@
   #music .mt{min-width:96px}
 
 
-  /* 앞쪽 철제 고리: 초점이 안 맞은 듯 살짝 흐릿하게(가까이 있는 물체) */
-  #fgFrame{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:4;filter:blur(1.8px);opacity:.92}
+  /* 콜라주 띠 액자(셀레스테 뒤) */
+  #band{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -765,12 +765,12 @@
 
   <main id="stage">
     <div id="loading">석고상을 깨우는 중…</div>
+        <svg id="band" aria-hidden="true"></svg>
         <div id="figure">
       <svg id="haloB"></svg>
       <canvas id="c"></canvas>
       <svg id="haloF"></svg>
     </div>
-    <svg id="fgFrame" aria-hidden="true"></svg>
     <div id="stageLbl"><b>CÉLESTE</b><span id="stageName">plâtre</span></div>
     <div id="doves"></div>
   </main>
@@ -1454,24 +1454,26 @@ function appH(){
   const h = innerHeight, sh = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
   return sa && sh > h && sh - h < 160 ? sh : h;
 }
-function drawFrame(st, land, headY){                     // 프레임 속 프레임: 카메라 바로 앞의 철제 고리(흐릿하게) 너머로 셀레스테를 본다
-  const W = st.clientWidth, H = st.clientHeight, svg = $('fgFrame'); if(!svg || !W) return;
-  const cx = W*(land ? .56 : .54), cy = Math.min(H*.56, headY + H*.30), rx = W*(land ? .36 : .50), ry = H*(land ? .66 : .58), rot = land ? -8 : -12;
-  const t0 = (rot - 150)*Math.PI/180, a = 3.55, px = cx + rx*Math.cos(a)*Math.cos(rot*Math.PI/180) - ry*Math.sin(a)*Math.sin(rot*Math.PI/180),
-    py = cy + rx*Math.cos(a)*Math.sin(rot*Math.PI/180) + ry*Math.sin(a)*Math.cos(rot*Math.PI/180);
-  const R0 = Math.min(W, H)*.20, sc = [px - R0*.9, py + R0*1.25];                         // 고리에서 이어진 소용돌이(벤치 다리처럼)
-  const pts = []; for(let i = 0; i <= 60; i++){ const k = i/60, r = R0*(1 - k*.82), th = -1.2 + k*Math.PI*3.1; pts.push((sc[0] + r*Math.cos(th)).toFixed(1) + ',' + (sc[1] + r*Math.sin(th)).toFixed(1)); }
-  const curl = 'M' + px.toFixed(1) + ',' + py.toFixed(1) + ' L' + pts.join(' L');
-  const sw = Math.max(18, Math.min(W, H)*.055);
+function drawFrame(st, land, headY){                     // 프레임 속 프레임(콜라주식): 화면 속 파란 띠 액자 → 셀레스테가 그 안에 앉고 머리·후광은 띠 위로 넘친다
+  const W = st.clientWidth, H = st.clientHeight, svg = $('band'); if(!svg || !W) return;
+  const top = Math.round(headY + H*(land ? .30 : .26)), bot = H - (land ? 20 : 2), d = 14;               // 띠 위·아래
+  const ox = W*(land ? .14 : .06), oy = Math.max(8, top - H*.30);                                       // 뒤쪽 망점 사각(어긋난 판)
+  const cx = W*.5, cy = top + (bot - top)*.45, rr = Math.max(W, H)*.42;
+  const dia = y=>{ let p = ''; for(let x = -d; x < W + d; x += d) p += `M${x},${y} l${d/2},${-d/2} l${d/2},${d/2} l${-d/2},${d/2}Z`; return p; };
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  const e = (k)=>{ const c = Math.cos(rot*Math.PI/180), si = Math.sin(rot*Math.PI/180), p = []; for(let i = 0; i <= 72; i++){ const t = i/72*Math.PI*2, x = rx*k*Math.cos(t), y = ry*k*Math.sin(t); p.push((cx + x*c - y*si).toFixed(1) + ',' + (cy + x*si + y*c).toFixed(1)); } return 'M' + p.join(' L') + 'Z'; };
-  svg.innerHTML = `<path fill-rule="evenodd" d="M-40,-40H${W + 40}V${H + 40}H-40Z ${e(1.04)}" fill="#121212" opacity=".16"/>
-    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})" stroke="#121212" stroke-width="${sw}"/>
-    <path d="${curl}" stroke="#121212" stroke-width="${sw*.8}"/>
-    <ellipse cx="${cx - 3}" cy="${cy - 4}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})" stroke="#5a5a58" stroke-width="${sw*.22}" stroke-dasharray="${rx*1.6} ${rx*.9}"/>
-    <path d="${curl}" stroke="#5a5a58" stroke-width="${sw*.16}" transform="translate(-2 -3)"/>
-    <ellipse cx="${cx}" cy="${cy}" rx="${rx - sw*.5 - 3}" ry="${ry - sw*.5 - 3}" transform="rotate(${rot} ${cx} ${cy})" stroke="#1E22D6" stroke-width="1.5" opacity=".7"/></g>`;
+  svg.innerHTML = `<defs><pattern id="hd" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.1" fill="#1E22D6"/></pattern></defs>
+    <rect x="${ox}" y="${oy}" width="${W*.56}" height="${top - oy + 30}" fill="url(#hd)" opacity=".55"/>
+    <rect x="${ox}" y="${oy}" width="${W*.56}" height="${top - oy + 30}" fill="none" stroke="#1E22D6" stroke-width="1"/>
+    <rect x="${W*.62}" y="${oy + 24}" width="${W*.30}" height="12" fill="#121212"/>
+    <circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="#1E22D6" stroke-width="1" opacity=".6"/>
+    <rect x="0" y="${top}" width="${W}" height="${bot - top}" fill="#1E22D6"/>
+    <rect x="0" y="${top}" width="${W}" height="${bot - top}" fill="url(#hd)" opacity=".0"/>
+    <circle cx="${cx}" cy="${cy}" r="${(bot - top)*.62}" fill="none" stroke="#fff" stroke-width="1" opacity=".55"/>
+    <path d="M0,${top + d*1.6} H${W} M0,${bot - d*1.6} H${W}" stroke="#fff" stroke-width=".8" opacity=".6"/>
+    <rect x="0" y="${top - d/2}" width="${W}" height="${d}" fill="#121212"/><path d="${dia(top)}" fill="#f4f3ef"/>
+    ${land ? '' : `<rect x="0" y="${bot - d/2}" width="${W}" height="${d}" fill="#121212"/><path d="${dia(bot)}" fill="#f4f3ef"/>`}
+    <path d="M${W*.86},${top - 46} q6,40 46,46 q-40,6 -46,46 q-6,-40 -46,-46 q40,-6 46,-46z" fill="#fff" stroke="#121212" stroke-width="1.2"/>
+    <text x="${W*.5}" y="${bot - d*2.4}" text-anchor="middle" fill="#fff" font-family="'Bodoni 72','Didot',serif" font-style="italic" font-size="${land ? 15 : 13}" letter-spacing="3" opacity=".9">Bleu Minuit · théorie du bleu</text>`;
 }
 function fit(){
   // 아이폰 홈 화면 앱은 웹 화면 높이를 상태 표시줄만큼 짧게 준다 → 문서 전체(html·body·앱)를 화면 높이로 늘린다
