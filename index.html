@@ -767,9 +767,6 @@
     #bottom::before{left:-14px;right:-12px}
   }
 
-  /* UI 뒤 정돈: 종이 판(가장자리 흐림) — 선·무늬는 판 밖에서만 보임 */
-  #uiWash{z-index:3}
-  #uiWash i{position:absolute;background:var(--paper2);border-radius:14px;filter:blur(9px);opacity:.94}
   /* 입체감: 앞 조각일수록 그림자 길고 부드럽게 */
   #time{box-shadow:6px 7px 0 var(--bleu),14px 18px 22px #12121238!important}
   #music{box-shadow:5px 6px 0 var(--bleu),14px 20px 24px #12121240!important}
@@ -789,9 +786,6 @@
     #top>#music{margin-bottom:4px!important}
   }
 
-  /* UI 뒤: 반듯한 반투명 유리판(뒤 콜라주를 확실히 흐림) */
-  #uiWash i{position:absolute;border-radius:0!important;filter:none!important;opacity:1!important;background:#f4f3efb8!important;
-    -webkit-backdrop-filter:blur(14px) saturate(.9);backdrop-filter:blur(14px) saturate(.9);outline:1px solid #12121233;box-shadow:8px 10px 0 #1e22d61f}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -820,7 +814,7 @@
     <div id="doves"></div>
   </main>
 
-  <div id="fgo" class="layer"></div><div id="uiWash" class="layer"></div><svg id="fg1" class="layer"></svg>
+  <div id="fgo" class="layer"></div><svg id="fg1" class="layer"></svg>
   <div id="stageBand"></div>
   <div id="safeL" aria-hidden="true"><span>bleu minuit · stay until midnight</span></div>
 <footer id="bottom">
@@ -1151,11 +1145,6 @@ async function buildCollage(){
     Object.assign(el.style, {left:(OX + x - s/2) + 'px', top:(y - s/2) + 'px', width:s + 'px', transform:`scaleX(${dir}) rotate(${rr(-25, 15)}deg)`});
     el.appendChild(c); drift(el, i + 10, 1.8); bo.appendChild(el); i++; }
   $('bgo').replaceChildren(bo); $('fgo').replaceChildren(fo);
-  { const box = ids=>{ const r = ids.map(id=>$(id)).filter(e=>e && e.offsetParent).map(e=>e.getBoundingClientRect()); if(!r.length) return '';   // UI 묶음마다 반듯한 유리판 하나
-      const x0 = Math.min(...r.map(b=>b.left)) - ab.left - 12, y0 = Math.min(...r.map(b=>b.top)) - ab.top - 12, x1 = Math.max(...r.map(b=>b.right)) - ab.left + 14, y1 = Math.max(...r.map(b=>b.bottom)) - ab.top + 14;
-      return `<i style="left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px"></i>`; };
-    $('uiWash').innerHTML = land ? box(['brand','time','tbar','pomo','recent','row','music','sline','btns'])
-      : box(['brand','time','tbar','pomo','recent','row']) + box(['music','sline','btns']); }
   for(const id of ['bg1','bg2','fg1']) $(id).setAttribute('viewBox', `0 0 ${AW} ${H}`);
   const g = t => `<g transform="translate(${OX} 0)">${t}</g>`;
   for(const id of ['bg1','bgo','bg2','fgo','fg1']) $(id).style.clipPath = OX ? `inset(0 0 0 ${OX}px)` : '';   // 가로: 왼쪽 글자 칸으로 넘치지 않게
