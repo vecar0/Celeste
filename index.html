@@ -750,6 +750,22 @@
   #bgo{filter:drop-shadow(3px 4px 0 #12121226)}
   #bg2{filter:drop-shadow(5px 7px 0 #1212121f)}
   #fgo{filter:drop-shadow(8px 10px 2px #12121233)}
+
+  /* ── UI를 장면 속 조각으로: 칸 나눔 없이 콜라주 위에 겹쳐 놓고, 조각마다 높이(그림자)·기울기를 달리 ── */
+  #bottom{background:none!important;border:0!important}
+  #bottom::after{display:none}
+  #sline{display:flex;width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;gap:14px;background:var(--paper2);padding:4px 10px;outline:1px solid var(--ink);box-shadow:3px 3px 0 #12121233;transform:rotate(-.8deg)}
+  #time{transform:rotate(-1.6deg);box-shadow:6px 7px 0 var(--bleu),10px 12px 14px #12121233!important}
+  #row{transform:rotate(.7deg);box-shadow:4px 5px 0 var(--ink),8px 10px 12px #12121226}
+  #music{transform:rotate(-.6deg);box-shadow:5px 6px 0 var(--bleu),10px 14px 16px #12121238!important}
+  #pomo>span{background:var(--paper2);padding:2px 7px;outline:1px solid #12121255;box-shadow:2px 2px 0 #1212121f}
+  #recent .add{background:var(--paper2)!important;box-shadow:2px 2px 0 #1212121f}
+  #btns{filter:drop-shadow(0 10px 10px #12121222)}
+  #tbar{transform:rotate(-.4deg)}
+  @media (orientation:landscape) and (max-height:600px){
+    #bottom{margin-left:14px!important;padding-left:0!important;padding-right:0!important}
+    #bottom::before{left:-14px;right:-12px}
+  }
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -997,7 +1013,7 @@ async function buildCollage(){
   const my = ++collageBusy;
   const A = $('app'), st = $('stage'), AW = A.clientWidth, H = A.clientHeight;
   const land = matchMedia('(orientation:landscape) and (max-height:600px)').matches;
-  const OX = land ? st.offsetLeft : 0, W = land ? AW - OX : AW;            // 가로에선 무대 쪽부터 화면 오른쪽 끝까지
+  const OX = 0, W = AW;                                                    // 콜라주는 세로·가로 모두 화면 전체(UI도 장면 속에 놓임)
   if(!FIG || !W) return;
   const R = rngOf('bleu-minuit/' + dayKey()), rr = (a, b) => a + R()*(b - a), pick = arr => arr[Math.floor(R()*arr.length)];
   const fx = X => FIG.x - OX + X*FIG.sc, fy = Y => FIG.y + Y*FIG.sc;
@@ -1058,7 +1074,7 @@ async function buildCollage(){
   const topB = land ? 0 : $('top').getBoundingClientRect().bottom - ab.top;      // 위쪽 글자판 아래부터
   { // 영어·프랑스어 한 구절: 작은 흰 카드 + 파란 블록 그림자 + 작은 머리글
     const L = pick(LINES), fs = land ? 8.6 : 7.6, lh = fs*1.32, w = land ? Math.min(132, W*.26) : Math.min(112, W*.28);
-    const h = 18 + L.length*lh + 7, x = side === 'L' ? 10 : W - w - 10, y = Math.max(H*rr(.31, .34), topB + 14);
+    const h = 18 + L.length*lh + 7, x = side === 'L' ? (land ? st.offsetLeft : 0) + 10 : W - w - 10, y = Math.max(H*rr(.31, .34), topB + 14);
     const esc2 = t => t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
     f1 += `<rect x="${x+3}" y="${y+3}" width="${w}" height="${h}" fill="${B}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="${K}" stroke-width=".7"/>`;
     f1 += `<text x="${x+7}" y="${y+10}" font-family="-apple-system,system-ui,sans-serif" font-size="5.6" font-weight="600" letter-spacing="1.6" fill="${B}">NOTE · ${String(1 + Math.floor(R()*28)).padStart(2,'0')}</text>`;
@@ -2158,7 +2174,9 @@ let rig = null, shown = 0;
 const PAR = [['bg1', -1.1], ['bgo', -.7], ['bg2', -.4], ['fgo', 1.9], ['fg1', 1.4]];   // 멀수록(bg1) 반대로 크게, 앞(fg)은 같은 쪽으로 크게 → 깊이감
 function parallax(t){                       // 고개·기울기를 따라 뒤는 반대로, 앞은 더 크게 → 깊이감
   const S = rig.S, sc = FIG ? FIG.sc : .25, hx = S.head.x*sc*2 + S.tilt.x*10, hy = S.tilt.y*6 + Math.sin(t*.21)*2;
-  for(const [id, k] of PAR){ const el = $(id); if(el) el.style.transform = `translate3d(${(hx*k).toFixed(2)}px,${(hy*k).toFixed(2)}px,0) scale(1.02)`; } }
+  for(const [id, k] of PAR){ const el = $(id); if(el) el.style.transform = `translate3d(${(hx*k).toFixed(2)}px,${(hy*k).toFixed(2)}px,0) scale(1.02)`; }
+  for(const [id, k] of UIPAR){ const el = $(id); if(el) el.style.translate = `${(hx*k).toFixed(1)}px ${(hy*k).toFixed(1)}px`; } }
+const UIPAR = [['time', .55], ['moon', .8], ['row', .3], ['music', .45], ['sline', .2]];   // 화면 앞 조각일수록 크게
 (async ()=>{
   fit(); setPomo(pomo); paintStats();
   ['haloB','haloF'].forEach(id=>{ $(id).setAttribute('viewBox', `0 0 ${IW} ${IH}`); });
