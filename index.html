@@ -789,6 +789,10 @@
 
   /* 세로: 띠 아래는 종이로 막아 무대와 구분(몸이 비치지 않게) */
   @media not all and (orientation:landscape) and (max-height:600px){ #bottom{background:var(--paper2)!important} }
+
+  /* 장르별 맞춤 플리 카드 */
+  .plc.auto .pcov{box-shadow:4px 4px 0 var(--ink)} .plc.auto em{color:var(--bleu)!important;letter-spacing:.06em}
+  .plb2 span{flex:1;font:11px var(--sans);color:#888;text-align:left}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1765,21 +1769,55 @@ const Music = {
       (this.thumb(x) ? '<img src="' + this.thumb(x) + '" alt="">' : '<i class="art">≡</i>') + '<span><b>' + esc(x.title || '') + '</b><em>' + (x.type === 'playlist' ? '유튜브 재생목록 · ' : '') + esc(x.by || '') + (x.dur && this.fmtDur(x.dur) ? ' · ' + this.fmtDur(x.dur) : '') + '</em></span></button>' +
       '<button class="add" data-a="lmenu" data-s="' + src + '" data-i="' + i + '" aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>';
   },
+  // ── 장르별 맞춤 플리: 들은 곡의 유튜브 주제(장르)를 모아 장르마다 '들은 곡 + 비슷한 곡'으로 자동 구성 ──
+  GENRE:[['Jazz','재즈','jazz'],['Classical_music','클래식','classical music'],['Hip_hop_music','힙합','hiphop'],['Rhythm_and_blues','R&B','r&b'],['Soul_music','R&B','soul'],
+    ['Rock_music','록','rock'],['Electronic_music','일렉트로닉','electronic'],['Video_game_music','게임 음악','game ost'],['Music_of_Latin_America','라틴','latin'],
+    ['Country_music','컨트리','country'],['Reggae','레게','reggae'],['Christian_music','CCM','ccm'],['Independent_music','인디','indie'],['Music_of_Asia','J·K-POP','jpop kpop'],['Pop_music','팝','pop']],
+  glists(){ try{ return (JSON.parse(localStorage.getItem('bleu.ytGenre') || 'null') || {}).lists || []; }catch(e){ return []; } },
+  async buildGenres(force){
+    if(!this.key || this.gBusy) return;
+    const pool = []; this.played().concat(this.lib).forEach(x=>{ if(x.type === 'video' && !pool.some(y=>y.id === x.id)) pool.push(x); });
+    let old = null; try{ old = JSON.parse(localStorage.getItem('bleu.ytGenre') || 'null'); }catch(e){}
+    const fresh = old && pool.length - old.n < 3 && Date.now() - old.at < 12*36e5;
+    if(pool.length < 3 || (!force && fresh)) return;
+    this.gBusy = true; this.refreshLib();
+    const K = '&key=' + encodeURIComponent(this.key), P = pool.slice(0, 50), topic = {};
+    const j = await Music.gj('https://www.googleapis.com/youtube/v3/videos?part=topicDetails&id=' + P.map(x=>x.id).join(',') + K);
+    (j.items || []).forEach(v=>{ topic[v.id] = ((v.topicDetails && v.topicDetails.topicCategories) || []).map(u=>u.split('/').pop()); });
+    const groups = {};
+    P.forEach(x=>{ const t = topic[x.id] || [], g = this.GENRE.find(([k])=>t.includes(k)); if(g) (groups[g[1]] = groups[g[1]] || {g, items:[]}).items.push(x); });
+    const top = Object.values(groups).filter(v=>v.items.length >= 2).sort((a, b)=>b.items.length - a.items.length).slice(0, 4), lists = [];
+    const txt = h => new DOMParser().parseFromString(h, 'text/html').body.textContent;
+    for(const {g, items} of top){
+      const by = {}; items.forEach(x=>{ if(x.by) by[x.by] = (by[x.by] || 0) + 1; }); const artist = Object.keys(by).sort((a, b)=>by[b] - by[a])[0] || '';
+      const r = await Music.gj('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15&regionCode=KR&q=' + encodeURIComponent((artist + ' ' + g[2]).trim()) + K);
+      const recs = (r.items || []).map(x=>({type:'video', id:x.id.videoId, title:txt(x.snippet.title), by:x.snippet.channelTitle, ch:x.snippet.channelId})).filter(x=>x.id && !items.some(y=>y.id === x.id));
+      const a = items.slice(0, 10), mix = [];                                  // 들은 곡 1 : 새 곡 1~2 번갈아
+      for(let i = 0; mix.length < 24 && (i < a.length || i*2 < recs.length); i++){ if(a[i]) mix.push(this.clean(a[i])); recs.slice(i*2, i*2 + 2).forEach(x=>mix.push(this.clean(x))); }
+      lists.push({id:'g_' + g[0], name:g[1] + ' 믹스', genre:g[1], auto:true, items:mix.slice(0, 24)});
+    }
+    try{ localStorage.setItem('bleu.ytGenre', JSON.stringify({at:Date.now(), n:pool.length, lists})); }catch(e){}
+    this.gBusy = false; this.refreshLib();
+  },
   renderLib(box){
-    const L = this.lists(), op = this.openList && L.find(t=>t.id === this.openList);
+    const U = this.lists(), G = this.glists(), L = U.concat(G), op = this.openList && L.find(t=>t.id === this.openList);
+    if(!op) this.buildGenres();
     if(op){                                                // 플레이리스트 안
       const playing = this.cur && this.cur.type === 'mylist' && this.cur.id === 'L' + op.id;
       box.innerHTML = '<div class="pld"><button class="back" data-a="closelist" aria-label="뒤로">‹ 저장한 음악</button>' +
-        '<div class="plh">' + this.coverHTML(op) + '<div><small>PLAYLIST · N°' + String(L.indexOf(op) + 1).padStart(2, '0') + '</small><h3 class="pn"><span>' + esc(op.name) + '</span><img class="nst" src="' + this.objFor(op.id) + '" alt=""></h3><p>' + op.items.length + '곡</p></div></div>' +
-        '<div class="plb"><button class="pri" data-a="plplay" data-i="0">' + SPI.play + '전체 재생</button><button data-a="plshuf">' + SPI.shuffle + '섞어서</button><button data-a="pladd">' + SPI.plus + '곡 담기</button></div>' +
-        '<div class="plb2"><button data-a="plren">이름 바꾸기</button><button data-a="pldel">플레이리스트 지우기</button></div>' +
+        '<div class="plh">' + this.coverHTML(op) + '<div><small>' + (op.auto ? 'FOR YOU · ' + esc(op.genre) : 'PLAYLIST · N°' + String(U.indexOf(op) + 1).padStart(2, '0')) + '</small><h3 class="pn"><span>' + esc(op.name) + '</span><img class="nst" src="' + this.objFor(op.id) + '" alt=""></h3><p>' + op.items.length + '곡</p></div></div>' +
+        '<div class="plb"><button class="pri" data-a="plplay" data-i="0">' + SPI.play + '전체 재생</button><button data-a="plshuf">' + SPI.shuffle + '섞어서</button>' + (op.auto ? '<button data-a="plsave">' + SPI.plus + '내 플리로</button>' : '<button data-a="pladd">' + SPI.plus + '곡 담기</button>') + '</div>' +
+        (op.auto ? '<div class="plb2"><span>들은 곡 + 비슷한 곡으로 자동으로 만든 목록이에요</span><button data-a="plregen">다시 만들기</button></div>' : '<div class="plb2"><button data-a="plren">이름 바꾸기</button><button data-a="pldel">플레이리스트 지우기</button></div>') +
         (op.items.length ? op.items.map((x, i)=>this.trackHTML(x, i, 'pl', playing && this.vid === x.id)).join('') : '<p class="none">아직 비어 있어요 · ‘곡 담기’로 채워요</p>') + '</div>';
       return;
     }
     box.innerHTML = '<form id="ytAdd" class="row" autocomplete="off"><input id="ytUrl" placeholder="유튜브 링크 붙여 넣기 (영상·재생목록)" enterkeyhint="done"><button type="submit">저장</button></form>' +
       '<h4 class="sth">내 플레이리스트<img class="stk" src="' + PARTS + 'obj_dove.webp" alt=""></h4>' +
       '<div class="pls"><button class="plc new" data-a="newlist"><div class="pcov"><span>+</span></div><b>새 플레이리스트</b><em>만들기</em></button>' +
-      L.map(t=>'<button class="plc" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b class="pn"><span>' + esc(t.name) + '</span><img class="nst" src="' + this.objFor(t.id) + '" alt=""></b><em>' + t.items.length + '곡</em></button>').join('') + '</div>' +
+      U.map(t=>'<button class="plc" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b class="pn"><span>' + esc(t.name) + '</span><img class="nst" src="' + this.objFor(t.id) + '" alt=""></b><em>' + t.items.length + '곡</em></button>').join('') + '</div>' +
+      '<h4 class="sth">장르별 맞춤 플리</h4>' +
+      (G.length ? '<div class="pls">' + G.map(t=>'<button class="plc auto" data-a="openlist" data-l="' + t.id + '">' + this.coverHTML(t) + '<b class="pn"><span>' + esc(t.name) + '</span></b><em>FOR YOU · ' + t.items.length + '곡</em></button>').join('') + '</div>'
+        : '<p class="none">' + (this.gBusy ? '듣는 노래로 장르별 플리를 만드는 중…' : !this.key ? '검색 키를 넣으면 듣는 노래로 장르별 플리를 만들어요' : '노래를 3곡 이상 들으면 장르별로 만들어져요') + '</p>') +
       '<h4 class="sth">저장한 곡<img class="stk r" src="' + PARTS + 'obj_roses.webp" alt=""></h4>' +
       (this.lib.length ? this.lib.map((x, i)=>this.trackHTML(x, i, 'lib', this.cur && this.cur.id === x.id)).join('') : '<p class="none">아직 없어요</p>') +
       '<img class="libend" src="' + PARTS + 'obj_lily.webp" alt="">';
@@ -2183,7 +2221,9 @@ const Music = {
     if(a === 'newlist'){ const t = this.newList(prompt('새 플레이리스트 이름', '') || ''); if(t){ this.openList = t.id; this.renderSheet(); } return; }
     if(a === 'openlist'){ this.openList = b.dataset.l; $('spBody').scrollTop = 0; this.renderSheet(); return; }
     if(a === 'closelist'){ this.openList = null; this.renderSheet(); return; }
-    { const L = this.lists(), t = L.find(y=>y.id === this.openList);
+    { const L = this.lists(), t = L.concat(this.glists()).find(y=>y.id === this.openList);
+      if(a === 'plregen'){ this.buildGenres(true); toast('듣는 노래로 다시 만드는 중', 1600); return; }
+      if(a === 'plsave' && t){ const n = this.newList(t.name); if(n){ const l = this.lists(); l[0].items = t.items.map(x=>this.clean(x)); this.saveLists(l); toast('‘' + t.name + '’를 내 플레이리스트에 저장했어요', 2000); } return; }
       if(a === 'plplay'){ this.playList(t, i); return; }
       if(a === 'plshuf'){ this.playList(t, 0, true); return; }
       if(a === 'pladd'){ if(t) this.pickSongs(t); return; }
@@ -2192,7 +2232,7 @@ const Music = {
       if(a === 'lmenu'){ const src = b.dataset.s, x = src === 'pl' ? t && t.items[i] : this.lib[i]; if(!x) return;
         const opts = [{t:'재생', ic:SPI.play, f:()=>src === 'pl' ? this.playList(t, i) : this.playItem(x)}];
         if(x.type === 'video') opts.push({t:'플레이리스트에 담기', ic:SPI.plus, f:()=>this.chooseList(x)});
-        if(src === 'pl'){ if(i > 0) opts.push({t:'위로 올리기', ic:'↑ ', f:()=>{ [t.items[i - 1], t.items[i]] = [t.items[i], t.items[i - 1]]; this.saveLists(L); this.renderSheet(); }});
+        if(src === 'pl' && !t.auto){ if(i > 0) opts.push({t:'위로 올리기', ic:'↑ ', f:()=>{ [t.items[i - 1], t.items[i]] = [t.items[i], t.items[i - 1]]; this.saveLists(L); this.renderSheet(); }});
           opts.push({t:'이 플레이리스트에서 빼기', ic:'× ', f:()=>{ t.items.splice(i, 1); this.saveLists(L); this.renderSheet(); }}); }
         else opts.push({t:'저장한 곡에서 지우기', ic:'× ', f:()=>{ this.lib.splice(i, 1); this.save(); this.renderSheet(); }});
         this.sheetMenu(x.title || '', opts); return; } }
