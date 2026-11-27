@@ -639,7 +639,7 @@
   #ytMenu .mm{background:var(--paper2);color:var(--ink);border-top:1px solid var(--ink)} #ytMenu p{color:#777} #ytMenu button{color:var(--ink)} #ytMenu svg{fill:var(--ink)} #ytMenu .cx{border-top-color:#12121230}
 
   /* ── 지금: 영상도 같이 스크롤(고정 해제). 시트 밖은 잘라 냄 ── */
-  #spSheet:not(.wide) #ytNow .vwrap{position:static!important;box-shadow:none!important;padding-bottom:22px!important}
+  #spSheet:not(.wide) #ytNow .vwrap{position:relative!important;box-shadow:none!important;padding-bottom:22px!important}
   #spSheet:not(.wide) #ytNow .blk{margin:18px 0 -6px;font:12px/1.5 var(--sans);color:var(--bleu);text-align:center}
   @media (orientation:landscape) and (max-height:600px){ #spSheet:not(.wide) #ytNow .blk{margin:20px 0 0} }
 
@@ -793,6 +793,17 @@
   /* 장르별 맞춤 플리 카드 */
   .plc.auto .pcov{box-shadow:4px 4px 0 var(--ink)} .plc.auto em{color:var(--bleu)!important;letter-spacing:.06em}
   .plb2 span{flex:1;font:11px var(--sans);color:#888;text-align:left}
+
+  #ytWin{will-change:auto!important}
+  #ytWin.big{z-index:80!important;outline:0!important;box-shadow:none!important;background:#000}
+  .bigbtn{position:absolute;right:0;bottom:2px;z-index:2;display:flex;gap:5px;align-items:center;padding:5px 9px;background:#121212d9;color:#fff;font:500 11px var(--sans);letter-spacing:.04em}
+  .bigbtn svg{width:13px;fill:#fff} #ytNow .vwrap{position:relative}
+  #bigHud{position:fixed;z-index:90;right:calc(14px + env(safe-area-inset-right));top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;background:#f4f3efeb;outline:1px solid var(--ink);box-shadow:4px 4px 0 var(--bleu)}
+  #bigHud[hidden]{display:none}
+  #bigHud .dot{width:7px;height:7px;background:var(--bleu);border-radius:50%} #bigHud.rest .dot{background:#8a8a86}
+  #bigHud b{font:400 22px/1 var(--serif);font-variant-numeric:tabular-nums;color:var(--ink)} #bigHud em{font:500 10px var(--sans);font-style:normal;letter-spacing:.14em;color:#666}
+  #bigHud button{width:26px;height:26px;margin-left:2px;background:var(--ink);color:#fff;font-size:12px}
+  #spSheet:not(.wide) #ytNow .vwrap{padding-bottom:42px!important}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1573,7 +1584,7 @@ const Music = {
   mount(){
     if(this.p) return this.p;
     return this.p = this.api().then(()=>new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%',
-      playerVars:{playsinline:1, rel:0, modestbranding:1, origin:location.origin},
+      playerVars:{playsinline:1, rel:0, modestbranding:1, fs:0, origin:location.origin},
       events:{onReady:()=>{ this._pl = pl; this.ready = true; res(pl); }, onStateChange:e=>this.onState(e), onError:e=>this.onErr(e)}}); }));
   },
   load1(item, play){                                       // 플레이어에 곡 넣기(play=false면 대기만)
@@ -1868,7 +1879,7 @@ const Music = {
     if(!this.key){ this.renderSheet(); return; }
     if(more && this.busy) return;
     const tok = this.sTok = (this.sTok || 0) + 1;
-    if(!more){ if(q != null) this.q = q; this.found = []; this.next = ''; }
+    if(!more){ if(q != null) this.q = q; this.found = []; this.next = ''; this.shOpen = false; }
     this.busy = true; if(!more){ const b = $('spBody'); if(b) b.scrollTop = 0; this.renderResults(); }
     const K = '&key=' + encodeURIComponent(this.key);
     try{
@@ -2001,7 +2012,8 @@ const Music = {
         (x.live ? '<span class="tag live">● 실시간</span>' : x.type === 'playlist' ? '<span class="tag">' + SPI.list + (x.count ? '동영상 ' + x.count + '개' : '재생목록') + '</span>' : this.fmtDur(x.dur) ? '<span class="tag">' + this.fmtDur(x.dur) + '</span>' : '') +
         '</div><div class="meta">' + av + '<div><h5>' + esc(x.title) + '</h5><p>' + sub + '</p>' + (x.live ? '<b class="lv">실시간</b>' : '') + '</div>' +
         '<button class="keep" data-a="menu" data-i="' + i + '" aria-label="더보기"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>' + this.kstk(x.id) + '</div></article>'; });
-    const out = []; let n = 0; const blk = sIdx.length ? this.shortsHTML(sIdx.map(i=>this.found[i]), k=>'data-s="found" data-i="' + sIdx[k] + '"', 'play') : '';
+    const sh = this.shOpen ? sIdx : sIdx.slice(0, 4), out = []; let n = 0;
+    const blk = sh.length ? this.shortsHTML(sh.map(i=>this.found[i]), k=>'data-s="found" data-i="' + sh[k] + '"', 'play').replace(/<\/section>$/, (sIdx.length > 4 ? '<button class="smore' + (this.shOpen ? ' up' : '') + '" data-a="shmore" aria-label="쇼츠 더 보기"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6-1.4-1.4L12 12.2 7.4 7.6z"/></svg></button>' : '') + '</section>') : '';
     html.forEach(h=>{ if(!h) return; out.push(h); if(++n === 3 && blk) out.push(blk); }); if(n < 3 && blk) out.push(blk);
     box.innerHTML = out.join('') +
       (this.next ? '<p class="none more">' + (this.busy ? '불러오는 중…' : '') + '</p>' : '');
@@ -2128,14 +2140,31 @@ const Music = {
   hold(){ if(mode === 'run' && phase === 'focus'){ pause(); this.held = true; setStatus('음악 고르는 동안 멈춤'); } },   // 음악 고르는 동안 집중 시간 안 흐름
   release(){ if(this.held && mode === 'paused'){ this.held = false; start(false); } this.held = false; },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
-    const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot');
+    const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot'), fr = w.querySelector('iframe');
+    if(this.big && this.ready){ const W = innerWidth, H = innerHeight, k = 'big' + W + 'x' + H;   // 크게 보기: 화면 전체
+      w.classList.add('show', 'big'); if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:'0', top:'0', transform:'', width:W + 'px', height:H + 'px', clipPath:''}); if(fr) Object.assign(fr.style, {width:W + 'px', height:H + 'px'}); }
+      return; }
+    w.classList.remove('big');
     const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
     w.classList.toggle('show', !!on);
     if(on){ const r = spot.getBoundingClientRect(), k = [r.left, r.top, r.width, r.height].map(Math.round).join();
       const bb = $('spBody').getBoundingClientRect(), ct = Math.max(-24, Math.round(bb.top - r.top)), cb = Math.max(-24, Math.round(r.bottom - bb.bottom)), kk = k + ct + '|' + cb;
-      if(kk !== this.pk){ this.pk = kk; Object.assign(w.style, {left:'0', top:'0', transform:'translate3d(' + r.left + 'px,' + r.top + 'px,0)', width:r.width + 'px', height:r.height + 'px', clipPath:'inset(' + ct + 'px -24px ' + cb + 'px -24px)'}); }
+      if(kk !== this.pk){ this.pk = kk; Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', transform:'', width:r.width + 'px', height:r.height + 'px', clipPath:'inset(' + ct + 'px -24px ' + cb + 'px -24px)'});
+        if(fr) Object.assign(fr.style, {width:r.width + 'px', height:r.height + 'px'}); }
       if(!this.praf) this.praf = requestAnimationFrame(()=>{ this.praf = 0; this.place(); }); }
-    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', transform:'', width:'200px', height:'200px', clipPath:''}); }
+    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', transform:'', width:'200px', height:'200px', clipPath:''}); if(fr) Object.assign(fr.style, {width:'200px', height:'200px'}); }
+  },
+  bigOn(on){                                               // 크게 보기 켜고 끄기 + 남은 시간 작은 창
+    this.big = on; this.pk = ''; let h = $('bigHud');
+    if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" aria-label="작게">✕</button>'; document.body.appendChild(h);
+      h.querySelector('button').onclick = ()=>this.bigOn(false); }
+    if(h) h.hidden = !on; clearInterval(this.bigT);
+    const tick = ()=>{ const m = Math.floor(remain/60), sec = remain%60, run = mode === 'run' || mode === 'paused';
+      h.querySelector('b').textContent = run ? String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0') : '--:--';
+      h.querySelector('em').textContent = !run ? '타이머 대기' : mode === 'paused' ? '멈춤' : phase === 'focus' ? '집중' : '휴식';
+      h.classList.toggle('rest', run && phase !== 'focus'); };
+    if(on){ tick(); this.bigT = setInterval(tick, 500); }
+    this.place();
   },
   nowTick(){                                               // 지금 화면: 진행 막대·시간
     clearTimeout(this.nt); const pl = this._pl, sk = $('ytSeek'); if(!pl || !sk || $('spSheet').hidden || this.tab !== 'now') return;
@@ -2149,7 +2178,7 @@ const Music = {
     if(this.ready && this.loaded !== it.id && this.loaded !== 'err:' + it.id) this.load1(it, false);   // 플레이어가 비어 있으면 이 곡을 대기시켜 화면에 띄움
     const av = this.avs[this.chId || (this.radio ? '' : it.ch)];
     const by = this.by || it.by || '';
-    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
+    box.innerHTML = '<div id="ytNow"><div class="vwrap"><div class="perchrow"><i class="tape"></i><img class="perch" src="' + PARTS + 'obj_dove.webp" alt=""></div>' + (this.ready ? '<div class="vidspot"></div>' : '<img class="vidspot" src="' + (it.type === 'video' ? 'https://i.ytimg.com/vi/' + it.id + '/hqdefault.jpg' : it.img || '') + '" alt="" style="object-fit:cover">') + (this.ready ? '<button class="bigbtn" data-a="big"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>크게 보기</button>' : '') + (this.blocked ? '<p class="blk">▲ 영상을 한 번 눌러 주세요 · 아이폰은 처음 한 번은 직접 눌러야 소리가 나요</p>' : '') + '</div>' +
       '<div class="tiw"><small class="np">NOW PLAYING<img src="' + PARTS + 'halo_star_blue.webp" alt=""></small><h3 class="ti">' + esc(this.title || it.title || '') + '</h3></div>' +
       '<button class="ch" data-a="chan"><i>' + (av ? '<img src="' + av + '" alt="">' : esc(by.slice(0, 1) || '♪')) + '</i><span>' + esc(by) + '</span><img class="chrose" src="' + PARTS + 'obj_roses.webp" alt=""><em>' + (this.chId || it.ch ? '채널 보기 ›' : '') + '</em></button>' +
       '<input id="ytSeek" type="range" min="0" max="1" step="1" value="0"><div class="tm"><span>0:00</span><span></span></div>' +
@@ -2213,6 +2242,8 @@ const Music = {
     if(a === 'menu'){ this.menuFor(this.getItem(b.dataset)); return; }
     if(a === 'splay'){ this.playItem(this.getItem(b.dataset)); return; }
     if(a === 'smore'){ const g = b.dataset.g, sh = (g === 'home' ? this.home : this.chShelves)[+b.dataset.s]; if(sh){ sh.open = !sh.open; g === 'home' ? this.renderResults() : this.renderChannelList(); } return; }
+    if(a === 'shmore'){ this.shOpen = !this.shOpen; this.renderResults(); return; }
+    if(a === 'big'){ this.bigOn(true); return; }
     if(a === 'mixat'){ if(this.ready && this.upNext){ const l = this.upNext.slice(); this.radio = true; this.want = true; this._pl.loadPlaylist(l, i - 1); this.watchStart(); } return; }
     if(a === 'pi'){ if(this.ready){ this.want = true; this._pl.playVideoAt(i); this.watchStart(); } return; }
     if(a === 'play'){ this.playItem((src === 'lib' ? this.lib : this.found)[i]); return; }
@@ -2243,7 +2274,8 @@ const Music = {
     $('music').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); };
     $('spBody').onclick = e=>{ const b = e.target.closest('[data-a]'); if(b){ e.stopPropagation(); this.act(b); } };
     $('spTabs').onclick = e=>{ const b = e.target.closest('button'); if(b) this.renderSheet(b.dataset.t); };
-    $('spClose').onclick = ()=>{ $('spSheet').hidden = true; this.place(); this.release(); };
+    addEventListener('resize', ()=>{ this.pk = ''; this.place(); });
+    $('spClose').onclick = ()=>{ if(this.big) this.bigOn(false);  $('spSheet').hidden = true; this.place(); this.release(); };
     this.mount().then(()=>{ if(this.cur && !this.loaded) this.load1(this.cur, false); this.refreshNow(); });   // 앱을 열자마자 준비 → 누르면 바로 재생
     this.render();
   }
