@@ -824,6 +824,10 @@
     repeating-linear-gradient(0deg,#0000 0 23px,#ffffff10 23px 24px),#121212!important}
 
   @media (orientation:landscape) and (max-height:600px){ #spSheet{background:#121212e8} }   /* 뒤 화면이 자리 바꾸는 게 비치지 않게 */
+
+  /* 크게 보기 버튼: 영상 위에서 터치가 씹히지 않게(별도 레이어 + 넉넉한 터치 영역) */
+  #bigHud,#bigCtl{transform:translateZ(0);touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  #bigCtl button{width:46px!important;height:42px!important} #bigHud button{width:42px!important;height:38px!important}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -2219,10 +2223,11 @@ const Music = {
     this.big = on; this.pk = ''; let h = $('bigHud');
     if(on) this.release(); else if(!$('spSheet').hidden) this.hold(); window.__ytBig = on; setVF();   // 크게 보기 = 집중하며 보기 → 시간 흐름
     if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" class="x" aria-label="작게">✕</button>'; document.body.appendChild(h);
-      h.querySelector('.x').onclick = ()=>this.bigOn(false);
+      const tap = (el, f)=>{ let t = 0; el.addEventListener('pointerup', e=>{ e.preventDefault(); t = Date.now(); f(e); }); el.addEventListener('click', e=>{ if(Date.now() - t > 600) f(e); }); };   // 영상 위에서도 첫 터치에 바로 반응
+      tap(h.querySelector('.x'), ()=>this.bigOn(false));
       const bk = document.createElement('div'); bk.id = 'bigBack'; bk.innerHTML = '<i></i>'; document.body.appendChild(bk);
       const c = document.createElement('div'); c.id = 'bigCtl'; c.innerHTML = '<button data-a="prev">' + SPI.prev + '</button><button class="pp" data-a="toggle">' + SPI.play + '</button><button data-a="next">' + SPI.next + '</button>'; document.body.appendChild(c);
-      c.onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); }; }
+      tap(c, e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); }); }
     if(h){ h.hidden = !on; $('bigBack').hidden = !on; $('bigCtl').hidden = !on; } clearInterval(this.bigT);
     const tick = ()=>{ const m = Math.floor(remain/60), sec = remain%60, run = mode === 'run' || mode === 'paused';
       h.querySelector('b').textContent = run ? String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0') : '--:--';
