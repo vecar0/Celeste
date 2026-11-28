@@ -804,6 +804,19 @@
   #bigHud b{font:400 22px/1 var(--serif);font-variant-numeric:tabular-nums;color:var(--ink)} #bigHud em{font:500 10px var(--sans);font-style:normal;letter-spacing:.14em;color:#666}
   #bigHud button{width:26px;height:26px;margin-left:2px;background:var(--ink);color:#fff;font-size:12px}
   #spSheet:not(.wide) #ytNow .vwrap{padding-bottom:42px!important}
+
+  /* 크게 보기 = 상영관: 가운데 스크린 + 양옆은 영상 빛이 번진 벽 */
+  #bigBack{position:fixed;inset:0;z-index:79;background:#000 center/cover no-repeat;overflow:hidden}
+  #bigBack[hidden],#bigCtl[hidden]{display:none}
+  #bigBack::before{content:"";position:absolute;inset:-60px;background:inherit;filter:blur(40px) saturate(1.3) brightness(.55);transform:scale(1.15)}
+  #bigBack i{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0000 40%,#000a 100%)}
+  #ytWin.big{box-shadow:0 0 60px 10px #0009!important}
+  #bigHud{top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom))!important}
+  #bigCtl{position:fixed;z-index:90;left:calc(14px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));display:flex;gap:6px;padding:6px;background:#f4f3efeb;outline:1px solid var(--ink);box-shadow:4px 4px 0 var(--bleu)}
+  #bigCtl button{width:34px;height:30px;display:grid;place-items:center} #bigCtl svg{width:16px;fill:var(--ink)} #bigCtl .pp{background:var(--bleu)} #bigCtl .pp svg{fill:#fff}
+  /* ADHD: 딴생각 메모 버튼 */
+  #parkBtn{flex:none;padding:3px 8px;border:1px dashed var(--ink);background:var(--paper2);font:500 11px var(--sans);color:var(--ink);white-space:nowrap}
+  #parkBtn[hidden]{display:none}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -837,7 +850,7 @@
   <div id="safeL" aria-hidden="true"><span>bleu minuit · stay until midnight</span></div>
 <footer id="bottom">
     <div id="music"></div>
-    <div id="sline"><span id="status">시간을 고르고 시작하세요</span><span id="mini"></span></div>
+    <div id="sline"><span id="status">시간을 고르고 시작하세요</span><button id="parkBtn" type="button" hidden>딴생각 적기</button><span id="mini"></span></div>
     <div id="btns"><button id="go">집중 시작</button><button id="quit" hidden>그만두기</button><button id="warm" type="button">5분만</button></div>
   </footer>
 </div>
@@ -1415,7 +1428,11 @@ function tickOnce(){
   if(mode === 'over'){ rec.todaySec++; if(cur) cur.sec++; if(rec.todaySec % 15 === 0) saveRec(); paint(); paintStats(); return; }
   const was = remain; remain = Math.max(0, Math.round((endAt - Date.now())/1000));
   const add = Math.max(0, was - remain);
-  if(phase === 'focus'){ rec.todaySec += add; if(cur) cur.sec += add; if(rec.todaySec % 15 < add) saveRec(); }
+  if(phase === 'focus'){ rec.todaySec += add; if(cur) cur.sec += add; if(rec.todaySec % 15 < add) saveRec();
+    const half = Math.floor(total/2);
+    if(total >= 240 && was > half && remain <= half){ tone([523, 659], .5, 'sine', .06); toast('절반 지났어요 · ' + Math.ceil(remain/60) + '분 남았어요', 2400); }
+    if(total >= 180 && was > 60 && remain <= 60){ tone([659, 784], .5, 'sine', .06); toast('1분 남았어요 · 마무리해요', 2400); } }
+  { const pb = $('parkBtn'); if(pb) pb.hidden = !(phase === 'focus' && (mode === 'run' || mode === 'paused')); }
   paint(); paintStats(); if(remain <= 0) phaseEnd();
 }
 function reward(){                                       // 집중 목표 한 번 달성: 바로 보상
@@ -1451,13 +1468,20 @@ function waitTick(){
   if(left <= 0){ waitUntil = 0; clearInterval(tid); if(rounds === 0 && mode === 'wait'){ mode = 'finished'; } runPhase('focus'); return; }
   setStatus('휴식 끝 · ' + left + '초 뒤 다음 집중이 시작돼요'); paint();
 }
+let park = []; try{ park = JSON.parse(localStorage.getItem('bleu.park') || '[]'); }catch(e){}
+$('parkBtn').onclick = ()=>{ const t = (prompt('떠오른 생각을 한 줄로 적어 두세요 · 쉬는 시간에 할 일로 옮겨 줄게요', '') || '').trim();
+  if(!t) return; park.push(t); try{ localStorage.setItem('bleu.park', JSON.stringify(park)); }catch(e){} toast('적어 뒀어요 · 지금은 다시 집중', 1800); };
+function unpark(){ if(!park.length) return; const k = keyOf(); (plans[k] = plans[k] || []).push(...park.map(t=>({t, d:false}))); savePlans();
+  toast('딴생각 ' + park.length + '개를 오늘 할 일로 옮겼어요', 2600); park = []; try{ localStorage.setItem('bleu.park', '[]'); }catch(e){} try{ paintPlan && paintPlan(); }catch(e){} }
 function toBreak(){                                      // 집중을 마치고 휴식으로
+  setTimeout(unpark, 3000);
   clearInterval(tid); focusEndAt = Date.now(); setTimeout(paint, 2700);
   if(cur) rec.best = Math.max(rec.best, Math.round(cur.sec/60));
   commit(true); $('subject').disabled = false; setTimeout(()=>checkStamp(keyOf()), 0);
   runPhase(rounds >= ROUNDS ? 'long' : 'break');
 }
 function start(warm){                                    // 큰 버튼
+  if((mode === 'idle' || mode === 'finished') && !$('subject').value.trim()){ const nx = (plans[keyOf()] || []).find(it=>!it.d); if(nx){ $('subject').value = nx.t; toast('지금 할 일: ' + nx.t, 1800); } }
   if(mode === 'over'){ toBreak(); return; }
   if(mode === 'run' && phase === 'focus'){ pause(); return; }
   if(mode === 'run'){ remain = 0; phaseEnd(); return; }   // 휴식 건너뛰기
@@ -1584,7 +1608,7 @@ const Music = {
   mount(){
     if(this.p) return this.p;
     return this.p = this.api().then(()=>new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%',
-      playerVars:{playsinline:1, rel:0, modestbranding:1, fs:0, origin:location.origin},
+      playerVars:{playsinline:1, rel:0, modestbranding:1, fs:0, controls:0, iv_load_policy:3, disablekb:1, origin:location.origin},
       events:{onReady:()=>{ this._pl = pl; this.ready = true; res(pl); }, onStateChange:e=>this.onState(e), onError:e=>this.onErr(e)}}); }));
   },
   load1(item, play){                                       // 플레이어에 곡 넣기(play=false면 대기만)
@@ -1833,6 +1857,23 @@ const Music = {
       (this.lib.length ? this.lib.map((x, i)=>this.trackHTML(x, i, 'lib', this.cur && this.cur.id === x.id)).join('') : '<p class="none">아직 없어요</p>') +
       '<img class="libend" src="' + PARTS + 'obj_lily.webp" alt="">';
     $('ytAdd').onsubmit = e=>{ e.preventDefault(); const v = $('ytUrl').value; $('ytUrl').blur(); if(v.trim()) this.addLink(v); };
+  },
+  async songMix(x){                                        // 한 곡 → 그 곡과 어울리는 곡들로 플리 자동 생성
+    toast('‘' + (this.short ? this.short(x.title) : x.title) + '’와 어울리는 곡을 모으는 중…', 2600);
+    await this.mount();
+    if(!this.pkP){ const d = document.createElement('div'); d.style.cssText = 'position:fixed;right:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none;overflow:hidden;z-index:-1'; d.innerHTML = '<div id="ytPeek"></div>'; document.body.appendChild(d);
+      this.pkP = new Promise(res=>{ const pk = new YT.Player('ytPeek', {width:'200', height:'120', playerVars:{playsinline:1, origin:location.origin}, events:{onReady:()=>{ this._pk = pk; res(); }}}); }); }
+    await this.pkP; this._pk.cuePlaylist({list:'RD' + x.id, listType:'playlist', index:0});
+    let ids = [];
+    for(let n = 0; n < 20 && !ids.length; n++){ await new Promise(r=>setTimeout(r, 400)); const l = this._pk.getPlaylist() || []; if(l.length > 1) ids = l.filter(v=>v !== x.id).slice(0, 24); }
+    if(!ids.length && this.key){ let cid = x.ch || this.vch[x.id];                    // 믹스를 못 받으면 같은 채널 영상으로
+      if(!cid){ const j = await Music.gj('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=' + x.id + '&key=' + encodeURIComponent(this.key)); const v = (j.items || [])[0]; cid = v && v.snippet.channelId; }
+      if(cid) ids = (await this.plItems('UU' + cid.slice(2), 20, '', cid).catch(()=>[])).map(v=>v.id).filter(v=>v !== x.id); }
+    if(!ids.length){ toast('비슷한 곡을 못 찾았어요 · 잠시 후 다시 해 주세요', 2600); return; }
+    await this.upTitles(ids);
+    const name = (this.short ? this.short(x.title) : x.title).slice(0, 18) + ' 믹스', t = this.newList(name, x); const l = this.lists();
+    l[0].items = l[0].items.concat(ids.map(v=>({type:'video', id:v, title:(this.vt[v] || {}).t || '', by:(this.vt[v] || {}).by || '', ch:'', dur:''}))); this.saveLists(l);
+    toast('‘' + name + '’ 플리를 만들었어요 · ' + l[0].items.length + '곡', 2400); this.openList = t.id; this.refreshLib();
   },
   playList(t, at, shuffle){
     if(!t || !t.items.length){ toast('비어 있는 플레이리스트예요', 1600); return; }
@@ -2145,8 +2186,9 @@ const Music = {
   fitFrame(fr, w, h){ if(!fr) return; const L = this.insetL(); Object.assign(fr.style, {width:(w + 2*L) + 'px', height:h + 'px', marginLeft:-2*L + 'px'}); },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
     const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot'), fr = w.querySelector('iframe');
-    if(this.big && this.ready){ const W = innerWidth, H = innerHeight, k = 'big' + W + 'x' + H;   // 크게 보기: 화면 전체
-      w.classList.add('show', 'big'); if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:'0', top:'0', transform:'', width:W + 'px', height:H + 'px', clipPath:''}); this.fitFrame(fr, W, H); }
+    if(this.big && this.ready){ const W = innerWidth, H = innerHeight, vw = Math.min(W - 24, (H - 24)*16/9), vh = vw*9/16, k = 'big' + W + 'x' + H;   // 크게 보기: 가운데 16:9 스크린
+      w.classList.add('show', 'big'); if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:(W - vw)/2 + 'px', top:(H - vh)/2 + 'px', transform:'', width:vw + 'px', height:vh + 'px', clipPath:''}); this.fitFrame(fr, vw, vh); }
+      const bk = $('bigBack'); if(bk) bk.style.backgroundImage = 'url(https://i.ytimg.com/vi/' + (this.vid || (this.cur && this.cur.id)) + '/hqdefault.jpg)';
       return; }
     w.classList.remove('big');
     const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
@@ -2161,13 +2203,16 @@ const Music = {
   bigOn(on){                                               // 크게 보기 켜고 끄기 + 남은 시간 작은 창
     this.big = on; this.pk = ''; let h = $('bigHud');
     if(on) this.release(); else if(!$('spSheet').hidden) this.hold();   // 크게 보기 = 집중하며 보기 → 시간 흐름
-    if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" aria-label="작게">✕</button>'; document.body.appendChild(h);
-      h.querySelector('button').onclick = ()=>this.bigOn(false); }
-    if(h) h.hidden = !on; clearInterval(this.bigT);
+    if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" class="x" aria-label="작게">✕</button>'; document.body.appendChild(h);
+      h.querySelector('.x').onclick = ()=>this.bigOn(false);
+      const bk = document.createElement('div'); bk.id = 'bigBack'; bk.innerHTML = '<i></i>'; document.body.appendChild(bk);
+      const c = document.createElement('div'); c.id = 'bigCtl'; c.innerHTML = '<button data-a="prev">' + SPI.prev + '</button><button class="pp" data-a="toggle">' + SPI.play + '</button><button data-a="next">' + SPI.next + '</button>'; document.body.appendChild(c);
+      c.onclick = e=>{ const b = e.target.closest('[data-a]'); if(b) this.act(b); }; }
+    if(h){ h.hidden = !on; $('bigBack').hidden = !on; $('bigCtl').hidden = !on; } clearInterval(this.bigT);
     const tick = ()=>{ const m = Math.floor(remain/60), sec = remain%60, run = mode === 'run' || mode === 'paused';
       h.querySelector('b').textContent = run ? String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0') : '--:--';
       h.querySelector('em').textContent = !run ? '타이머 대기' : mode === 'paused' ? '멈춤' : phase === 'focus' ? '집중' : '휴식';
-      h.classList.toggle('rest', run && phase !== 'focus'); };
+      h.classList.toggle('rest', run && phase !== 'focus'); const pp = document.querySelector('#bigCtl .pp'); if(pp) pp.innerHTML = this.playing ? SPI.pause : SPI.play; };
     if(on){ tick(); this.bigT = setInterval(tick, 500); }
     this.place();
   },
@@ -2267,7 +2312,7 @@ const Music = {
       if(a === 'pldel' && t){ if(confirm('‘' + t.name + '’ 플레이리스트를 지울까요? (곡 자체는 남아요)')){ this.saveLists(L.filter(y=>y !== t)); this.openList = null; this.renderSheet(); } return; }
       if(a === 'lmenu'){ const src = b.dataset.s, x = src === 'pl' ? t && t.items[i] : this.lib[i]; if(!x) return;
         const opts = [{t:'재생', ic:SPI.play, f:()=>src === 'pl' ? this.playList(t, i) : this.playItem(x)}];
-        if(x.type === 'video') opts.push({t:'플레이리스트에 담기', ic:SPI.plus, f:()=>this.chooseList(x)});
+        if(x.type === 'video') opts.push({t:'이 곡으로 맞춤 플리 만들기', ic:SPI.shuffle, f:()=>this.songMix(x)}, {t:'플레이리스트에 담기', ic:SPI.plus, f:()=>this.chooseList(x)});
         if(src === 'pl' && !t.auto){ if(i > 0) opts.push({t:'위로 올리기', ic:'↑ ', f:()=>{ [t.items[i - 1], t.items[i]] = [t.items[i], t.items[i - 1]]; this.saveLists(L); this.renderSheet(); }});
           opts.push({t:'이 플레이리스트에서 빼기', ic:'× ', f:()=>{ t.items.splice(i, 1); this.saveLists(L); this.renderSheet(); }}); }
         else opts.push({t:'저장한 곡에서 지우기', ic:'× ', f:()=>{ this.lib.splice(i, 1); this.save(); this.renderSheet(); }});
