@@ -2139,10 +2139,12 @@ const Music = {
   open(tab){ this.hold(); $('spSheet').hidden = false; this.renderSheet(tab || this.tab); },
   hold(){ if(mode === 'run' && phase === 'focus'){ pause(); this.held = true; setStatus('음악 고르는 동안 멈춤'); } },   // 음악 고르는 동안 집중 시간 안 흐름
   release(){ if(this.held && mode === 'paused'){ this.held = false; start(false); } this.held = false; },
+  insetL(){ if(!this.ip){ this.ip = document.createElement('div'); this.ip.style.cssText = 'position:fixed;left:0;top:0;height:0;width:env(safe-area-inset-left);visibility:hidden;pointer-events:none'; document.body.appendChild(this.ip); } return this.ip.offsetWidth || 0; },
+  fitFrame(fr, w, h){ if(!fr) return; const L = this.insetL(); Object.assign(fr.style, {width:(w + L) + 'px', height:h + 'px', marginLeft:-L + 'px'}); },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
     const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot'), fr = w.querySelector('iframe');
     if(this.big && this.ready){ const W = innerWidth, H = innerHeight, k = 'big' + W + 'x' + H;   // 크게 보기: 화면 전체
-      w.classList.add('show', 'big'); if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:'0', top:'0', transform:'', width:W + 'px', height:H + 'px', clipPath:''}); if(fr) Object.assign(fr.style, {width:W + 'px', height:H + 'px'}); }
+      w.classList.add('show', 'big'); if(k !== this.pk){ this.pk = k; Object.assign(w.style, {left:'0', top:'0', transform:'', width:W + 'px', height:H + 'px', clipPath:''}); this.fitFrame(fr, W, H); }
       return; }
     w.classList.remove('big');
     const on = spot && !$('spSheet').hidden && this.tab === 'now' && this.ready;
@@ -2150,12 +2152,13 @@ const Music = {
     if(on){ const r = spot.getBoundingClientRect(), k = [r.left, r.top, r.width, r.height].map(Math.round).join();
       const bb = $('spBody').getBoundingClientRect(), ct = Math.max(-24, Math.round(bb.top - r.top)), cb = Math.max(-24, Math.round(r.bottom - bb.bottom)), kk = k + ct + '|' + cb;
       if(kk !== this.pk){ this.pk = kk; Object.assign(w.style, {left:r.left + 'px', top:r.top + 'px', transform:'', width:r.width + 'px', height:r.height + 'px', clipPath:'inset(' + ct + 'px -24px ' + cb + 'px -24px)'});
-        if(fr) Object.assign(fr.style, {width:r.width + 'px', height:r.height + 'px'}); }
+        this.fitFrame(fr, r.width, r.height); }
       if(!this.praf) this.praf = requestAnimationFrame(()=>{ this.praf = 0; this.place(); }); }
-    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', transform:'', width:'200px', height:'200px', clipPath:''}); if(fr) Object.assign(fr.style, {width:'200px', height:'200px'}); }
+    else { this.pk = ''; Object.assign(w.style, {left:'0', top:'0', transform:'', width:'200px', height:'200px', clipPath:''}); if(fr) Object.assign(fr.style, {width:'200px', height:'200px', marginLeft:'0'}); }
   },
   bigOn(on){                                               // 크게 보기 켜고 끄기 + 남은 시간 작은 창
     this.big = on; this.pk = ''; let h = $('bigHud');
+    if(on) this.release(); else if(!$('spSheet').hidden) this.hold();   // 크게 보기 = 집중하며 보기 → 시간 흐름
     if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" aria-label="작게">✕</button>'; document.body.appendChild(h);
       h.querySelector('button').onclick = ()=>this.bigOn(false); }
     if(h) h.hidden = !on; clearInterval(this.bigT);
