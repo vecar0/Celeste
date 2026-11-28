@@ -2140,7 +2140,9 @@ const Music = {
   hold(){ if(mode === 'run' && phase === 'focus'){ pause(); this.held = true; setStatus('음악 고르는 동안 멈춤'); } },   // 음악 고르는 동안 집중 시간 안 흐름
   release(){ if(this.held && mode === 'paused'){ this.held = false; start(false); } this.held = false; },
   insetL(){ if(!this.ip){ this.ip = document.createElement('div'); this.ip.style.cssText = 'position:fixed;left:0;top:0;height:0;width:env(safe-area-inset-left);visibility:hidden;pointer-events:none'; document.body.appendChild(this.ip); } return this.ip.offsetWidth || 0; },
-  fitFrame(fr, w, h){ if(!fr) return; const L = this.insetL(); Object.assign(fr.style, {width:(w + L) + 'px', height:h + 'px', marginLeft:-L + 'px'}); },
+  // 아이폰 가로: 유튜브 화면이 왼쪽 안전 영역 폭(L)만큼 오른쪽으로 밀려 그려짐(가운데 정렬은 iframe 폭 기준).
+  // iframe을 2L만큼 왼쪽으로 빼고 폭을 2L 늘리면, 영상 가운데가 제자리에 오고 양옆도 빈틈없이 덮인다.
+  fitFrame(fr, w, h){ if(!fr) return; const L = this.insetL(); Object.assign(fr.style, {width:(w + 2*L) + 'px', height:h + 'px', marginLeft:-2*L + 'px'}); },
   place(){                                                 // '지금' 화면의 영상 자리에 플레이어를 맞춘다(옮기지 않고 위치만 → 끊기지 않음)
     const w = $('ytWin'), spot = document.querySelector('#ytNow .vidspot'), fr = w.querySelector('iframe');
     if(this.big && this.ready){ const W = innerWidth, H = innerHeight, k = 'big' + W + 'x' + H;   // 크게 보기: 화면 전체
