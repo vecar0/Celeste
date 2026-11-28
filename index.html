@@ -1562,6 +1562,9 @@ function appH(){
   const h = innerHeight, sh = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
   return sa && sh > h && sh - h < 160 ? sh : h;
 }
+// 아이폰 가로: 노치 안전 영역 값이 유튜브 화면 안으로 전해져 영상·제목이 밀림 → 가로에서만 viewport-fit=cover를 끔(안전 영역 = 0)
+function setVF(){ const m = document.querySelector('meta[name=viewport]'), land = matchMedia('(orientation:landscape)').matches, c = m.content.replace(/,\s*viewport-fit=\w+/, '') + (land ? '' : ',viewport-fit=cover'); if(m.content !== c) m.content = c; }
+setVF(); addEventListener('orientationchange', ()=>setTimeout(setVF, 50)); matchMedia('(orientation:landscape)').addEventListener('change', setVF);
 function fit(){
   // 아이폰 홈 화면 앱은 웹 화면 높이를 상태 표시줄만큼 짧게 준다 → 문서 전체(html·body·앱)를 화면 높이로 늘린다
   const h = appH() + 'px';
@@ -1608,7 +1611,7 @@ const Music = {
   mount(){
     if(this.p) return this.p;
     return this.p = this.api().then(()=>new Promise(res=>{ const pl = new YT.Player('ytFrame', {width:'100%', height:'100%',
-      playerVars:{playsinline:1, rel:0, modestbranding:1, fs:0, controls:0, iv_load_policy:3, disablekb:1, origin:location.origin},
+      playerVars:{playsinline:1, rel:0, modestbranding:1, fs:0, iv_load_policy:3, origin:location.origin},
       events:{onReady:()=>{ this._pl = pl; this.ready = true; res(pl); }, onStateChange:e=>this.onState(e), onError:e=>this.onErr(e)}}); }));
   },
   load1(item, play){                                       // 플레이어에 곡 넣기(play=false면 대기만)
