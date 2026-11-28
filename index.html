@@ -1565,7 +1565,7 @@ function appH(){
 // 아이폰 가로: 노치 안전 영역 값이 유튜브 화면 안으로 전해져 영상·제목이 밀림
 // → 평소엔 화면 끝까지(cover), 음악 화면·크게 보기가 열린 동안만 안전 영역을 끔(옆 띠는 어두운 색)
 function setVF(){ const m = document.querySelector('meta[name=viewport]'), land = matchMedia('(orientation:landscape)').matches,
-    vid = land && (!$('spSheet').hidden || (typeof Music !== 'undefined' && Music.big)),
+    vid = land && (!$('spSheet').hidden || window.__ytBig),
     c = m.content.replace(/,\s*viewport-fit=\w+/, '') + (vid ? '' : ',viewport-fit=cover');
   if(m.content !== c) m.content = c; document.documentElement.style.background = vid ? '#121212' : ''; }
 setVF(); addEventListener('orientationchange', ()=>setTimeout(setVF, 50)); matchMedia('(orientation:landscape)').addEventListener('change', setVF);
@@ -2210,7 +2210,7 @@ const Music = {
   },
   bigOn(on){                                               // 크게 보기 켜고 끄기 + 남은 시간 작은 창
     this.big = on; this.pk = ''; let h = $('bigHud');
-    if(on) this.release(); else if(!$('spSheet').hidden) this.hold(); setVF();   // 크게 보기 = 집중하며 보기 → 시간 흐름
+    if(on) this.release(); else if(!$('spSheet').hidden) this.hold(); window.__ytBig = on; setVF();   // 크게 보기 = 집중하며 보기 → 시간 흐름
     if(on && !h){ h = document.createElement('div'); h.id = 'bigHud'; h.innerHTML = '<span class="dot"></span><b></b><em></em><button type="button" class="x" aria-label="작게">✕</button>'; document.body.appendChild(h);
       h.querySelector('.x').onclick = ()=>this.bigOn(false);
       const bk = document.createElement('div'); bk.id = 'bigBack'; bk.innerHTML = '<i></i>'; document.body.appendChild(bk);
