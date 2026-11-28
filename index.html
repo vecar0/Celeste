@@ -817,6 +817,11 @@
   /* ADHD: 딴생각 메모 버튼 */
   #parkBtn{flex:none;padding:3px 8px;border:1px dashed var(--ink);background:var(--paper2);font:500 11px var(--sans);color:var(--ink);white-space:nowrap}
   #parkBtn[hidden]{display:none}
+
+  /* 음악·크게 보기 중 가로 양옆(노치 띠): 앱 무늬로 — 잉크 바탕 + 파란 마름모 줄 + 가는 줄무늬 */
+  html.vidside{background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M12 2L22 12 12 22 2 12Z' fill='%231E22D6'/%3E%3C/svg%3E") center top/24px 24px repeat-y,
+    repeating-linear-gradient(0deg,#0000 0 23px,#ffffff10 23px 24px),#121212!important}
 </style></head><body>
 <div id="ytWin"><div id="ytBox"><div id="ytFrame"></div></div><div id="ytAd" hidden><img alt=""><span>광고 가리는 중 · 소리 끔<small>끝나면 바로 이어서 나와요</small></span></div></div>
 <div id="app">
@@ -1567,7 +1572,7 @@ function appH(){
 function setVF(){ const m = document.querySelector('meta[name=viewport]'), land = matchMedia('(orientation:landscape)').matches,
     vid = land && (!$('spSheet').hidden || window.__ytBig),
     c = m.content.replace(/,\s*viewport-fit=\w+/, '') + (vid ? '' : ',viewport-fit=cover');
-  if(m.content !== c) m.content = c; document.documentElement.style.background = vid ? '#121212' : ''; }
+  if(m.content !== c) m.content = c; document.documentElement.classList.toggle('vidside', vid); }
 setVF(); addEventListener('orientationchange', ()=>setTimeout(setVF, 50)); matchMedia('(orientation:landscape)').addEventListener('change', setVF);
 new MutationObserver(setVF).observe($('spSheet'), {attributes:true, attributeFilter:['hidden']});
 function fit(){
